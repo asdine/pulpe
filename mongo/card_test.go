@@ -1,6 +1,7 @@
 package mongo_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/blankrobot/pulpe"
@@ -200,5 +201,38 @@ func TestCardService_UpdateCard(t *testing.T) {
 		updatedCard, err = s.UpdateCard("QQQ", &pulpe.CardUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 		require.Nil(t, updatedCard)
+	})
+}
+
+func TestCardService_CardsByBoard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.CardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		for i := 0; i < 6; i++ {
+			c := pulpe.CardCreate{
+				ListID:      "ListX",
+				BoardID:     pulpe.BoardID(fmt.Sprintf("Board%d", i%2)),
+				Name:        "name",
+				Description: "description",
+			}
+
+			// Create new card.
+			_, err := s.CreateCard(&c)
+			require.NoError(t, err)
+		}
+
+		cards, err := s.CardsByBoard("Board0")
+		require.NoError(t, err)
+		require.Len(t, cards, 3)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to find cards of a board that doesn't exist.
+		cards, err := s.CardsByBoard("QQQ")
+		require.NoError(t, err)
+		require.Len(t, cards, 0)
 	})
 }

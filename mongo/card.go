@@ -20,11 +20,11 @@ type Card struct {
 	PublicID    string        `bson:"publicID"`
 	CreatedAt   time.Time     `bson:"createdAt"`
 	UpdatedAt   *time.Time    `bson:"updatedAt,omitempty"`
-	ListID      string        `json:"listID"`
-	BoardID     string        `json:"boardID"`
+	ListID      string        `bson:"listID"`
+	BoardID     string        `bson:"boardID"`
 	Name        string        `bson:"name"`
-	Description string        `json:"description"`
-	Position    float64       `json:"position"`
+	Description string        `bson:"description"`
+	Position    float64       `bson:"position"`
 }
 
 // ToMongoCard creates a mongo card from a pulpe card.
@@ -162,5 +162,18 @@ func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.C
 
 // CardsByBoard returns Cards by board ID.
 func (s *CardService) CardsByBoard(boardID pulpe.BoardID) ([]*pulpe.Card, error) {
-	return nil, nil
+	var cards []Card
+
+	// TODO set a limit
+	err := s.session.db.C(cardCol).Find(bson.M{"boardID": string(boardID)}).All(&cards)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]*pulpe.Card, len(cards))
+	for i := range cards {
+		list[i] = FromMongoCard(&cards[i])
+	}
+
+	return list, nil
 }
