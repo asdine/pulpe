@@ -1,0 +1,8 @@
+version: '2'
+services:
+  db:
+    container_name: pulpe-db
+    image: mongo:3.4
+    command: --storageEngine=wiredTiger
+    ports:
+      - 27017:27017

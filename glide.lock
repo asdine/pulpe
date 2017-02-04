@@ -1,5 +1,5 @@
-hash: af6c81f93a31d2fac7d0bb6d579624ae68dda4561ac5c9125a4412fac88d7e47
-updated: 2017-02-04T17:54:59.327947304+01:00
+hash: 3bcdca49d509cf7222df7e52093576c18ea133bf73b1c99e270d2f0dd8df225b
+updated: 2017-02-04T22:27:43.18883186+01:00
 imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
@@ -11,6 +11,13 @@ imports:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/ventu-io/go-shortid
   version: 6c56cef5189ca1b3d5ef01dc07f4d611dfc0bb33
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
 - name: gopkg.in/tylerb/graceful.v1
   version: 4654dfbb6ad53cb5e27f37d99b02e16c1872fbbb
 testImports:

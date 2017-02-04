@@ -10,4 +10,5 @@ type Session interface {
 	CardService() CardService
 	ListService() ListService
 	BoardService() BoardService
+	Close() error
 }

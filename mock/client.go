@@ -56,3 +56,8 @@ func (s *Session) ListService() pulpe.ListService {
 func (s *Session) BoardService() pulpe.BoardService {
 	return s.boardService
 }
+
+// Close session.
+func (s *Session) Close() error {
+	return nil
+}

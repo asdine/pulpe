@@ -5,6 +5,9 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/ventu-io/go-shortid
   version: ~1.0.0
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
 - package: gopkg.in/tylerb/graceful.v1
   version: ~1.2.15
 testImport:
