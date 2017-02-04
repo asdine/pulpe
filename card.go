@@ -22,7 +22,7 @@ type Card struct {
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 	ListID      ListID     `json:"listID"`
 	BoardID     BoardID    `json:"boardID"`
-	Title       string     `json:"title"`
+	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Position    float64    `json:"position"`
 }
@@ -31,14 +31,14 @@ type Card struct {
 type CardCreate struct {
 	ListID      ListID  `json:"listID"`
 	BoardID     BoardID `json:"boardID"`
-	Title       string  `json:"title"`
+	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Position    float64 `json:"position"`
 }
 
 // CardUpdate is used to update a Card.
 type CardUpdate struct {
-	Title       *string  `json:"title"`
+	Name        *string  `json:"name"`
 	Description *string  `json:"description"`
 	Position    *float64 `json:"position"`
 }

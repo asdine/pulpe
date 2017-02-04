@@ -31,7 +31,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 		require.Equal(t, &pulpe.CardCreate{
 			ListID:      "456",
 			BoardID:     "789",
-			Title:       "title",
+			Name:        "name",
 			Description: "description",
 			Position:    1,
 		}, c)
@@ -41,7 +41,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 			CreatedAt:   mock.Now,
 			ListID:      c.ListID,
 			BoardID:     c.BoardID,
-			Title:       c.Title,
+			Name:        c.Name,
 			Description: c.Description,
 			Position:    c.Position,
 		}, nil
@@ -53,7 +53,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/v1/cards", bytes.NewReader([]byte(`{
     "listID": "456",
     "boardID": "789",
-    "title": "title",
+    "name": "name",
     "description": "description",
 		"position": 1
   }`)))
@@ -65,7 +65,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 		"id": "123",
     "listID": "456",
     "boardID": "789",
-    "title": "title",
+    "name": "name",
     "description": "description",
 		"position": 1,
 		"createdAt": `+string(date)+`
@@ -113,7 +113,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 	// Mock service.
 	c.CardService.CardFn = func(id pulpe.CardID) (*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
-		return &pulpe.Card{ID: id, Title: "title", Description: "description", Position: 2 << 3, ListID: "YYY", BoardID: "ZZZ", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
+		return &pulpe.Card{ID: id, Name: "name", Description: "description", Position: 2 << 3, ListID: "YYY", BoardID: "ZZZ", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
 	}
 
 	// Retrieve Card.
@@ -126,7 +126,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 		"id": "XXX",
 		"listID": "YYY",
 		"boardID": "ZZZ",
-    "title": "title",
+    "name": "name",
     "description": "description",
 		"position": 16,
     "createdAt": `+string(date)+`,
@@ -237,15 +237,15 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 	// Mock service.
 	c.CardService.UpdateCardFn = func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
-		require.NotNil(t, u.Title)
-		require.Equal(t, "new title", *u.Title)
+		require.NotNil(t, u.Name)
+		require.Equal(t, "new name", *u.Name)
 		require.NotNil(t, u.Description)
 		require.Zero(t, *u.Description)
 		require.NotNil(t, u.Position)
 		require.Zero(t, *u.Position)
 		return &pulpe.Card{
 			ID:          "XXX",
-			Title:       *u.Title,
+			Name:        *u.Name,
 			Description: *u.Description,
 			Position:    *u.Position,
 			CreatedAt:   mock.Now,
@@ -255,7 +255,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
-    "title": "new title",
+    "name": "new name",
     "description": "",
     "position": 0
   }`)))
@@ -264,7 +264,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
-    "title": "new title",
+    "name": "new name",
 		"description": "",
 		"position": 0,
     "listID": "",
@@ -296,7 +296,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
-    "title": "new title",
+    "name": "new name",
     "description": ""
   }`)))
 	h.ServeHTTP(w, r)
@@ -314,7 +314,7 @@ func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
-    "title": "new title",
+    "name": "new name",
     "description": ""
   }`)))
 	h.ServeHTTP(w, r)

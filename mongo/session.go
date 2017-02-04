@@ -18,6 +18,9 @@ func newSession(session *mgo.Session) *Session {
 	}
 
 	s.boardService.session = &s
+	s.listService.session = &s
+	s.cardService.session = &s
+
 	return &s
 }
 

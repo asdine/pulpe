@@ -10,9 +10,7 @@ import (
 	"github.com/blankrobot/pulpe"
 )
 
-const (
-	boardCol = "boards"
-)
+const boardCol = "boards"
 
 // Ensure BoardService implements pulpe.BoardService.
 var _ pulpe.BoardService = new(BoardService)

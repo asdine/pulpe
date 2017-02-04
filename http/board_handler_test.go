@@ -254,9 +254,9 @@ func testBoardHandler_Board_OK(t *testing.T) {
       {"id": "789", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "name": "Name"}
     ],
     "cards": [
-      {"id": "ABC", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "123", "title": "", "description": "", "position": 0},
-      {"id": "DEF", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "456", "title": "", "description": "", "position": 0},
-      {"id": "GHI", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "789", "title": "", "description": "", "position": 0}
+      {"id": "ABC", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "123", "name": "", "description": "", "position": 0},
+      {"id": "DEF", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "456", "name": "", "description": "", "position": 0},
+      {"id": "GHI", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "789", "name": "", "description": "", "position": 0}
     ],
     "settings": {}
 	}`, w.Body.String())
