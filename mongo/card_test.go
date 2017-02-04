@@ -81,3 +81,35 @@ func TestCardService_Card(t *testing.T) {
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
+
+func TestCardService_DeleteCard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.CardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		c := pulpe.CardCreate{
+			ListID:  "ListX",
+			BoardID: "BoardX",
+		}
+
+		// Create new card.
+		card, err := s.CreateCard(&c)
+		require.NoError(t, err)
+
+		// Delete card.
+		err = s.DeleteCard(card.ID)
+		require.NoError(t, err)
+
+		// Try to delete the same card.
+		err = s.DeleteCard(card.ID)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to delete a card that doesn't exist.
+		err := s.DeleteCard("QQQ")
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+	})
+}

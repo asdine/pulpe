@@ -114,7 +114,12 @@ func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
 
 // DeleteCard deletes a Card by ID.
 func (s *CardService) DeleteCard(id pulpe.CardID) error {
-	return nil
+	err := s.session.db.C(cardCol).Remove(bson.M{"publicID": string(id)})
+	if err == mgo.ErrNotFound {
+		return pulpe.ErrCardNotFound
+	}
+
+	return err
 }
 
 // UpdateCard updates a Card by ID.
