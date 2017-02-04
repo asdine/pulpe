@@ -1,8 +1,11 @@
 language: go
 
-services: mongodb
+services:
+  - docker
 
 before_install:
+  - docker pull mongo:3.4
+  - docker run -d -p 127.0.0.1:27017:27017 mongo:3.4 --storageEngine=wiredTiger
   - wget "https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz"
   - mkdir -p $HOME/bin
   - tar -vxz -C $HOME/bin --strip=1 -f glide-v0.12.3-linux-amd64.tar.gz
