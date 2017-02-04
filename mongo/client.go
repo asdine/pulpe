@@ -36,11 +36,6 @@ func (c *Client) Open() error {
 		return err
 	}
 
-	c.Session.SetSafe(&mgo.Safe{
-		WMode: "majority",
-		J:     true,
-	})
-
 	return nil
 }
 
