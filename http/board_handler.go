@@ -41,7 +41,10 @@ type BoardHandler struct {
 
 // handlePostBoard handles requests to create a new board.
 func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	boards, err := h.Client.Connect().BoardService().Boards()
+	session := h.Client.Connect()
+	defer session.Close()
+
+	boards, err := session.BoardService().Boards()
 	switch err {
 	case nil:
 		encodeJSON(w, boards, h.Logger)
@@ -64,7 +67,10 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 		req.Settings = &defaultSettings
 	}
 
-	board, err := h.Client.Connect().BoardService().CreateBoard(&req)
+	session := h.Client.Connect()
+	defer session.Close()
+
+	board, err := session.BoardService().CreateBoard(&req)
 	switch err {
 	case nil:
 		w.WriteHeader(http.StatusCreated)
@@ -79,6 +85,7 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	id := ps.ByName("id")
 
 	session := h.Client.Connect()
+	defer session.Close()
 
 	// Get the board
 	board, err := session.BoardService().Board(pulpe.BoardID(id))
@@ -117,7 +124,10 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	err := h.Client.Connect().BoardService().DeleteBoard(pulpe.BoardID(id))
+	session := h.Client.Connect()
+	defer session.Close()
+
+	err := session.BoardService().DeleteBoard(pulpe.BoardID(id))
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			NotFound(w)
@@ -142,7 +152,10 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	board, err := h.Client.Connect().BoardService().UpdateBoard(pulpe.BoardID(id), &req)
+	session := h.Client.Connect()
+	defer session.Close()
+
+	board, err := session.BoardService().UpdateBoard(pulpe.BoardID(id), &req)
 	switch err {
 	case nil:
 		encodeJSON(w, board, h.Logger)

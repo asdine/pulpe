@@ -43,7 +43,10 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	list, err := h.Client.Connect().ListService().CreateList(&req)
+	session := h.Client.Connect()
+	defer session.Close()
+
+	list, err := session.ListService().CreateList(&req)
 	switch err {
 	case nil:
 		w.WriteHeader(http.StatusCreated)
@@ -61,8 +64,10 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	// Delete list by ID.
-	err := h.Client.Connect().ListService().DeleteList(pulpe.ListID(id))
+	session := h.Client.Connect()
+	defer session.Close()
+
+	err := session.ListService().DeleteList(pulpe.ListID(id))
 	if err != nil {
 		if err == pulpe.ErrListNotFound {
 			NotFound(w)
@@ -87,7 +92,10 @@ func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	card, err := h.Client.Connect().ListService().UpdateList(pulpe.ListID(id), &req)
+	session := h.Client.Connect()
+	defer session.Close()
+
+	card, err := session.ListService().UpdateList(pulpe.ListID(id), &req)
 	switch err {
 	case nil:
 		encodeJSON(w, card, h.Logger)
