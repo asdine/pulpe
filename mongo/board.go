@@ -110,7 +110,19 @@ func (s *BoardService) Board(id pulpe.BoardID) (*pulpe.Board, error) {
 
 // Boards returns all the boards.
 func (s *BoardService) Boards() ([]*pulpe.Board, error) {
-	return nil, nil
+	var bs []Board
+
+	err := s.session.db.C(boardCol).Find(nil).All(&bs)
+	if err != nil {
+		return nil, err
+	}
+
+	boards := make([]*pulpe.Board, len(bs))
+	for i := range bs {
+		boards[i] = FromMongoBoard(&bs[i])
+	}
+
+	return boards, nil
 }
 
 // DeleteBoard deletes a Board by ID, and all of its lists and cards .
