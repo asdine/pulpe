@@ -124,7 +124,40 @@ func (s *CardService) DeleteCard(id pulpe.CardID) error {
 
 // UpdateCard updates a Card by ID.
 func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
-	return nil, nil
+	col := s.session.db.C(cardCol)
+
+	patch := make(bson.M)
+	if u.Name != nil {
+		patch["name"] = *u.Name
+	}
+
+	if u.Description != nil {
+		patch["description"] = *u.Description
+	}
+
+	if u.Position != nil {
+		patch["position"] = *u.Position
+	}
+
+	if len(patch) == 0 {
+		return s.Card(id)
+	}
+
+	err := col.Update(
+		bson.M{"publicID": string(id)},
+		bson.M{
+			"$set":         patch,
+			"$currentDate": bson.M{"updatedAt": true},
+		})
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrCardNotFound
+		}
+
+		return nil, err
+	}
+
+	return s.Card(id)
 }
 
 // CardsByBoard returns Cards by board ID.

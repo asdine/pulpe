@@ -113,3 +113,92 @@ func TestCardService_DeleteCard(t *testing.T) {
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
+
+func TestCardService_UpdateCard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.CardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		c := pulpe.CardCreate{
+			ListID:      "ListX",
+			BoardID:     "BoardX",
+			Name:        "name",
+			Description: "description",
+			Position:    1,
+		}
+
+		// Create new card.
+		card, err := s.CreateCard(&c)
+		require.NoError(t, err)
+
+		// Update a single field.
+		newName := "new name"
+		updatedCard, err := s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			Name: &newName,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedCard)
+
+		// Retrieve card and check.
+		other, err := s.Card(card.ID)
+		require.NoError(t, err)
+		require.Equal(t, newName, other.Name)
+		require.NotNil(t, other.UpdatedAt)
+		require.Equal(t, updatedCard, other)
+
+		// Update multiple fields.
+		newName = "new name2"
+		newDesc := "new description"
+		newPosition := float64(2)
+		updatedCard, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			Name:        &newName,
+			Description: &newDesc,
+			Position:    &newPosition,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedCard)
+
+		// Retrieve card and check.
+		other, err = s.Card(card.ID)
+		require.NoError(t, err)
+		require.Equal(t, newName, other.Name)
+		require.Equal(t, newDesc, other.Description)
+		require.Equal(t, newPosition, other.Position)
+		require.Equal(t, updatedCard, other)
+
+		// Set zero values.
+		newName = ""
+		newDesc = ""
+		newPosition = 0
+		updatedCard, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			Name:        &newName,
+			Description: &newDesc,
+			Position:    &newPosition,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedCard)
+
+		// Retrieve card and check.
+		other, err = s.Card(card.ID)
+		require.NoError(t, err)
+		require.Zero(t, other.Name)
+		require.Zero(t, other.Description)
+		require.Zero(t, other.Position)
+		require.Equal(t, updatedCard, other)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to update a card that doesn't exist with no patch
+		updatedCard, err := s.UpdateCard("QQQ", &pulpe.CardUpdate{})
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+		require.Nil(t, updatedCard)
+
+		// Trying to update a card that doesn't exist with a patch
+		newName := "new name"
+		updatedCard, err = s.UpdateCard("QQQ", &pulpe.CardUpdate{Name: &newName})
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+		require.Nil(t, updatedCard)
+	})
+}
