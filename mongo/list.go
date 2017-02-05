@@ -108,7 +108,32 @@ func (s *ListService) DeleteList(id pulpe.ListID) error {
 
 // UpdateList updates a List by ID.
 func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
-	return nil, nil
+	col := s.session.db.C(listCol)
+
+	patch := make(bson.M)
+	if u.Name != nil {
+		patch["name"] = *u.Name
+	}
+
+	if len(patch) == 0 {
+		return s.List(id)
+	}
+
+	err := col.Update(
+		bson.M{"publicID": string(id)},
+		bson.M{
+			"$set":         patch,
+			"$currentDate": bson.M{"updatedAt": true},
+		})
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrListNotFound
+		}
+
+		return nil, err
+	}
+
+	return s.List(id)
 }
 
 // ListsByBoard returns all the lists of a given board.

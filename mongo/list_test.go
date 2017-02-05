@@ -105,3 +105,63 @@ func TestListService_DeleteList(t *testing.T) {
 		require.Equal(t, pulpe.ErrListNotFound, err)
 	})
 }
+
+func TestListService_UpdateList(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.ListService()
+
+	t.Run("Exists", func(t *testing.T) {
+		c := pulpe.ListCreate{
+			BoardID: "BoardX",
+			Name:    "name",
+		}
+
+		// Create new list.
+		list, err := s.CreateList(&c)
+		require.NoError(t, err)
+
+		// Update a single field.
+		newName := "new name"
+		updatedList, err := s.UpdateList(list.ID, &pulpe.ListUpdate{
+			Name: &newName,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedList)
+
+		// Retrieve list and check.
+		other, err := s.List(list.ID)
+		require.NoError(t, err)
+		require.Equal(t, newName, other.Name)
+		require.NotNil(t, other.UpdatedAt)
+		require.Equal(t, updatedList, other)
+
+		// Set zero values.
+		newName = ""
+		updatedList, err = s.UpdateList(list.ID, &pulpe.ListUpdate{
+			Name: &newName,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedList)
+
+		// Retrieve list and check.
+		other, err = s.List(list.ID)
+		require.NoError(t, err)
+		require.Zero(t, other.Name)
+		require.Equal(t, updatedList, other)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to update a list that doesn't exist with no patch.
+		updatedList, err := s.UpdateList("QQQ", &pulpe.ListUpdate{})
+		require.Equal(t, pulpe.ErrListNotFound, err)
+		require.Nil(t, updatedList)
+
+		// Trying to update a list that doesn't exist with a patch.
+		newName := "new name"
+		updatedList, err = s.UpdateList("QQQ", &pulpe.ListUpdate{Name: &newName})
+		require.Equal(t, pulpe.ErrListNotFound, err)
+		require.Nil(t, updatedList)
+	})
+}
