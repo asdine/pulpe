@@ -9,7 +9,7 @@ import (
 
 	"github.com/blankrobot/pulpe"
 	"github.com/blankrobot/pulpe/http"
-	"github.com/blankrobot/pulpe/mock"
+	"github.com/blankrobot/pulpe/mongo"
 	"github.com/spf13/cobra"
 )
 
@@ -55,21 +55,28 @@ func NewServerCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&s.addr, "http", ":4000", "HTTP address")
+	cmd.Flags().StringVar(&s.mongoURI, "mongo", "mongodb://localhost:27017/pulpe", "MongoDB uri")
 
 	return &cmd
 }
 
 // ServerCmd is a command the runs the pulpe server.
 type ServerCmd struct {
-	addr string
+	addr     string
+	mongoURI string
 }
 
 // Run creates a bolt client and runs the HTTP server.
 func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
-	client := mock.NewClient()
-	srv := http.NewServer(c.addr, http.NewHandler(client))
+	client := mongo.NewClient(c.mongoURI)
+	err := client.Open()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
 
-	err := srv.Open()
+	srv := http.NewServer(c.addr, http.NewHandler(client))
+	err = srv.Open()
 	if err != nil {
 		return err
 	}
