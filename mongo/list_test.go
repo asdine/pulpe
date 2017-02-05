@@ -1,6 +1,7 @@
 package mongo_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/blankrobot/pulpe"
@@ -163,5 +164,35 @@ func TestListService_UpdateList(t *testing.T) {
 		updatedList, err = s.UpdateList("QQQ", &pulpe.ListUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrListNotFound, err)
 		require.Nil(t, updatedList)
+	})
+}
+
+func TestListService_ListsByBoard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.ListService()
+
+	t.Run("Exists", func(t *testing.T) {
+		for i := 0; i < 6; i++ {
+			l := pulpe.ListCreate{
+				BoardID: pulpe.BoardID(fmt.Sprintf("Board%d", i%2)),
+			}
+
+			// Create new list.
+			_, err := s.CreateList(&l)
+			require.NoError(t, err)
+		}
+
+		lists, err := s.ListsByBoard("Board0")
+		require.NoError(t, err)
+		require.Len(t, lists, 3)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to find lists of a board that doesn't exist.
+		lists, err := s.ListsByBoard("QQQ")
+		require.NoError(t, err)
+		require.Len(t, lists, 0)
 	})
 }

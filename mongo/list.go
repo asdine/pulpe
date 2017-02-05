@@ -138,5 +138,18 @@ func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.L
 
 // ListsByBoard returns all the lists of a given board.
 func (s *ListService) ListsByBoard(boardID pulpe.BoardID) ([]*pulpe.List, error) {
-	return nil, nil
+	var lists []List
+
+	// TODO set a limit
+	err := s.session.db.C(listCol).Find(bson.M{"boardID": string(boardID)}).All(&lists)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]*pulpe.List, len(lists))
+	for i := range lists {
+		list[i] = FromMongoList(&lists[i])
+	}
+
+	return list, nil
 }
