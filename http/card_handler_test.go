@@ -59,7 +59,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "123",
@@ -121,6 +121,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
@@ -148,6 +149,7 @@ func testCardHandler_Card_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 
@@ -204,6 +206,7 @@ func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/v1/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 
@@ -261,6 +264,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
@@ -301,6 +305,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 

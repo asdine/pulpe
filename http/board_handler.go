@@ -47,7 +47,7 @@ func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 	boards, err := session.BoardService().Boards()
 	switch err {
 	case nil:
-		encodeJSON(w, boards, h.Logger)
+		encodeJSON(w, boards, http.StatusOK, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
@@ -73,8 +73,7 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	board, err := session.BoardService().CreateBoard(&req)
 	switch err {
 	case nil:
-		w.WriteHeader(http.StatusCreated)
-		encodeJSON(w, board, h.Logger)
+		encodeJSON(w, board, http.StatusCreated, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
@@ -117,7 +116,7 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	encodeJSON(w, board, h.Logger)
+	encodeJSON(w, board, http.StatusOK, h.Logger)
 }
 
 // handleDeleteBoard handles requests to delete a single board and all of its content.
@@ -170,7 +169,7 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 	board, err := session.BoardService().UpdateBoard(pulpe.BoardID(id), &req)
 	switch err {
 	case nil:
-		encodeJSON(w, board, h.Logger)
+		encodeJSON(w, board, http.StatusOK, h.Logger)
 	case pulpe.ErrBoardNotFound:
 		NotFound(w)
 	default:

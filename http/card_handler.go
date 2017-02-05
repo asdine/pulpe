@@ -50,7 +50,7 @@ func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, _ h
 	switch err {
 	case nil:
 		w.WriteHeader(http.StatusCreated)
-		encodeJSON(w, card, h.Logger)
+		encodeJSON(w, card, http.StatusCreated, h.Logger)
 	case pulpe.ErrCardIDRequired, pulpe.ErrCardListIDRequired, pulpe.ErrCardBoardIDRequired:
 		Error(w, err, http.StatusBadRequest, h.Logger)
 	case pulpe.ErrCardExists:
@@ -78,7 +78,7 @@ func (h *CardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 
-	encodeJSON(w, card, h.Logger)
+	encodeJSON(w, card, http.StatusOK, h.Logger)
 }
 
 // handleDeleteCard handles requests to delete a single card.
@@ -119,7 +119,7 @@ func (h *CardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 	card, err := session.CardService().UpdateCard(pulpe.CardID(id), &req)
 	switch err {
 	case nil:
-		encodeJSON(w, card, h.Logger)
+		encodeJSON(w, card, http.StatusOK, h.Logger)
 	case pulpe.ErrCardNotFound:
 		NotFound(w)
 	default:

@@ -49,8 +49,7 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 	list, err := session.ListService().CreateList(&req)
 	switch err {
 	case nil:
-		w.WriteHeader(http.StatusCreated)
-		encodeJSON(w, list, h.Logger)
+		encodeJSON(w, list, http.StatusCreated, h.Logger)
 	case pulpe.ErrListIDRequired, pulpe.ErrListBoardIDRequired:
 		Error(w, err, http.StatusBadRequest, h.Logger)
 	case pulpe.ErrListExists:
@@ -104,7 +103,7 @@ func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 	card, err := session.ListService().UpdateList(pulpe.ListID(id), &req)
 	switch err {
 	case nil:
-		encodeJSON(w, card, h.Logger)
+		encodeJSON(w, card, http.StatusOK, h.Logger)
 	case pulpe.ErrListNotFound:
 		NotFound(w)
 	default:

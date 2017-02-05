@@ -38,6 +38,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `[
     {
@@ -121,7 +122,7 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "123",
@@ -160,7 +161,7 @@ func testBoardHandler_CreateBoard_OK_NoSettings(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "123",
@@ -242,6 +243,7 @@ func testBoardHandler_Board_OK(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
@@ -276,6 +278,7 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 
@@ -399,6 +402,7 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 	require.True(t, c.BoardService.DeleteBoardInvoked)
 	require.False(t, c.ListService.DeleteListsByBoardIDInvoked)
@@ -521,6 +525,7 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
@@ -561,6 +566,7 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 

@@ -48,7 +48,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "123",
@@ -133,6 +133,7 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.JSONEq(t, `{}`, w.Body.String())
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.True(t, c.ListService.DeleteListInvoked)
 	require.False(t, c.CardService.DeleteCardsByListIDInvoked)
 }
@@ -207,6 +208,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
 		"id": "XXX",
@@ -243,6 +245,7 @@ func testListHandler_UpdateList_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 }
 
