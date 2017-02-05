@@ -106,6 +106,12 @@ func (s *ListService) DeleteList(id pulpe.ListID) error {
 	return err
 }
 
+// DeleteListsByBoardID deletes all the lists of a board.
+func (s *ListService) DeleteListsByBoardID(boardID pulpe.BoardID) error {
+	_, err := s.session.db.C(listCol).RemoveAll(bson.M{"boardID": string(boardID)})
+	return err
+}
+
 // UpdateList updates a List by ID.
 func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
 	col := s.session.db.C(listCol)

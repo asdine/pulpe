@@ -49,6 +49,7 @@ type CardService interface {
 	Card(id CardID) (*Card, error)
 	DeleteCard(id CardID) error
 	DeleteCardsByListID(listID ListID) error
+	DeleteCardsByBoardID(boardID BoardID) error
 	UpdateCard(id CardID, u *CardUpdate) (*Card, error)
 	CardsByBoard(boardID BoardID) ([]*Card, error)
 }

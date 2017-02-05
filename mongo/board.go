@@ -125,7 +125,12 @@ func (s *BoardService) Boards() ([]*pulpe.Board, error) {
 
 // DeleteBoard deletes a Board by ID, and all of its lists and cards .
 func (s *BoardService) DeleteBoard(id pulpe.BoardID) error {
-	return nil
+	err := s.session.db.C(boardCol).Remove(bson.M{"publicID": string(id)})
+	if err == mgo.ErrNotFound {
+		return pulpe.ErrBoardNotFound
+	}
+
+	return err
 }
 
 // UpdateBoard updates a Board by ID.

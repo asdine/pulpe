@@ -19,6 +19,9 @@ type CardService struct {
 	DeleteCardsByListIDFn      func(listID pulpe.ListID) error
 	DeleteCardsByListIDInvoked bool
 
+	DeleteCardsByBoardIDFn      func(boardID pulpe.BoardID) error
+	DeleteCardsByBoardIDInvoked bool
+
 	UpdateCardFn      func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error)
 	UpdateCardInvoked bool
 
@@ -48,6 +51,12 @@ func (s *CardService) DeleteCard(id pulpe.CardID) error {
 func (s *CardService) DeleteCardsByListID(listID pulpe.ListID) error {
 	s.DeleteCardsByListIDInvoked = true
 	return s.DeleteCardsByListIDFn(listID)
+}
+
+// DeleteCardsByBoardID runs DeleteCardsByBoardIDFn and sets DeleteCardsByBoardIDInvoked to true when invoked.
+func (s *CardService) DeleteCardsByBoardID(boardID pulpe.BoardID) error {
+	s.DeleteCardsByBoardIDInvoked = true
+	return s.DeleteCardsByBoardIDFn(boardID)
 }
 
 // UpdateCard runs UpdateCardFn and sets UpdateCardInvoked to true when invoked.

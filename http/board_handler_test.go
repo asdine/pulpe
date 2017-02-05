@@ -349,7 +349,9 @@ func testBoardHandler_Board_CardInternalError(t *testing.T) {
 func TestBoardHandler_DeleteBoard(t *testing.T) {
 	t.Run("OK", testBoardHandler_DeleteBoard_OK)
 	t.Run("Not found", testBoardHandler_DeleteBoard_NotFound)
-	t.Run("Internal error", testBoardHandler_DeleteBoard_InternalError)
+	t.Run("Internal error on delete board", testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard)
+	t.Run("Internal error on delete lists by board id", testBoardHandler_DeleteBoard_InternalErrorOnDeleteListsByBoardID)
+	t.Run("Internal error on delete cards by board id", testBoardHandler_DeleteBoard_InternalErrorOnDeleteCardsByBoardID)
 }
 
 func testBoardHandler_DeleteBoard_OK(t *testing.T) {
@@ -357,16 +359,23 @@ func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.DeleteBoardFn = func(id pulpe.BoardID) error {
+	byBoardID := func(id pulpe.BoardID) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
+
+	c.BoardService.DeleteBoardFn = byBoardID
+	c.ListService.DeleteListsByBoardIDFn = byBoardID
+	c.CardService.DeleteCardsByBoardIDFn = byBoardID
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
+	require.True(t, c.BoardService.DeleteBoardInvoked)
+	require.True(t, c.ListService.DeleteListsByBoardIDInvoked)
+	require.True(t, c.CardService.DeleteCardsByBoardIDInvoked)
 }
 
 func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
@@ -378,15 +387,25 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 		return pulpe.ErrBoardNotFound
 	}
 
+	byBoardID := func(id pulpe.BoardID) error {
+		require.Equal(t, "XXX", string(id))
+		return nil
+	}
+	c.ListService.DeleteListsByBoardIDFn = byBoardID
+	c.CardService.DeleteCardsByBoardIDFn = byBoardID
+
 	// Retrieve Board.
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.JSONEq(t, `{}`, w.Body.String())
+	require.True(t, c.BoardService.DeleteBoardInvoked)
+	require.False(t, c.ListService.DeleteListsByBoardIDInvoked)
+	require.False(t, c.CardService.DeleteCardsByBoardIDInvoked)
 }
 
-func testBoardHandler_DeleteBoard_InternalError(t *testing.T) {
+func testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
@@ -395,11 +414,73 @@ func testBoardHandler_DeleteBoard_InternalError(t *testing.T) {
 		return errors.New("unexpected error")
 	}
 
+	byBoardID := func(id pulpe.BoardID) error {
+		require.Equal(t, "XXX", string(id))
+		return nil
+	}
+	c.ListService.DeleteListsByBoardIDFn = byBoardID
+	c.CardService.DeleteCardsByBoardIDFn = byBoardID
+
 	// Retrieve Board.
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.DeleteBoardInvoked)
+	require.False(t, c.ListService.DeleteListsByBoardIDInvoked)
+	require.False(t, c.CardService.DeleteCardsByBoardIDInvoked)
+}
+
+func testBoardHandler_DeleteBoard_InternalErrorOnDeleteListsByBoardID(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	byBoardID := func(id pulpe.BoardID) error {
+		require.Equal(t, "XXX", string(id))
+		return nil
+	}
+
+	c.BoardService.DeleteBoardFn = byBoardID
+	c.ListService.DeleteListsByBoardIDFn = func(id pulpe.BoardID) error {
+		return errors.New("unexpected error")
+	}
+	c.CardService.DeleteCardsByBoardIDFn = byBoardID
+
+	// Retrieve Board.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.DeleteBoardInvoked)
+	require.True(t, c.ListService.DeleteListsByBoardIDInvoked)
+	require.False(t, c.CardService.DeleteCardsByBoardIDInvoked)
+}
+
+func testBoardHandler_DeleteBoard_InternalErrorOnDeleteCardsByBoardID(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	byBoardID := func(id pulpe.BoardID) error {
+		require.Equal(t, "XXX", string(id))
+		return nil
+	}
+
+	c.BoardService.DeleteBoardFn = byBoardID
+	c.ListService.DeleteListsByBoardIDFn = byBoardID
+	c.CardService.DeleteCardsByBoardIDFn = func(id pulpe.BoardID) error {
+		return errors.New("unexpected error")
+	}
+
+	// Retrieve Board.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.DeleteBoardInvoked)
+	require.True(t, c.ListService.DeleteListsByBoardIDInvoked)
+	require.True(t, c.CardService.DeleteCardsByBoardIDInvoked)
 }
 
 func TestBoardHandler_UpdateBoard(t *testing.T) {

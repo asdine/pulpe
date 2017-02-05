@@ -40,6 +40,7 @@ type ListService interface {
 	CreateList(list *ListCreate) (*List, error)
 	List(id ListID) (*List, error)
 	DeleteList(id ListID) error
+	DeleteListsByBoardID(boardID BoardID) error
 	UpdateList(id ListID, u *ListUpdate) (*List, error)
 	ListsByBoard(boardID BoardID) ([]*List, error)
 }

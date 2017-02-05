@@ -16,6 +16,9 @@ type ListService struct {
 	DeleteListFn      func(id pulpe.ListID) error
 	DeleteListInvoked bool
 
+	DeleteListsByBoardIDFn      func(boardID pulpe.BoardID) error
+	DeleteListsByBoardIDInvoked bool
+
 	UpdateListFn      func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error)
 	UpdateListInvoked bool
 
@@ -39,6 +42,12 @@ func (s *ListService) List(id pulpe.ListID) (*pulpe.List, error) {
 func (s *ListService) DeleteList(id pulpe.ListID) error {
 	s.DeleteListInvoked = true
 	return s.DeleteListFn(id)
+}
+
+// DeleteListsByBoardID runs DeleteListsByBoardIDFn and sets DeleteListsByBoardIDInvoked to true when invoked.
+func (s *ListService) DeleteListsByBoardID(boardID pulpe.BoardID) error {
+	s.DeleteListsByBoardIDInvoked = true
+	return s.DeleteListsByBoardIDFn(boardID)
 }
 
 // UpdateList runs UpdateListFn and sets UpdateListInvoked to true when invoked.

@@ -99,3 +99,33 @@ func TestBoardService_Boards(t *testing.T) {
 		require.Len(t, boards, 0)
 	})
 }
+
+func TestBoardService_DeleteBoard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.BoardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		b := pulpe.BoardCreate{
+			Name: "Board1",
+		}
+
+		// Create new board.
+		board, err := s.CreateBoard(&b)
+		require.NoError(t, err)
+
+		// Delete board.
+		err = s.DeleteBoard(board.ID)
+		require.NoError(t, err)
+
+		_, err = s.Board(board.ID)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to delete a board that doesn't exist.
+		err := s.DeleteBoard("QQQ")
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+	})
+}

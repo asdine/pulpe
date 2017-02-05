@@ -138,6 +138,18 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	err = session.ListService().DeleteListsByBoardID(pulpe.BoardID(id))
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.Logger)
+		return
+	}
+
+	err = session.CardService().DeleteCardsByBoardID(pulpe.BoardID(id))
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.Logger)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 

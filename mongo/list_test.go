@@ -107,6 +107,46 @@ func TestListService_DeleteList(t *testing.T) {
 	})
 }
 
+func TestListService_DeleteListsByBoardID(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.ListService()
+
+	t.Run("Exists", func(t *testing.T) {
+		const board1 = pulpe.BoardID("Board1")
+		const board2 = pulpe.BoardID("Board2")
+
+		for i := 0; i < 10; i++ {
+			var c pulpe.ListCreate
+
+			if i%2 != 0 {
+				c.BoardID = board1
+			} else {
+				c.BoardID = board2
+			}
+
+			// Create new list.
+			_, err := s.CreateList(&c)
+			require.NoError(t, err)
+		}
+
+		// Delete by board id.
+		err := s.DeleteListsByBoardID(board1)
+		require.NoError(t, err)
+
+		lists, err := s.ListsByBoard(board1)
+		require.NoError(t, err)
+		require.Len(t, lists, 0)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Calling with a boardID with no associated lists.
+		err := s.DeleteListsByBoardID("QQQ")
+		require.NoError(t, err)
+	})
+}
+
 func TestListService_UpdateList(t *testing.T) {
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
