@@ -78,6 +78,12 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
+	err = session.CardService().DeleteCardsByListID(pulpe.ListID(id))
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.Logger)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 

@@ -98,7 +98,12 @@ func (s *ListService) List(id pulpe.ListID) (*pulpe.List, error) {
 
 // DeleteList deletes a List by ID.
 func (s *ListService) DeleteList(id pulpe.ListID) error {
-	return nil
+	err := s.session.db.C(listCol).Remove(bson.M{"publicID": string(id)})
+	if err == mgo.ErrNotFound {
+		return pulpe.ErrListNotFound
+	}
+
+	return err
 }
 
 // UpdateList updates a List by ID.

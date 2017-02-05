@@ -122,6 +122,12 @@ func (s *CardService) DeleteCard(id pulpe.CardID) error {
 	return err
 }
 
+// DeleteCardsByListID deletes all the cards of a list.
+func (s *CardService) DeleteCardsByListID(listID pulpe.ListID) error {
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": string(listID)})
+	return err
+}
+
 // UpdateCard updates a Card by ID.
 func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 	col := s.session.db.C(cardCol)

@@ -90,7 +90,8 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 func TestListHandler_DeleteList(t *testing.T) {
 	t.Run("OK", testListHandler_DeleteList_OK)
 	t.Run("Not found", testListHandler_DeleteList_NotFound)
-	t.Run("Internal error", testListHandler_DeleteList_InternalError)
+	t.Run("Internal error on delete list", testListHandler_DeleteList_InternalErrorOnDeleteList)
+	t.Run("Internal error on delete cards by list id", testListHandler_DeleteList_InternalErrorOnDeleteCardsByListID)
 }
 
 func testListHandler_DeleteList_OK(t *testing.T) {
@@ -103,11 +104,18 @@ func testListHandler_DeleteList_OK(t *testing.T) {
 		return nil
 	}
 
+	c.CardService.DeleteCardsByListIDFn = func(id pulpe.ListID) error {
+		require.Equal(t, "XXX", string(id))
+		return nil
+	}
+
 	// Retrieve List.
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("DELETE", "/v1/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
+	require.True(t, c.ListService.DeleteListInvoked)
+	require.True(t, c.CardService.DeleteCardsByListIDInvoked)
 }
 
 func testListHandler_DeleteList_NotFound(t *testing.T) {
@@ -125,9 +133,11 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.JSONEq(t, `{}`, w.Body.String())
+	require.True(t, c.ListService.DeleteListInvoked)
+	require.False(t, c.CardService.DeleteCardsByListIDInvoked)
 }
 
-func testListHandler_DeleteList_InternalError(t *testing.T) {
+func testListHandler_DeleteList_InternalErrorOnDeleteList(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
@@ -141,6 +151,30 @@ func testListHandler_DeleteList_InternalError(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/v1/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.ListService.DeleteListInvoked)
+	require.False(t, c.CardService.DeleteCardsByListIDInvoked)
+}
+
+func testListHandler_DeleteList_InternalErrorOnDeleteCardsByListID(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	c.ListService.DeleteListFn = func(id pulpe.ListID) error {
+		return nil
+	}
+
+	c.CardService.DeleteCardsByListIDFn = func(id pulpe.ListID) error {
+		return errors.New("unexpected error")
+	}
+
+	// Retrieve List.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("DELETE", "/v1/lists/XXX", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.ListService.DeleteListInvoked)
+	require.True(t, c.CardService.DeleteCardsByListIDInvoked)
 }
 
 func TestListHandler_UpdateList(t *testing.T) {

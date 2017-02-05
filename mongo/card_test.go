@@ -115,6 +115,52 @@ func TestCardService_DeleteCard(t *testing.T) {
 	})
 }
 
+func TestCardService_DeleteCardsByListID(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.CardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		const list1 = pulpe.ListID("List1")
+		const list2 = pulpe.ListID("List2")
+		const boardID = pulpe.BoardID("board1")
+
+		for i := 0; i < 10; i++ {
+			c := pulpe.CardCreate{
+				BoardID: boardID,
+			}
+
+			if i%2 != 0 {
+				c.ListID = list1
+			} else {
+				c.ListID = list2
+			}
+
+			// Create new card.
+			_, err := s.CreateCard(&c)
+			require.NoError(t, err)
+		}
+
+		// Delete card.
+		err := s.DeleteCardsByListID(list1)
+		require.NoError(t, err)
+
+		cards, err := s.CardsByBoard(boardID)
+		require.NoError(t, err)
+		require.Len(t, cards, 5)
+		for _, card := range cards {
+			require.Equal(t, list2, card.ListID)
+		}
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Calling with a listID with no associated cards.
+		err := s.DeleteCardsByListID("QQQ")
+		require.NoError(t, err)
+	})
+}
+
 func TestCardService_UpdateCard(t *testing.T) {
 	session, cleanup := MustGetSession(t)
 	defer cleanup()

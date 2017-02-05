@@ -48,6 +48,7 @@ type CardService interface {
 	CreateCard(card *CardCreate) (*Card, error)
 	Card(id CardID) (*Card, error)
 	DeleteCard(id CardID) error
+	DeleteCardsByListID(listID ListID) error
 	UpdateCard(id CardID, u *CardUpdate) (*Card, error)
 	CardsByBoard(boardID BoardID) ([]*Card, error)
 }

@@ -75,3 +75,33 @@ func TestListService_List(t *testing.T) {
 		require.Equal(t, pulpe.ErrListNotFound, err)
 	})
 }
+
+func TestListService_DeleteList(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.ListService()
+
+	t.Run("Exists", func(t *testing.T) {
+		l := pulpe.ListCreate{
+			BoardID: "BoardID",
+		}
+
+		// Create new list.
+		list, err := s.CreateList(&l)
+		require.NoError(t, err)
+
+		// Delete list.
+		err = s.DeleteList(list.ID)
+		require.NoError(t, err)
+
+		_, err = s.List(list.ID)
+		require.Equal(t, pulpe.ErrListNotFound, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to delete a list that doesn't exist.
+		err := s.DeleteList("QQQ")
+		require.Equal(t, pulpe.ErrListNotFound, err)
+	})
+}
