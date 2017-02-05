@@ -129,3 +129,66 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 }
+
+func TestBoardService_UpdateBoard(t *testing.T) {
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.BoardService()
+
+	t.Run("Exists", func(t *testing.T) {
+		b := pulpe.BoardCreate{
+			Name:     "name",
+			Settings: &settings,
+		}
+
+		// Create new board.
+		board, err := s.CreateBoard(&b)
+		require.NoError(t, err)
+
+		// Update a single field.
+		newName := "new name"
+		newSettings := json.RawMessage([]byte(`{"a":"b"}`))
+		updatedBoard, err := s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
+			Name:     &newName,
+			Settings: &newSettings,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedBoard)
+
+		// Retrieve board and check.
+		other, err := s.Board(board.ID)
+		require.NoError(t, err)
+		require.Equal(t, newName, other.Name)
+		require.NotNil(t, other.UpdatedAt)
+		require.Equal(t, other, updatedBoard)
+		// Set zero values.
+		newName = ""
+		newSettings = []byte("")
+		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
+			Name:     &newName,
+			Settings: &newSettings,
+		})
+		require.NoError(t, err)
+		require.Zero(t, updatedBoard.Name)
+		require.Nil(t, updatedBoard.Settings)
+
+		// Retrieve board and check.
+		other, err = s.Board(board.ID)
+		require.NoError(t, err)
+		require.Zero(t, other.Name)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		// Trying to update a board that doesn't exist with no patch.
+		updatedBoard, err := s.UpdateBoard("QQQ", &pulpe.BoardUpdate{})
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+		require.Nil(t, updatedBoard)
+
+		// Trying to update a board that doesn't exist with a patch.
+		newName := "new name"
+		updatedBoard, err = s.UpdateBoard("QQQ", &pulpe.BoardUpdate{Name: &newName})
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+		require.Nil(t, updatedBoard)
+	})
+}

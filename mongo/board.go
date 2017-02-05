@@ -135,5 +135,34 @@ func (s *BoardService) DeleteBoard(id pulpe.BoardID) error {
 
 // UpdateBoard updates a Board by ID.
 func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
-	return nil, nil
+	col := s.session.db.C(boardCol)
+
+	patch := make(bson.M)
+	if u.Name != nil {
+		patch["name"] = *u.Name
+	}
+
+	if u.Settings != nil {
+		patch["settings"] = []byte(*u.Settings)
+	}
+
+	if len(patch) == 0 {
+		return s.Board(id)
+	}
+
+	err := col.Update(
+		bson.M{"publicID": string(id)},
+		bson.M{
+			"$set":         patch,
+			"$currentDate": bson.M{"updatedAt": true},
+		})
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrBoardNotFound
+		}
+
+		return nil, err
+	}
+
+	return s.Board(id)
 }
