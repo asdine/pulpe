@@ -1,13 +1,15 @@
 import path from 'path';
+import webpack from 'webpack';
 import validate from 'webpack-validator';
 
 const BUILD_DIR = path.resolve(__dirname, 'build');
 
 export default validate({
-  context: path.join(__dirname, 'app'),
-
   entry: [
-    './index.js',
+    'webpack/hot/only-dev-server', // "only" prevents reload on syntax errors
+    'babel-polyfill',
+    './app/index.jsx',
+    './app/index.html'
   ],
 
   module: {
@@ -16,8 +18,13 @@ export default validate({
         test: /\.jsx?$/,
         exclude: /node_modules/,
         loaders: [
+          'react-hot-loader',
           'babel-loader',
         ],
+      },
+      {
+        test: /\.html$/,
+        loader: "file-loader?name=[name].[ext]",
       },
       {
         test: /\.json$/,
@@ -28,13 +35,20 @@ export default validate({
 
   output: {
     path: BUILD_DIR,
-    filename: 'app.bundle.js',
-
-    // https://github.com/webpack/webpack/issues/1114
-    libraryTarget: 'commonjs2'
+    filename: 'app.bundle.js'
   },
 
   resolve: {
     extensions: ['.js', '.jsx', '.json']
   },
+
+  plugins: [
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NoEmitOnErrorsPlugin(),
+  ],
+
+  devServer: {
+    hot: true,
+    contentBase: './app/'
+  }
 });
