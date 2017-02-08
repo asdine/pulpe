@@ -1,5 +1,4 @@
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/dom/ajax';
 
 class Client {
   constructor(url) {

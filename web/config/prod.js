@@ -1,14 +1,16 @@
+import webpack from 'webpack';
 import merge from 'webpack-merge';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import baseConfig from './base';
+import packageConfig from '../package.json';
 
 export default merge(baseConfig, {
   devtool: 'source-map',
 
-  entry: [
-    'babel-polyfill',
-    './app/index.jsx'
-  ],
+  entry: {
+    main: ['babel-polyfill', './app/index.jsx'],
+    vendor: Object.keys(packageConfig.dependencies)
+  },
 
   module: {
     loaders: [
@@ -21,11 +23,7 @@ export default merge(baseConfig, {
         test: /\.s?css$/,
         use: ExtractTextPlugin.extract({
           fallback: 'style-loader',
-          use: [
-            { loader: 'css-loader', query: { modules: true, sourceMaps: true } },
-            { loader: 'sass-loader' },
-            { loader: 'postcss-loader' },
-          ]
+          use: 'css-loader?!postcss-loader!sass-loader'
         })
       },
       {
@@ -41,5 +39,8 @@ export default merge(baseConfig, {
 
   plugins: [
     new ExtractTextPlugin('style.css'),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: ['vendor', 'manifest']
+    }),
   ]
 });

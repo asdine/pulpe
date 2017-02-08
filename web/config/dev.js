@@ -5,6 +5,10 @@ import baseConfig from './base';
 export default merge(baseConfig, {
   devtool: 'cheap-module-source-map',
 
+  output: {
+    filename: '[name].js',
+  },
+
   entry: [
     'react-hot-loader',
     'babel-polyfill',
@@ -41,7 +45,7 @@ export default merge(baseConfig, {
 
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoEmitOnErrorsPlugin(),
+    new webpack.NoEmitOnErrorsPlugin()
   ],
 
   devServer: {
