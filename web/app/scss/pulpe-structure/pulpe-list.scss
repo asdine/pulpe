@@ -1,0 +1,121 @@
+.plp-board-content.gridBoard-horizontal {
+	.plp-cards-list-wrapper {
+		display       : inline-block;
+		vertical-align: top;
+
+		.plp-cards-list {
+			display       : inline-block;
+			vertical-align: top;
+			background    : rgba(0,0,0, .05);
+			width         : 280px;
+			margin        : 0 0.625rem 0 0;
+			padding       : 0.75rem 0.5rem;
+			box-shadow    : 1px 1px 0 0 rgba(0,0,0, .1);
+			border-radius : 4px;
+
+			.plp-card:last-of-type {
+				margin-bottom: 0.625rem;
+			}
+
+			.plp-list-top {
+				width      : calc(100% - 20px);
+				min-height : 24px;
+				margin     : 0 10px 10px;
+				font-size  : 1rem;
+				font-weight: 400;
+				white-space: normal;
+				word-wrap  : break-word;
+			}
+
+			.plp-list-top-edit {
+				width     : 100%;
+				margin    : 0 0 8px;
+				padding   : 0 0 0 10px;
+				background: none;
+				border    : 1px solid lightgrey;
+
+				&:focus {
+					outline: none;
+				}
+			}
+
+			.plp-list-bottom {
+				width  : 100%;
+				display: flex;
+
+				.btn-new-card {}
+
+				.btn-delete-list {
+					margin-left: auto;
+				}
+			}
+		}
+	}
+}
+
+.plp-board-content.gridBoard-vertical {
+	.plp-cards-list-wrapper {
+		display       : block;
+		vertical-align: top;
+
+		.plp-cards-list {
+			display       : inline-block;
+			vertical-align: top;
+			background    : rgba(0,0,0, .05);
+			width         : auto;
+			margin        : 0 1.9rem 0.625rem 0;
+			padding       : 0.75rem 0.5rem;
+			box-shadow    : 1px 1px 0 0 rgba(0,0,0, .1);
+			border-radius : 4px;
+
+			.card:last-of-type {
+				margin-bottom: 0;
+			}
+
+			.plp-list-top {
+				width      : calc(100% - 20px);
+				min-height : 24px;
+				margin     : 0 10px 10px;
+				font-size  : 1rem;
+				font-weight: 400;
+				white-space: normal;
+				word-wrap  : break-word;
+			}
+
+			.plp-list-top-edit {
+				display   : block;
+				width     : 100%;
+				margin    : 0 0 8px;
+				padding   : 0 0 0 10px;
+				background: none;
+				border    : 1px solid lightgrey;
+
+				&:focus {
+					outline: none;
+				}
+			}
+
+			.plp-list-bottom {
+				width  : auto;
+				display: inline-block;
+				margin : 5px 0 0;
+
+				.btn-new-card {}
+
+				.btn-delete-list {
+					margin-left: 5px;
+				}
+			}
+
+			.card + .plp-list-bottom {
+				margin-left: 15px;
+			}
+		}
+
+		&:last-child {
+			.plp-cards-list {
+				width: 280px;
+			}
+		}
+	}
+}

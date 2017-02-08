@@ -1,0 +1,56 @@
+.plp-board {
+	height : 100vh;
+	width  : calc(100% - 240px); // Minus Size of the left menu
+	margin : 0;
+	padding: 0;
+
+	header {
+		width        : 100%;
+		height       : 55px;
+		padding      : 15px 30px 15px 40px;
+		margin       : 0;
+		border-bottom: 1px solid #ccc;
+
+		h6 {
+			margin : 6px 0 0;
+			display: inline-block;
+			padding: 0 0 3px;
+
+			&:hover {
+				border-bottom: 1px solid lightgrey;
+				cursor       : pointer;
+			}
+		}
+
+		input.board-name {
+			display   : inline-block;
+			width     : calc(100% - 250px);
+			background: white;
+			border    : none;
+			padding   : 0 0 0 5px;
+			margin    : 3px 0 0;
+			font-style: italic;
+
+			&:focus {
+				outline: none;
+			}
+		}
+
+		.btn-group {
+			margin-left: 8px;
+		}
+
+		button {
+			margin-left: 8px;
+		}
+	}
+
+	.plp-board-content {
+		width      : 100%;
+		height     : calc(100% - 55px);
+		margin     : 0;
+		padding    : 30px 20px 30px 40px;
+		overflow-x : scroll;
+		white-space: nowrap;
+	}
+}

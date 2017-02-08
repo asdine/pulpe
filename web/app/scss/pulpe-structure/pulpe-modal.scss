@@ -1,0 +1,86 @@
+.modal {
+	.modal-title {
+		word-wrap: break-word;
+	}
+
+	button {
+		margin-left: 5px;
+	}
+
+	.close {
+		margin-left: 15px;
+	}
+
+	.modal-body {
+		.large-card-description {
+			.large-card-description__no-description {
+				font-style: italic;
+				color     : grey;
+			}
+		}
+
+		.large-card-description-edit {
+			textarea {
+				width     : 100%;
+				min-height: 150px;
+				border    : 1px solid lightgrey;
+				padding   : 5px 10px;
+
+				&:focus {
+					outline: none;
+				}
+			}
+
+			.large-card-description-edit__footer {
+				text-align: right;
+				margin-top: 10px;
+
+				.btn {
+					margin-left: 0;
+					display    : inline-block;
+				}
+
+				.save-btn {
+					margin-left: 5px;
+				}
+
+				.cancel-btn {}
+			}
+		}
+	}
+}
+
+.plp-modal-createBoard {
+	.form-group {
+		margin-bottom: 0;
+	}
+
+	.modal-footer {
+		button {
+			margin-left: 0;
+		}
+	}
+}
+
+.plp-modal-large-card {
+	.modal-header {
+		display: flex;
+
+		.modal-title {
+			width: calc(100% - 120px); // 145 + 20
+
+			h5 {
+				word-wrap: break-word;
+			}
+
+			input {
+				width: 100%;
+			}
+		}
+
+		.modal-options {
+			width      : 100px;
+			margin-left: 20px;
+		}
+	}
+}
