@@ -9,6 +9,8 @@ import (
 )
 
 func TestListService_CreateList(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -46,6 +48,8 @@ func TestListService_CreateList(t *testing.T) {
 }
 
 func TestListService_List(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -78,6 +82,8 @@ func TestListService_List(t *testing.T) {
 }
 
 func TestListService_DeleteList(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -108,6 +114,8 @@ func TestListService_DeleteList(t *testing.T) {
 }
 
 func TestListService_DeleteListsByBoardID(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -148,6 +156,8 @@ func TestListService_DeleteListsByBoardID(t *testing.T) {
 }
 
 func TestListService_UpdateList(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -208,6 +218,8 @@ func TestListService_UpdateList(t *testing.T) {
 }
 
 func TestListService_ListsByBoard(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 

@@ -1,6 +1,7 @@
 package mongo_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	defaultURI = "mongodb://localhost:27017/pulpe-tests"
+	defaultURI = "mongodb://localhost:27017"
 )
 
 // Client is a test wrapper for mongo.Client.
@@ -27,7 +28,7 @@ func NewClient() *Client {
 	}
 
 	c := &Client{
-		Client: mongo.NewClient(uri),
+		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests-%d", uri, time.Now().UnixNano())),
 	}
 	c.Now = func() time.Time { return mock.Now }
 

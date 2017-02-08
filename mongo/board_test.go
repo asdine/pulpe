@@ -13,6 +13,8 @@ var settings = json.RawMessage([]byte("{}"))
 
 // Ensure boards can be created and retrieved.
 func TestBoardService_CreateBoard(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -35,6 +37,8 @@ func TestBoardService_CreateBoard(t *testing.T) {
 }
 
 func TestBoardService_Board(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -64,6 +68,8 @@ func TestBoardService_Board(t *testing.T) {
 }
 
 func TestBoardService_Boards(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Exists", func(t *testing.T) {
 		session, cleanup := MustGetSession(t)
 		defer cleanup()
@@ -101,6 +107,8 @@ func TestBoardService_Boards(t *testing.T) {
 }
 
 func TestBoardService_DeleteBoard(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -131,6 +139,8 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 }
 
 func TestBoardService_UpdateBoard(t *testing.T) {
+	t.Parallel()
+
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
