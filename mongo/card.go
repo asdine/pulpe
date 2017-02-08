@@ -67,6 +67,41 @@ type CardService struct {
 	session *Session
 }
 
+func (s *CardService) ensureIndexes() error {
+	col := s.session.db.C(cardCol)
+
+	// Unique publicID
+	index := mgo.Index{
+		Key:    []string{"publicID"},
+		Unique: true,
+		Sparse: true,
+	}
+
+	err := col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	// listID
+	index = mgo.Index{
+		Key:    []string{"listID"},
+		Sparse: true,
+	}
+
+	err = col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	// boardID
+	index = mgo.Index{
+		Key:    []string{"boardID"},
+		Sparse: true,
+	}
+
+	return col.EnsureIndex(index)
+}
+
 // CreateCard creates a new Card.
 func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 	if c.ListID == "" {

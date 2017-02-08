@@ -49,7 +49,6 @@ func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, _ h
 	card, err := session.CardService().CreateCard(&req)
 	switch err {
 	case nil:
-		w.WriteHeader(http.StatusCreated)
 		encodeJSON(w, card, http.StatusCreated, h.Logger)
 	case pulpe.ErrCardIDRequired, pulpe.ErrCardListIDRequired, pulpe.ErrCardBoardIDRequired:
 		Error(w, err, http.StatusBadRequest, h.Logger)

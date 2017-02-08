@@ -58,6 +58,30 @@ type ListService struct {
 	session *Session
 }
 
+func (s *ListService) ensureIndexes() error {
+	col := s.session.db.C(listCol)
+
+	// Unique publicID
+	index := mgo.Index{
+		Key:    []string{"publicID"},
+		Unique: true,
+		Sparse: true,
+	}
+
+	err := col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	// boardID
+	index = mgo.Index{
+		Key:    []string{"boardID"},
+		Sparse: true,
+	}
+
+	return col.EnsureIndex(index)
+}
+
 // CreateList creates a new List
 func (s *ListService) CreateList(l *pulpe.ListCreate) (*pulpe.List, error) {
 	if l.BoardID == "" {

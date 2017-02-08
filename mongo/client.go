@@ -36,7 +36,20 @@ func (c *Client) Open() error {
 		return err
 	}
 
-	return nil
+	session := c.Connect()
+	defer session.Close()
+
+	err = session.CardService().(*CardService).ensureIndexes()
+	if err != nil {
+		return err
+	}
+
+	err = session.ListService().(*ListService).ensureIndexes()
+	if err != nil {
+		return err
+	}
+
+	return session.BoardService().(*BoardService).ensureIndexes()
 }
 
 // Close closes then underlying MongoDB database.

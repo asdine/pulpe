@@ -70,6 +70,19 @@ type BoardService struct {
 	session *Session
 }
 
+func (s *BoardService) ensureIndexes() error {
+	col := s.session.db.C(boardCol)
+
+	// Unique publicID
+	index := mgo.Index{
+		Key:    []string{"publicID"},
+		Unique: true,
+		Sparse: true,
+	}
+
+	return col.EnsureIndex(index)
+}
+
 // CreateBoard creates a new Board.
 func (s *BoardService) CreateBoard(b *pulpe.BoardCreate) (*pulpe.Board, error) {
 	var err error
