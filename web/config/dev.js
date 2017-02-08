@@ -1,9 +1,8 @@
 import webpack from 'webpack';
-import validate from 'webpack-validator';
 import merge from 'webpack-merge';
 import baseConfig from './base';
 
-export default validate(merge(baseConfig, {
+export default merge(baseConfig, {
   devtool: 'cheap-module-source-map',
 
   entry: [
@@ -21,6 +20,21 @@ export default validate(merge(baseConfig, {
           'babel-loader',
           'eslint-loader'
         ],
+      },
+      {
+        test: /\.s?css$/,
+        loaders: [
+          'style-loader',
+          'css-loader?!postcss-loader!sass-loader'
+        ]
+      },
+      {
+        test: /\.(jpg|png|gif)$/,
+        use: 'file-loader'
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|svg)$/,
+        use: 'url-loader?limit=100000'
       }
     ]
   },
@@ -34,5 +48,8 @@ export default validate(merge(baseConfig, {
     hot: true,
     contentBase: './app/',
     historyApiFallback: true,
+    proxy: {
+      '/v1': 'http://localhost:4000'
+    }
   }
-}));
+});

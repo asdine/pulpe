@@ -1,0 +1,78 @@
+import { combineEpics } from 'redux-observable';
+import client from './client';
+import * as schema from './schema';
+import * as ActionTypes from '../actions/types';
+import ajaxEpic from './ajaxEpic';
+import fixCardPositionEpic from './fixCardPosition';
+import onSuccess from './onSuccess';
+
+export default combineEpics(
+  ajaxEpic(
+    ActionTypes.FETCH_BOARDS,
+    () => client.allBoards(),
+    [schema.board]
+  ),
+  ajaxEpic(
+    ActionTypes.FETCH_BOARD,
+    action => client.getBoard(action.id),
+    schema.board
+  ),
+  ajaxEpic(
+    ActionTypes.CREATE_BOARD,
+    action => client.createBoard(action),
+    schema.board
+  ),
+  ajaxEpic(
+    ActionTypes.UPDATE_BOARD,
+    action => client.updateBoard(action),
+    schema.board
+  ),
+  ajaxEpic(
+    ActionTypes.DELETE_BOARD,
+    action => client.deleteBoard(action.id).map(() => ({
+      ...action,
+      type: ActionTypes.successType(ActionTypes.DELETE_BOARD),
+    }))
+  ),
+  ajaxEpic(
+    ActionTypes.CREATE_LIST,
+    action => client.createList(action),
+    schema.list
+  ),
+  ajaxEpic(
+    ActionTypes.UPDATE_LIST,
+    action => client.updateList(action),
+    schema.list
+  ),
+  ajaxEpic(
+    ActionTypes.DELETE_LIST,
+    action => client.deleteList(action.id).map(() => ({
+      ...action,
+      type: ActionTypes.successType(ActionTypes.DELETE_LIST),
+    }))
+  ),
+  ajaxEpic(
+    ActionTypes.FETCH_CARD,
+    action => client.getCard(action.id),
+    schema.card
+  ),
+  ajaxEpic(
+    ActionTypes.CREATE_CARD,
+    action => client.createCard(action),
+    schema.card
+  ),
+  ajaxEpic(
+    ActionTypes.UPDATE_CARD,
+    action => client.updateCard(action),
+    schema.card
+  ),
+  ajaxEpic(
+    ActionTypes.DELETE_CARD,
+    action => client.deleteCard(action.id).map(() => ({
+      ...action,
+      type: ActionTypes.successType(ActionTypes.DELETE_CARD),
+    }))
+  ),
+  fixCardPositionEpic,
+  onSuccess
+);

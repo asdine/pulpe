@@ -4,7 +4,8 @@
   "scripts": {
     "build:prod": "node -r babel-register ./node_modules/webpack/bin/webpack --env=prod --optimize-minimize --define process.env.NODE_ENV=\"'production'\" --progress --profile --colors",
     "build:dev": "node -r babel-register ./node_modules/webpack/bin/webpack --env=dev --progress --profile --colors",
-    "server": "node -r babel-register ./node_modules/webpack-dev-server/bin/webpack-dev-server --env=dev"
+    "server": "node -r babel-register ./node_modules/webpack-dev-server/bin/webpack-dev-server --env=dev --progress --profile --colors",
+    "dev": "concurrently --kill-others -r 'pulpe server' 'yarn run server'"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",
@@ -13,6 +14,9 @@
     "babel-polyfill": "^6.22.0",
     "babel-preset-latest": "^6.22.0",
     "babel-preset-react": "^6.22.0",
+    "babel-preset-stage-0": "^6.22.0",
+    "concurrently": "^3.1.0",
+    "css-loader": "^0.26.1",
     "eslint": "^3.15.0",
     "eslint-config-airbnb": "^14.1.0",
     "eslint-loader": "^1.6.1",
@@ -21,18 +25,36 @@
     "eslint-plugin-jsx-a11y": "^4.0.0",
     "eslint-plugin-promise": "^3.4.1",
     "eslint-plugin-react": "^6.9.0",
+    "extract-text-webpack-plugin": "^2.0.0-beta",
     "file-loader": "^0.10.0",
     "html-webpack-plugin": "^2.28.0",
+    "node-sass": "^4.5.0",
+    "postcss-loader": "^1.2.2",
     "react-hot-loader": "^1.3.1",
+    "redux-logger": "^2.8.1",
+    "sass-loader": "^5.0.0",
+    "style-loader": "^0.13.1",
+    "url-loader": "^0.5.7",
     "webpack": "^2.2.1",
     "webpack-dev-middleware": "^1.10.0",
     "webpack-dev-server": "^2.3.0",
     "webpack-hot-middleware": "^2.16.1",
-    "webpack-merge": "^2.6.1",
-    "webpack-validator": "^2.3.0"
+    "webpack-merge": "^2.6.1"
   },
   "dependencies": {
+    "bootstrap": "4.0.0-alpha.6",
+    "normalizr": "^3.1.0",
     "react": "^15.4.2",
-    "react-dom": "^15.4.2"
+    "react-addons-css-transition-group": "15.0.0",
+    "react-addons-transition-group": "15.0.0",
+    "react-dnd": "^2.2.3",
+    "react-dnd-html5-backend": "^2.2.3",
+    "react-dom": "^15.4.2",
+    "react-redux": "^5.0.2",
+    "react-router": "^3.0.2",
+    "reactstrap": "^4.1.1",
+    "redux": "^3.6.0",
+    "redux-observable": "^0.13.0",
+    "rxjs": "^5.1.0"
   }
 }
