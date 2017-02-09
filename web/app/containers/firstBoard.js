@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { hashHistory } from 'react-router';
+import { browserHistory } from 'react-router';
 import { getFirstBoardID } from '../reducers';
 
 const mapStateToProps = (state) => ({
@@ -11,7 +11,7 @@ class FirstBoard extends React.Component {
   componentWillReceiveProps(nextProps) {
     const { id } = nextProps;
     if (id) {
-      hashHistory.push(`/b/${id}`);
+      browserHistory.push(`/b/${id}`);
     }
   }
 

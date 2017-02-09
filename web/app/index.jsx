@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import { Router, Route, hashHistory, IndexRoute } from 'react-router';
+import { Router, Route, browserHistory, IndexRoute } from 'react-router';
 import configureStore from './configureStore';
 import FirstBoard from './containers/firstBoard';
 import BoardActivate from './containers/boardActivate';
@@ -19,7 +19,7 @@ store.dispatch(fetchBoards());
 
 render(
   <Provider store={store}>
-    <Router history={hashHistory}>
+    <Router history={browserHistory}>
       <Route path="/" component={Home}>
         <IndexRoute component={FirstBoard} />
         <Route path="/b/:id" component={BoardActivate} />

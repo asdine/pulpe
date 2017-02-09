@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from 'reactstrap';
-import { hashHistory } from 'react-router';
+import { browserHistory } from 'react-router';
 
 export class MainModal extends React.Component {
   constructor(props) {
@@ -27,8 +27,8 @@ export class MainModal extends React.Component {
     });
 
     return board ?
-      setTimeout(() => hashHistory.push(`/b/${board.id}`), 500) :
-      setTimeout(() => hashHistory.push('/'), 500);
+      setTimeout(() => browserHistory.push(`/b/${board.id}`), 500) :
+      setTimeout(() => browserHistory.push('/'), 500);
   }
 
   render() {
@@ -130,7 +130,7 @@ export const DeleteBoardModal = ({ id, isOpen, deleteBoard, hideModal }) =>
     onConfirm={() => {
       deleteBoard(id);
         // TODO change route on delete success
-      hashHistory.push('/');
+      browserHistory.push('/');
     }}
     text="Delete the board"
     toggle={hideModal}
@@ -156,7 +156,7 @@ export const DeleteCardModal = ({ card, isOpen, deleteCard, hideModal }) =>
     isOpen={isOpen}
     onConfirm={() => {
       deleteCard(card);
-      hashHistory.push(`/b/${card.boardID}`);
+      browserHistory.push(`/b/${card.boardID}`);
     }}
     text="Delete the card"
     toggle={hideModal}

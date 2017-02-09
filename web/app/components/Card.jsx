@@ -1,5 +1,5 @@
 import React from 'react';
-import { hashHistory } from 'react-router';
+import { browserHistory } from 'react-router';
 import { Button, ModalBody } from 'reactstrap';
 import * as ActionTypes from '../actions/types';
 
@@ -10,7 +10,7 @@ export const Compact = ({
     <div
       className={`card ${userIsDragging ? '' : 'card-hover'}`}
       style={{ opacity: isDragging ? 0 : 1 }}
-      onClick={() => hashHistory.push(`/c/${id}`)}
+      onClick={() => browserHistory.push(`/c/${id}`)}
     >
       <div className="card-block">
         <h3 className="card-title">{ name }</h3>
@@ -161,7 +161,7 @@ export const LargeCreate = ({ card, cards, createCard, ...rest }) => (
 
       createCard(newCard);
 
-      return hashHistory.push(`/b/${card.boardID}`);
+      return browserHistory.push(`/b/${card.boardID}`);
     }}
   />
   );
