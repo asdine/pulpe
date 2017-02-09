@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { getModalType, getModalProps, isEditing, getActiveBoard, getEditLevel } from '../reducers';
+import { getModalType, getModalProps, isEditing, getActiveBoard, getEditLevel, getBoards } from '../reducers';
 import * as actions from '../actions';
 import { MainModal as BasicModal, CreateBoardModal, DeleteBoardModal, CreateListModal, DeleteListModal, DeleteCardModal } from '../components/Modal';
 import * as ActionTypes from '../actions/types';
@@ -22,10 +22,14 @@ const CreateBoard = connect(
 )(CreateBoardModal);
 
 const DeleteBoard = connect(
-  (state) => ({
-    id: getModalProps(state).id,
-    isOpen: getModalType(state) === ActionTypes.MODAL_DELETE_BOARD
-  }),
+  (state) => {
+    const id = getModalProps(state).id;
+    return ({
+      id,
+      isOpen: getModalType(state) === ActionTypes.MODAL_DELETE_BOARD,
+      redirectTo: getBoards(state).find(b => b.id !== id)
+    });
+  },
   actions,
 )(DeleteBoardModal);
 

@@ -26,7 +26,7 @@ class BoardDetail extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { fetchBoard, id } = this.props;
-    if (id !== prevProps.id) {
+    if (id && id !== prevProps.id) {
       fetchBoard(id);
     }
   }

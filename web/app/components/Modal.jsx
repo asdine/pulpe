@@ -124,17 +124,23 @@ export const CreateBoardModal = ({ createBoard, ...rest }) =>
     {...rest}
   />;
 
-export const DeleteBoardModal = ({ id, isOpen, deleteBoard, hideModal }) =>
-  <ConfirmModal
-    isOpen={isOpen}
-    onConfirm={() => {
-      deleteBoard(id);
-        // TODO change route on delete success
-      browserHistory.push('/');
-    }}
-    text="Delete the board"
-    toggle={hideModal}
-  />;
+export const DeleteBoardModal = ({
+    id,
+    isOpen,
+    deleteBoard,
+    hideModal,
+    redirectTo }) => (
+      <ConfirmModal
+        isOpen={isOpen}
+        onConfirm={() => {
+          deleteBoard(id);
+          return redirectTo !== undefined ?
+            browserHistory.push(`/b/${redirectTo.id}`) :
+            browserHistory.push('/');
+        }}
+        text="Delete the board"
+        toggle={hideModal}
+      />);
 
 export const CreateListModal = ({ createList, board, ...rest }) =>
   <InputModal
