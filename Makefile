@@ -1,5 +1,6 @@
-NAME      := pulpe
-PACKAGES  := $(shell glide novendor)
+NAME            := pulpe
+PACKAGES        := $(shell glide novendor)
+TEST_MONGO_URI  := "mongodb://localhost:27017"
 
 .PHONY: all build $(NAME) deps install gen test testrace
 
@@ -20,7 +21,7 @@ gen:
 	go generate $(PACKAGES)
 
 test:
-	go test -v -cover $(PACKAGES)
+	MONGO_URI=$(TEST_MONGO_URI) go test -v -cover $(PACKAGES)
 
 testrace:
-	go test -v -race -cover $(PACKAGES)
+	MONGO_URI=$(TEST_MONGO_URI) go test -v -race -cover $(PACKAGES)

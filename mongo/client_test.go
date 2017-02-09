@@ -10,34 +10,29 @@ import (
 	"github.com/blankrobot/pulpe/mongo"
 )
 
-const (
-	defaultURI = "mongodb://localhost:27017"
-)
-
 // Client is a test wrapper for mongo.Client.
 type Client struct {
 	*mongo.Client
 }
 
 // NewClient returns a new instance of Client.
-func NewClient() *Client {
-	// Create client wrapper.
-	uri := os.Getenv("MONGO_URI")
-	if uri == "" {
-		uri = defaultURI
-	}
-
-	c := &Client{
+func NewClient(uri string) *Client {
+	c := Client{
 		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests-%d", uri, time.Now().UnixNano())),
 	}
 	c.Now = func() time.Time { return mock.Now }
 
-	return c
+	return &c
 }
 
 // MustOpenClient returns an new, open instance of Client.
 func MustOpenClient(t *testing.T) *Client {
-	c := NewClient()
+	uri := os.Getenv("MONGO_URI")
+	if uri == "" {
+		t.Skip("Missing MONGO_URI environment variable.")
+	}
+
+	c := NewClient(uri)
 	if err := c.Open(); err != nil {
 		t.Error(err)
 	}
