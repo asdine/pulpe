@@ -56,14 +56,16 @@ func NewServerCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&s.addr, "http", ":4000", "HTTP address")
 	cmd.Flags().StringVar(&s.mongoURI, "mongo", "mongodb://localhost:27017/pulpe", "MongoDB uri")
+	cmd.Flags().StringVar(&s.assetsPath, "assets", "./web/build", "Assets directory")
 
 	return &cmd
 }
 
 // ServerCmd is a command the runs the pulpe server.
 type ServerCmd struct {
-	addr     string
-	mongoURI string
+	addr       string
+	mongoURI   string
+	assetsPath string
 }
 
 // Run creates a bolt client and runs the HTTP server.
@@ -75,7 +77,10 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 	defer client.Close()
 
-	srv := http.NewServer(c.addr, http.NewHandler(client))
+	handler := http.NewHandler(client)
+	handler.SetStatic(c.assetsPath)
+
+	srv := http.NewServer(c.addr, handler)
 	err = srv.Open()
 	if err != nil {
 		return err

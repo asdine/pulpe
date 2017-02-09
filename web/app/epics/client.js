@@ -86,10 +86,6 @@ const update = (url, data) => Observable.ajax({
   body: JSON.stringify(data)
 }).map(response => response.response);
 
-const addr = process.env.NODE_ENV === 'development' ?
-  '/v1' :
-  '/v1';
-
-const client = new Client(addr);
+const client = new Client('/v1');
 
 export default client;

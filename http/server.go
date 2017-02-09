@@ -9,7 +9,7 @@ import (
 )
 
 // NewServer returns a new instance of Server.
-func NewServer(addr string, handler *Handler) *Server {
+func NewServer(addr string, handler http.Handler) *Server {
 	return &Server{
 		Addr:    addr,
 		Handler: handler,
@@ -19,7 +19,7 @@ func NewServer(addr string, handler *Handler) *Server {
 // Server represents an HTTP server.
 type Server struct {
 	// Handler to serve.
-	Handler *Handler
+	Handler http.Handler
 
 	// Bind address to open.
 	Addr string

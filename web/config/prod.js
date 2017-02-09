@@ -7,9 +7,14 @@ import packageConfig from '../package.json';
 export default merge(baseConfig, {
   devtool: 'source-map',
 
+  output: {
+    publicPath: '/assets/'
+  },
+
   entry: {
     main: ['babel-polyfill', './app/index.jsx'],
     vendor: Object.keys(packageConfig.dependencies)
+      .filter(dep => packageConfig.excludedFromBuild.findIndex(exl => exl === dep) === -1)
   },
 
   module: {

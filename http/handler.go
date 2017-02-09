@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -26,9 +27,11 @@ func NewHandler(c pulpe.Client) *Handler {
 
 // Handler is a collection of all the service handlers.
 type Handler struct {
-	CardHandler  *CardHandler
-	ListHandler  *ListHandler
-	BoardHandler *BoardHandler
+	CardHandler   *CardHandler
+	ListHandler   *ListHandler
+	BoardHandler  *BoardHandler
+	StaticHandler http.Handler
+	assetsPath    string
 }
 
 // ServeHTTP delegates a request to the appropriate subhandler.
@@ -43,8 +46,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ListHandler.ServeHTTP(rw, r)
 	case strings.HasPrefix(r.URL.Path, "/v1/boards"):
 		h.BoardHandler.ServeHTTP(rw, r)
+	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
+		h.StaticHandler.ServeHTTP(rw, r)
 	default:
-		http.NotFound(rw, r)
+		if h.assetsPath != "" {
+			http.ServeFile(rw, r, path.Join(h.assetsPath, "index.html"))
+		} else {
+			http.NotFound(rw, r)
+		}
 	}
 
 	log.Printf(
@@ -56,6 +65,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rw.len,
 		time.Since(start),
 	)
+}
+
+// SetStatic sets the assets directory to be served.
+// By default, no assets are served.
+func (h *Handler) SetStatic(assetsPath string) {
+	h.StaticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
+	h.assetsPath = assetsPath
 }
 
 // NewResponseWriter instantiates a ResponseWriter.
