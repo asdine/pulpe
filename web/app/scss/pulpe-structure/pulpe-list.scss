@@ -18,24 +18,35 @@
 			}
 
 			.plp-list-top {
-				width      : calc(100% - 20px);
-				min-height : 24px;
-				margin     : 0 10px 10px;
-				font-size  : 1rem;
-				font-weight: 400;
-				white-space: normal;
-				word-wrap  : break-word;
-			}
-
-			.plp-list-top-edit {
 				width     : 100%;
-				margin    : 0 0 8px;
-				padding   : 0 0 0 10px;
-				background: none;
-				border    : 1px solid lightgrey;
+				min-height: 24px;
+				margin    : 0;
 
-				&:focus {
-					outline: none;
+				h3 {
+					display      : inline-block;
+					margin       : 4px 10px 10px;
+					padding      : 0 0 5px;
+					font-size    : 1rem;
+					font-weight  : 400;
+					white-space  : normal;
+					word-wrap    : break-word;
+					border-bottom: 1px solid transparent;
+
+					&:hover {
+						border-bottom: 1px solid lightgrey;
+					}
+				}
+
+				.plp-list-top-edit {
+					width     : 100%;
+					margin    : 0 0 11px;
+					padding   : 0 0 0 9px;
+					background: none;
+					border    : 1px solid lightgrey;
+
+					&:focus {
+						outline: none;
+					}
 				}
 			}
 
@@ -73,25 +84,35 @@
 			}
 
 			.plp-list-top {
-				width      : calc(100% - 20px);
-				min-height : 24px;
-				margin     : 0 10px 10px;
-				font-size  : 1rem;
-				font-weight: 400;
-				white-space: normal;
-				word-wrap  : break-word;
-			}
-
-			.plp-list-top-edit {
-				display   : block;
 				width     : 100%;
-				margin    : 0 0 8px;
-				padding   : 0 0 0 10px;
-				background: none;
-				border    : 1px solid lightgrey;
+				min-height: 24px;
+				margin    : 0;
 
-				&:focus {
-					outline: none;
+				h3 {
+					display      : inline-block;
+					margin       : 4px 10px 10px;
+					padding      : 0 0 5px;
+					font-size    : 1rem;
+					font-weight  : 400;
+					white-space  : normal;
+					word-wrap    : break-word;
+					border-bottom: 1px solid transparent;
+
+					&:hover {
+						border-bottom: 1px solid lightgrey;
+					}
+				}
+
+				.plp-list-top-edit {
+					width     : 100%;
+					margin    : 0 0 11px;
+					padding   : 0 0 0 9px;
+					background: none;
+					border    : 1px solid lightgrey;
+
+					&:focus {
+						outline: none;
+					}
 				}
 			}
 
