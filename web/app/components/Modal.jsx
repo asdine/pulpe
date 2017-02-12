@@ -95,7 +95,7 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
               }}
             />
           </div>
-          <div className="col-3 offset-1 inputModalOptions">
+          <div className="col-3 offset-1 input-modal-options">
             <button
               type="button"
               className="btn btn-secondary btn-sm btn-save"

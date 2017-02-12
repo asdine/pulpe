@@ -193,7 +193,7 @@ const LargeForm = ({ card, toggle, onSave }) => {
                 />
               </div>
             </div>
-            <div className="col-3 offset-1 closeSaveOptions">
+            <div className="col-3 offset-1 close-save-options">
               <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={toggle}>
                 <span aria-hidden="true">&times;</span>
               </button>
