@@ -8,7 +8,7 @@ export const Compact = ({
   card, isDragging, userIsDragging }) =>
   connectDragSource(connectDropTarget(
     <div
-      className={`card ${userIsDragging ? '' : 'card-hover'} ${isDragging ? 'dragged' : ''}`}
+      className={`card ${userIsDragging ? '' : 'card-hover'} ${isDragging ? 'shadow' : ''}`}
       onClick={() => browserHistory.push(`/${board.slug}/${card.id}`)}
     >
       <div className="card-block">
