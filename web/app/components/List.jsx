@@ -145,22 +145,24 @@ class List extends React.Component {
     return (
       <div className="plp-cards-list-wrapper">
         <div className="plp-cards-list">
-          { !this.state.isEditing ?
-            <div className="plp-list-top" onClick={this.toggleEditMode}>{ list.name || `#${index + 1}` }</div> :
-            <input
-              type="text"
-              className="plp-list-top-edit"
-              defaultValue={list.name}
-              autoFocus
-              ref={node => { input = node; }}
-              onBlur={save}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  save();
-                }
-              }}
-            />
-          }
+          <div className="plp-list-top">
+            { !this.state.isEditing ?
+              <h3 onClick={this.toggleEditMode}>{ list.name || `#${index + 1}` }</h3> :
+              <input
+                type="text"
+                className="plp-list-top-edit"
+                defaultValue={list.name}
+                autoFocus
+                ref={node => { input = node; }}
+                onBlur={save}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    save();
+                  }
+                }}
+              />
+            }
+          </div>
           {cards.map((card) => (
             <Draggable
               key={card.id}
