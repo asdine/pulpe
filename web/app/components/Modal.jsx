@@ -84,7 +84,7 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
     <Modal isOpen={isOpen} toggle={hideModal}>
       <div className="modal-body">
         <div className="row">
-          <div className="col-xs-8">
+          <div className="col-8">
             <input
               type="text"
               className="form-control"
@@ -95,13 +95,10 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
               }}
             />
           </div>
-          <div className="col-xs-3 offset-xs-1 clearfix">
-            <button type="button" className="close" aria-label="Close" onClick={hideModal}>
-              <span aria-hidden="true">×</span>
-            </button>
+          <div className="col-3 offset-1 inputModalOptions">
             <button
               type="button"
-              className="btn btn-secondary btn-sm float-xs-right"
+              className="btn btn-secondary btn-sm btnSave"
               onClick={(e) => {
                 e.preventDefault();
                 if (!input.value.trim()) {
@@ -110,6 +107,9 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
                 onSave(input.value);
               }}
             >Save</button>
+            <button type="button" className="close" aria-label="Close" onClick={hideModal}>
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
         </div>
       </div>
