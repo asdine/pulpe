@@ -3,6 +3,10 @@
 		word-wrap: break-word;
 	}
 
+	.container {
+		padding: 0;
+	}
+
 	button {
 		margin-left: 5px;
 	}
@@ -88,7 +92,13 @@
 .inputModalOptions {
 	display: flex;
 
-	.btnSave {
+	.btn-save {
 		margin-left: auto;
+	}
+}
+
+.closeSaveOptions {
+	.btn-save {
+		margin-left: 40px;
 	}
 }

@@ -98,7 +98,7 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
           <div className="col-3 offset-1 inputModalOptions">
             <button
               type="button"
-              className="btn btn-secondary btn-sm btnSave"
+              className="btn btn-secondary btn-sm btn-save"
               onClick={(e) => {
                 e.preventDefault();
                 if (!input.value.trim()) {
