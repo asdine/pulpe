@@ -58,7 +58,7 @@ export const ConfirmModal = ({ isOpen = false, onConfirm, text, toggle, delay })
   <Modal isOpen={isOpen} toggle={toggle}>
     <div className="modal-body">
       <div className="row">
-        <div className="col-xs-5 offset-xs-1">
+        <div className="col-5 offset-1">
           <button
             type="button"
             className="btn btn-danger btn-block"
@@ -70,7 +70,7 @@ export const ConfirmModal = ({ isOpen = false, onConfirm, text, toggle, delay })
             {text}
           </button>
         </div>
-        <div className="col-xs-5">
+        <div className="col-5">
           <button type="button" className="btn btn-secondary btn-block" onClick={toggle}>Cancel</button>
         </div>
       </div>
@@ -84,7 +84,7 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
     <Modal isOpen={isOpen} toggle={hideModal}>
       <div className="modal-body">
         <div className="row">
-          <div className="col-xs-8">
+          <div className="col-8">
             <input
               type="text"
               className="form-control"
@@ -95,13 +95,10 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
               }}
             />
           </div>
-          <div className="col-xs-3 offset-xs-1 clearfix">
-            <button type="button" className="close" aria-label="Close" onClick={hideModal}>
-              <span aria-hidden="true">×</span>
-            </button>
+          <div className="col-3 offset-1 input-modal-options">
             <button
               type="button"
-              className="btn btn-secondary btn-sm float-xs-right"
+              className="btn btn-secondary btn-sm btn-save"
               onClick={(e) => {
                 e.preventDefault();
                 if (!input.value.trim()) {
@@ -110,6 +107,9 @@ export const InputModal = ({ isOpen, onSave, hideModal, placeholder }) => {
                 onSave(input.value);
               }}
             >Save</button>
+            <button type="button" className="close" aria-label="Close" onClick={hideModal}>
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
         </div>
       </div>

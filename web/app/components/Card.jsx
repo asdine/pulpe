@@ -176,36 +176,38 @@ const LargeForm = ({ card, toggle, onSave }) => {
 
   return (
     <div>
-      <div className="modal-header clearfix">
-        <div className="row">
-          <div className="col-xs-8">
-            <div className="form-group">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Card name"
-                defaultValue={card.name}
-                ref={node => {
-                  input = node;
-                  return input && input.focus();
-                }}
-              />
+      <div className="modal-header">
+        <div className="container">
+          <div className="row">
+            <div className="col-8">
+              <div className="form-group">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Card name"
+                  defaultValue={card.name}
+                  ref={node => {
+                    input = node;
+                    return input && input.focus();
+                  }}
+                />
+              </div>
             </div>
-          </div>
-          <div className="col-xs-3 offset-xs-1 clearfix">
-            <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={toggle}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm float-xs-right"
-              onClick={(e) => {
-                e.preventDefault();
-                onSave(input, textarea);
-              }}
-            >
-              Save
-            </button>
+            <div className="col-3 offset-1 close-save-options">
+              <button type="button" className="close" data-dismiss="modal" aria-label="Close" onClick={toggle}>
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm btn-save"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSave(input, textarea);
+                }}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       </div>

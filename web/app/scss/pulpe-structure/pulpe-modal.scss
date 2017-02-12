@@ -3,6 +3,10 @@
 		word-wrap: break-word;
 	}
 
+	.container {
+		padding: 0;
+	}
+
 	button {
 		margin-left: 5px;
 	}
@@ -82,5 +86,19 @@
 			width      : 100px;
 			margin-left: 20px;
 		}
+	}
+}
+
+.input-modal-options {
+	display: flex;
+
+	.btn-save {
+		margin-left: auto;
+	}
+}
+
+.close-save-options {
+	.btn-save {
+		margin-left: 40px;
 	}
 }

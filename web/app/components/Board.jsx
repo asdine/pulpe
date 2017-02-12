@@ -31,7 +31,7 @@ const BoardHeader = ({ board = {}, mode, updateBoard, showModal, toggleEditMode,
   return (
     <header>
       { !isEditing ?
-        <h6 onClick={() => toggleEditMode('board-name')}>{board.name}</h6> :
+        <h2 onClick={() => toggleEditMode('board-name')}>{board.name}</h2> :
         <input
           type="text"
           autoFocus
@@ -46,17 +46,18 @@ const BoardHeader = ({ board = {}, mode, updateBoard, showModal, toggleEditMode,
           }}
         />
       }
-      <Button
-        color="danger"
-        size="sm"
-        className="float-xs-right"
-        onClick={() => showModal(ActionTypes.MODAL_DELETE_BOARD, board)}
-      >Delete</Button>
-      <BoardModeSwitcher
-        mode={mode}
-        board={board}
-        updateBoard={updateBoard}
-      />
+      <div className="board-options">
+        <BoardModeSwitcher
+          mode={mode}
+          board={board}
+          updateBoard={updateBoard}
+        />
+        <Button
+          color="danger"
+          size="sm"
+          onClick={() => showModal(ActionTypes.MODAL_DELETE_BOARD, board)}
+        >Delete</Button>
+      </div>
     </header>
   );
 };
@@ -75,7 +76,7 @@ const BoardModeSwitcher = ({ board = {}, updateBoard, mode }) => {
   };
 
   return (
-    <div className="btn-group float-xs-right" data-toggle="buttons">
+    <div className="btn-group" data-toggle="buttons">
       <label
         className={`btn btn-secondary btn-sm ${mode === 'horizontal' ? 'active' : ''}`}
         htmlFor="gridBoard-horizontal-mode"
