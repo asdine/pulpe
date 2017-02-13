@@ -41,6 +41,27 @@ func TestBoardService_CreateBoard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, board, other)
 	})
+
+	t.Run("Slug conflict", func(t *testing.T) {
+		b := pulpe.BoardCreate{
+			Name:     "ZZZ KK ",
+			Settings: &settings,
+		}
+
+		// Create new board.
+		board, err := s.CreateBoard(&b)
+		require.NoError(t, err)
+		require.Equal(t, board.Slug, "zzz-kk")
+
+		// Create second board with slightly different name that generates the same slug.
+		b = pulpe.BoardCreate{
+			Name:     "  ZZZ   KK ",
+			Settings: &settings,
+		}
+		_, err = s.CreateBoard(&b)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardExists, err)
+	})
 }
 
 func TestBoardService_Board(t *testing.T) {
@@ -180,8 +201,10 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, newName, other.Name)
 		require.NotNil(t, other.UpdatedAt)
+		require.Equal(t, "new-name", other.Slug)
 		require.Equal(t, other, updatedBoard)
 		// Set zero values.
+		// TODO prevents zero value here
 		newName = ""
 		newSettings = []byte("")
 		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{

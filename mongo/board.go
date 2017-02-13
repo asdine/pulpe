@@ -169,7 +169,19 @@ func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pul
 
 	patch := make(bson.M)
 	if u.Name != nil {
+		// verifying if the slug already exists.
+		slug := slugify.Slugify(*u.Name)
+		total, err := col.Find(bson.M{"slug": slug}).Limit(1).Count()
+		if err != nil {
+			return nil, err
+		}
+
+		if total > 0 {
+			return nil, pulpe.ErrBoardExists
+		}
+
 		patch["name"] = *u.Name
+		patch["slug"] = slug
 	}
 
 	if u.Settings != nil {

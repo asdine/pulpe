@@ -3,6 +3,8 @@ package pulpe
 import (
 	"encoding/json"
 	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // BoardID represents a Board identifier.
@@ -24,6 +26,13 @@ type Board struct {
 type BoardCreate struct {
 	Name     string           `json:"name"`
 	Settings *json.RawMessage `json:"settings"`
+}
+
+// Validate content.
+func (b *BoardCreate) Validate() error {
+	return validation.ValidateStruct(b,
+		validation.Field(&b.Name, validation.Required, validation.Length(1, 32)),
+	)
 }
 
 // BoardUpdate is used to update a board.

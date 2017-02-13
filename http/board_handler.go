@@ -67,6 +67,12 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 		req.Settings = &defaultSettings
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 
@@ -74,6 +80,8 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusCreated, h.Logger)
+	case pulpe.ErrBoardExists:
+		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}

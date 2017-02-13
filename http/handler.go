@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blankrobot/pulpe"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // HTTP errors
@@ -113,14 +114,34 @@ func Error(w http.ResponseWriter, err error, code int, logger *log.Logger) {
 		err = pulpe.ErrInternal
 	}
 
-	// Write generic error response.
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(&errorResponse{Err: err.Error()})
+
+	enc := json.NewEncoder(w)
+	switch e := err.(type) {
+	case validation.Errors:
+		err = enc.Encode(&validationErrorResponse{
+			Err:    "validation error",
+			Fields: e,
+		})
+	default:
+		err = enc.Encode(&errorResponse{Err: err.Error()})
+	}
+
+	if err != nil {
+		logger.Println(err)
+	}
 }
 
 // errorResponse is a generic response for sending an error.
 type errorResponse struct {
 	Err string `json:"err,omitempty"`
+}
+
+// validationErrorResponse is used for validation errors.
+type validationErrorResponse struct {
+	Err    string            `json:"err,omitempty"`
+	Fields validation.Errors `json:"fields"`
 }
 
 // NotFound writes an API error message to the response.

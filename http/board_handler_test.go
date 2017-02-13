@@ -27,9 +27,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		s := json.RawMessage([]byte(`{"a": "b"}`))
 		return []*pulpe.Board{
-			&pulpe.Board{ID: "id1", Name: "name1", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}},
-			&pulpe.Board{ID: "id2", Name: "name2", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}},
-			&pulpe.Board{ID: "id3", Name: "name3", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}, Settings: &s},
+			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}, Settings: &s},
 		}, nil
 	}
 
@@ -42,24 +40,9 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `[
     {
-  		"id": "id1",
-      "name": "name1",
-      "createdAt": `+string(date)+`,
-      "updatedAt": `+string(date)+`,
-			"lists": [],
-			"cards": []
-	  },
-    {
-  		"id": "id2",
-      "name": "name2",
-      "createdAt": `+string(date)+`,
-      "updatedAt": `+string(date)+`,
-			"lists": [],
-			"cards": []
-	  },
-    {
-  		"id": "id3",
-      "name": "name3",
+			"id": "id",
+			"name": "name",
+			"slug": "slug",
       "createdAt": `+string(date)+`,
       "updatedAt": `+string(date)+`,
 			"lists": [],
@@ -76,22 +59,25 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		return nil, errors.New("unexpected error")
 	}
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/v1/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.BoardsInvoked)
 }
 
 func TestBoardHandler_CreateBoard(t *testing.T) {
 	t.Run("OK", testBoardHandler_CreateBoard_OK)
 	t.Run("OKNoSettings", testBoardHandler_CreateBoard_OK_NoSettings)
 	t.Run("ErrInvalidJSON", testBoardHandler_CreateBoard_ErrInvalidJSON)
+	t.Run("ValidationError", testBoardHandler_CreateBoard_ValidationError)
 	t.Run("ErrInternal", testBoardHandler_CreateBoard_WithResponse(t, http.StatusInternalServerError, errors.New("unexpected error")))
+	t.Run("Conflict", testBoardHandler_CreateBoard_WithResponse(t, http.StatusConflict, pulpe.ErrBoardExists))
 }
 
 func testBoardHandler_CreateBoard_OK(t *testing.T) {
@@ -123,17 +109,8 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	date, _ := mock.Now.MarshalJSON()
-	require.JSONEq(t, `{
-		"id": "123",
-    "name": "name",
-		"createdAt": `+string(date)+`,
-    "lists": [],
-    "cards": [],
-    "settings": {
-      "a": "b"
-    }
-  }`, w.Body.String())
+	require.NotZero(t, w.Body.Len())
+	require.True(t, c.BoardService.CreateBoardInvoked)
 }
 
 func testBoardHandler_CreateBoard_OK_NoSettings(t *testing.T) {
@@ -162,15 +139,8 @@ func testBoardHandler_CreateBoard_OK_NoSettings(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	date, _ := mock.Now.MarshalJSON()
-	require.JSONEq(t, `{
-		"id": "123",
-    "name": "name",
-		"createdAt": `+string(date)+`,
-    "lists": [],
-    "cards": [],
-    "settings": {}
-  }`, w.Body.String())
+	require.NotZero(t, w.Body.Len())
+	require.True(t, c.BoardService.CreateBoardInvoked)
 }
 
 func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
@@ -185,6 +155,16 @@ func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
 	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
 }
 
+func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
+	h := pulpeHttp.NewHandler(mock.NewClient())
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/v1/boards", bytes.NewReader([]byte(`{}`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	require.JSONEq(t, `{"err": "validation error", "fields": {"name": "cannot be blank"}}`, w.Body.String())
+}
+
 func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
@@ -196,9 +176,10 @@ func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err err
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/boards", bytes.NewReader([]byte(`{}`)))
+		r, _ := http.NewRequest("POST", "/v1/boards", bytes.NewReader([]byte(`{"name": "name"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
+		require.True(t, c.BoardService.CreateBoardInvoked)
 	}
 }
 
@@ -217,25 +198,17 @@ func testBoardHandler_Board_OK(t *testing.T) {
 	// Mock service.
 	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
-		return &pulpe.Board{ID: id, Name: "name", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
+		return new(pulpe.Board), nil
 	}
 
 	c.ListService.ListsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
-		return []*pulpe.List{
-			{ID: "123", BoardID: "XXX", Name: "Name", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "456", BoardID: "XXX", Name: "Name", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "789", BoardID: "XXX", Name: "Name", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-		}, nil
+		return nil, nil
 	}
 
 	c.CardService.CardsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
-		return []*pulpe.Card{
-			{ID: "ABC", BoardID: "XXX", ListID: "123", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "DEF", BoardID: "XXX", ListID: "456", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "GHI", BoardID: "XXX", ListID: "789", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-		}, nil
+		return nil, nil
 	}
 
 	// Retrieve Board.
@@ -244,24 +217,10 @@ func testBoardHandler_Board_OK(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	date, _ := mock.Now.MarshalJSON()
-	require.JSONEq(t, `{
-		"id": "XXX",
-    "name": "name",
-    "createdAt": `+string(date)+`,
-    "updatedAt": `+string(date)+`,
-    "lists": [
-      {"id": "123", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "name": "Name"},
-      {"id": "456", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "name": "Name"},
-      {"id": "789", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "name": "Name"}
-    ],
-    "cards": [
-      {"id": "ABC", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "123", "name": "", "description": "", "position": 0},
-      {"id": "DEF", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "456", "name": "", "description": "", "position": 0},
-      {"id": "GHI", "createdAt": `+string(date)+`, "updatedAt": `+string(date)+`, "boardID": "XXX", "listID": "789", "name": "", "description": "", "position": 0}
-    ],
-    "settings": {}
-	}`, w.Body.String())
+	require.NotZero(t, w.Body.Len())
+	require.True(t, c.BoardService.BoardInvoked)
+	require.True(t, c.ListService.ListsByBoardInvoked)
+	require.True(t, c.CardService.CardsByBoardInvoked)
 }
 
 func testBoardHandler_Board_NotFound(t *testing.T) {
@@ -280,6 +239,7 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
+	require.True(t, c.BoardService.BoardInvoked)
 }
 
 func testBoardHandler_Board_InternalError(t *testing.T) {
@@ -296,6 +256,7 @@ func testBoardHandler_Board_InternalError(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.BoardInvoked)
 }
 
 func testBoardHandler_Board_ListInternalError(t *testing.T) {
@@ -317,6 +278,8 @@ func testBoardHandler_Board_ListInternalError(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.BoardInvoked)
+	require.True(t, c.ListService.ListsByBoardInvoked)
 }
 
 func testBoardHandler_Board_CardInternalError(t *testing.T) {
@@ -326,16 +289,12 @@ func testBoardHandler_Board_CardInternalError(t *testing.T) {
 	// Mock service.
 	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
-		return &pulpe.Board{ID: id, Name: "name", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
+		return new(pulpe.Board), nil
 	}
 
 	c.ListService.ListsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
-		return []*pulpe.List{
-			{ID: "123", BoardID: "XXX", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "456", BoardID: "XXX", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-			{ID: "789", BoardID: "XXX", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
-		}, nil
+		return []*pulpe.List{}, nil
 	}
 
 	c.CardService.CardsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.Card, error) {
@@ -347,6 +306,9 @@ func testBoardHandler_Board_CardInternalError(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.BoardInvoked)
+	require.True(t, c.ListService.ListsByBoardInvoked)
+	require.True(t, c.CardService.CardsByBoardInvoked)
 }
 
 func TestBoardHandler_DeleteBoard(t *testing.T) {
@@ -505,15 +467,7 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 		require.Equal(t, "new name", *u.Name)
 		require.JSONEq(t, `{"a": "b"}`, string(*u.Settings))
 
-		return &pulpe.Board{
-			ID:        "XXX",
-			Name:      *u.Name,
-			CreatedAt: mock.Now,
-			UpdatedAt: &mock.Now,
-			Lists:     []*pulpe.List{},
-			Cards:     []*pulpe.Card{},
-			Settings:  u.Settings,
-		}, nil
+		return new(pulpe.Board), nil
 	}
 
 	w := httptest.NewRecorder()
@@ -526,18 +480,8 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	date, _ := mock.Now.MarshalJSON()
-	require.JSONEq(t, `{
-		"id": "XXX",
-    "name": "new name",
-		"createdAt": `+string(date)+`,
-		"updatedAt": `+string(date)+`,
-    "lists": [],
-    "cards": [],
-    "settings": {
-      "a": "b"
-    }
-  }`, w.Body.String())
+	require.NotZero(t, w.Body.Len())
+	require.True(t, c.BoardService.UpdateBoardInvoked)
 }
 
 func testBoardHandler_UpdateBoard_ErrInvalidJSON(t *testing.T) {
@@ -568,6 +512,7 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
+	require.True(t, c.BoardService.UpdateBoardInvoked)
 }
 
 func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
@@ -584,4 +529,5 @@ func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.UpdateBoardInvoked)
 }
