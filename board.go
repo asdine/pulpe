@@ -3,18 +3,10 @@ package pulpe
 import (
 	"encoding/json"
 	"time"
-
-	shortid "github.com/ventu-io/go-shortid"
 )
 
 // BoardID represents a Board identifier.
 type BoardID string
-
-// NewBoardID generates a new BoardID.
-func NewBoardID() (BoardID, error) {
-	id, err := shortid.Generate()
-	return BoardID(id), err
-}
 
 // A Board is a container of lists.
 type Board struct {
@@ -22,6 +14,7 @@ type Board struct {
 	CreatedAt time.Time        `json:"createdAt"`
 	UpdatedAt *time.Time       `json:"updatedAt,omitempty"`
 	Name      string           `json:"name"`
+	Slug      string           `json:"slug"`
 	Lists     []*List          `json:"lists"`
 	Cards     []*Card          `json:"cards"`
 	Settings  *json.RawMessage `json:"settings,omitempty"`

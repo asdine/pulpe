@@ -10,6 +10,8 @@ import:
   - bson
 - package: gopkg.in/tylerb/graceful.v1
   version: ~1.2.15
+- package: github.com/Machiel/slugify
+  version: ~1.0.0
 testImport:
 - package: github.com/stretchr/testify
   version: ~1.1.4

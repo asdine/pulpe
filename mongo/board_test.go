@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/blankrobot/pulpe"
 	"github.com/stretchr/testify/require"
 )
@@ -22,12 +24,13 @@ func TestBoardService_CreateBoard(t *testing.T) {
 
 	t.Run("New", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "XXX",
+			Name:     "XXX YYY ",
 			Settings: &settings,
 		}
 		// Create new board.
 		board, err := s.CreateBoard(&b)
 		require.NoError(t, err)
+		require.Equal(t, board.Slug, "xxx-yyy")
 
 		// Retrieve board and compare.
 		other, err := s.Board(board.ID)
@@ -62,7 +65,8 @@ func TestBoardService_Board(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a board that doesn't exist.
-		_, err := s.Board("QQQ")
+		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		_, err := s.Board(id)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 }
@@ -133,7 +137,8 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a board that doesn't exist.
-		err := s.DeleteBoard("QQQ")
+		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		err := s.DeleteBoard(id)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 }
@@ -191,13 +196,14 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to update a board that doesn't exist with no patch.
-		updatedBoard, err := s.UpdateBoard("QQQ", &pulpe.BoardUpdate{})
+		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		updatedBoard, err := s.UpdateBoard(id, &pulpe.BoardUpdate{})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)
 
 		// Trying to update a board that doesn't exist with a patch.
 		newName := "new name"
-		updatedBoard, err = s.UpdateBoard("QQQ", &pulpe.BoardUpdate{Name: &newName})
+		updatedBoard, err = s.UpdateBoard(id, &pulpe.BoardUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)
 	})
