@@ -13,6 +13,10 @@ import (
 
 var settings = json.RawMessage([]byte("{}"))
 
+func newBoardID() pulpe.BoardID {
+	return pulpe.BoardID(bson.NewObjectId().Hex())
+}
+
 // Ensure boards can be created and retrieved.
 func TestBoardService_CreateBoard(t *testing.T) {
 	t.Parallel()

@@ -1,12 +1,17 @@
 package mongo_test
 
 import (
-	"fmt"
 	"testing"
+
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/blankrobot/pulpe"
 	"github.com/stretchr/testify/require"
 )
+
+func newListID() pulpe.ListID {
+	return pulpe.ListID(bson.NewObjectId().Hex())
+}
 
 func TestListService_CreateList(t *testing.T) {
 	t.Parallel()
@@ -18,7 +23,7 @@ func TestListService_CreateList(t *testing.T) {
 
 	t.Run("New", func(t *testing.T) {
 		l := pulpe.ListCreate{
-			BoardID: "BoardID",
+			BoardID: newBoardID(),
 			Name:    "Name",
 		}
 
@@ -57,7 +62,7 @@ func TestListService_List(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		l := pulpe.ListCreate{
-			BoardID: "BoardID",
+			BoardID: newBoardID(),
 		}
 
 		// Create new list.
@@ -76,7 +81,7 @@ func TestListService_List(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a list that doesn't exist.
-		_, err := s.List("QQQ")
+		_, err := s.List(newListID())
 		require.Equal(t, pulpe.ErrListNotFound, err)
 	})
 }
@@ -91,7 +96,7 @@ func TestListService_DeleteList(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		l := pulpe.ListCreate{
-			BoardID: "BoardID",
+			BoardID: newBoardID(),
 		}
 
 		// Create new list.
@@ -108,7 +113,7 @@ func TestListService_DeleteList(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a list that doesn't exist.
-		err := s.DeleteList("QQQ")
+		err := s.DeleteList(newListID())
 		require.Equal(t, pulpe.ErrListNotFound, err)
 	})
 }
@@ -122,8 +127,8 @@ func TestListService_DeleteListsByBoardID(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("Exists", func(t *testing.T) {
-		const board1 = pulpe.BoardID("Board1")
-		const board2 = pulpe.BoardID("Board2")
+		board1 := newBoardID()
+		board2 := newBoardID()
 
 		for i := 0; i < 10; i++ {
 			var c pulpe.ListCreate
@@ -150,7 +155,7 @@ func TestListService_DeleteListsByBoardID(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Calling with a boardID with no associated lists.
-		err := s.DeleteListsByBoardID("QQQ")
+		err := s.DeleteListsByBoardID(newBoardID())
 		require.NoError(t, err)
 	})
 }
@@ -165,7 +170,7 @@ func TestListService_UpdateList(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		c := pulpe.ListCreate{
-			BoardID: "BoardX",
+			BoardID: newBoardID(),
 			Name:    "name",
 		}
 
@@ -205,13 +210,13 @@ func TestListService_UpdateList(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to update a list that doesn't exist with no patch.
-		updatedList, err := s.UpdateList("QQQ", &pulpe.ListUpdate{})
+		updatedList, err := s.UpdateList(newListID(), &pulpe.ListUpdate{})
 		require.Equal(t, pulpe.ErrListNotFound, err)
 		require.Nil(t, updatedList)
 
 		// Trying to update a list that doesn't exist with a patch.
 		newName := "new name"
-		updatedList, err = s.UpdateList("QQQ", &pulpe.ListUpdate{Name: &newName})
+		updatedList, err = s.UpdateList(newListID(), &pulpe.ListUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrListNotFound, err)
 		require.Nil(t, updatedList)
 	})
@@ -226,9 +231,15 @@ func TestListService_ListsByBoard(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("Exists", func(t *testing.T) {
+		boardID1 := newBoardID()
+		boardID2 := newBoardID()
 		for i := 0; i < 6; i++ {
-			l := pulpe.ListCreate{
-				BoardID: pulpe.BoardID(fmt.Sprintf("Board%d", i%2)),
+			var l pulpe.ListCreate
+
+			if i%2 == 0 {
+				l.BoardID = boardID1
+			} else {
+				l.BoardID = boardID2
 			}
 
 			// Create new list.
@@ -236,14 +247,14 @@ func TestListService_ListsByBoard(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		lists, err := s.ListsByBoard("Board0")
+		lists, err := s.ListsByBoard(boardID1)
 		require.NoError(t, err)
 		require.Len(t, lists, 3)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to find lists of a board that doesn't exist.
-		lists, err := s.ListsByBoard("QQQ")
+		lists, err := s.ListsByBoard(newBoardID())
 		require.NoError(t, err)
 		require.Len(t, lists, 0)
 	})
