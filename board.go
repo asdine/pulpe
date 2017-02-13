@@ -2,6 +2,7 @@ package pulpe
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -28,10 +29,11 @@ type BoardCreate struct {
 	Settings *json.RawMessage `json:"settings"`
 }
 
-// Validate content.
+// Validate board creation payload.
 func (b *BoardCreate) Validate() error {
+	b.Name = strings.TrimSpace(b.Name)
 	return validation.ValidateStruct(b,
-		validation.Field(&b.Name, validation.Required, validation.Length(1, 32)),
+		validation.Field(&b.Name, validation.Required, validation.Length(1, 64)),
 	)
 }
 
@@ -39,6 +41,19 @@ func (b *BoardCreate) Validate() error {
 type BoardUpdate struct {
 	Name     *string          `json:"name"`
 	Settings *json.RawMessage `json:"settings"`
+}
+
+// Validate board update payload.
+func (b *BoardUpdate) Validate() error {
+	if b.Name == nil {
+		return nil
+	}
+
+	name := strings.TrimSpace(*b.Name)
+
+	return validation.Errors{
+		"name": validation.Validate(name, validation.Required, validation.Length(1, 64)),
+	}.Filter()
 }
 
 // BoardService represents a service for managing boards.

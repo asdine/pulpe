@@ -204,21 +204,17 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.Equal(t, "new-name", other.Slug)
 		require.Equal(t, other, updatedBoard)
 		// Set zero values.
-		// TODO prevents zero value here
-		newName = ""
 		newSettings = []byte("")
 		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
-			Name:     &newName,
 			Settings: &newSettings,
 		})
 		require.NoError(t, err)
-		require.Zero(t, updatedBoard.Name)
 		require.Nil(t, updatedBoard.Settings)
 
 		// Retrieve board and check.
 		other, err = s.Board(board.ID)
 		require.NoError(t, err)
-		require.Zero(t, other.Name)
+		require.Zero(t, other.Settings)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
@@ -229,7 +225,7 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.Nil(t, updatedBoard)
 
 		// Trying to update a board that doesn't exist with a patch.
-		newName := "new name"
+		newName := "new name 2"
 		updatedBoard, err = s.UpdateBoard(id, &pulpe.BoardUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)

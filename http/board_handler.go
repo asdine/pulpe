@@ -171,6 +171,12 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 

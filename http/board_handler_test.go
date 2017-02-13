@@ -453,6 +453,7 @@ func TestBoardHandler_UpdateBoard(t *testing.T) {
 	t.Run("OK", testBoardHandler_UpdateBoard_OK)
 	t.Run("ErrInvalidJSON", testBoardHandler_UpdateBoard_ErrInvalidJSON)
 	t.Run("Not found", testBoardHandler_UpdateBoard_NotFound)
+	t.Run("Validation error", testBoardHandler_UpdateBoard_ValidationError)
 	t.Run("Internal error", testBoardHandler_UpdateBoard_InternalError)
 }
 
@@ -513,6 +514,23 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.JSONEq(t, `{}`, w.Body.String())
 	require.True(t, c.BoardService.UpdateBoardInvoked)
+}
+
+func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+		return nil, errors.New("internal error")
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("PATCH", "/v1/boards/XXX", bytes.NewReader([]byte(`{
+    "name": "       "
+  }`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	require.False(t, c.BoardService.UpdateBoardInvoked)
 }
 
 func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
