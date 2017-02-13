@@ -1,19 +1,9 @@
 package pulpe
 
-import (
-	"time"
-
-	shortid "github.com/ventu-io/go-shortid"
-)
+import "time"
 
 // CardID represents a Card identifier.
 type CardID string
-
-// NewCardID generates a new CardID.
-func NewCardID() (CardID, error) {
-	id, err := shortid.Generate()
-	return CardID(id), err
-}
 
 // A Card is a unit of information that is stored in a list.
 type Card struct {

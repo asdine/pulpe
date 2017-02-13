@@ -17,11 +17,10 @@ var _ pulpe.CardService = new(CardService)
 // Card representation stored in MongoDB.
 type Card struct {
 	ID          bson.ObjectId `bson:"_id"`
-	PublicID    string        `bson:"publicID"`
 	CreatedAt   time.Time     `bson:"createdAt"`
 	UpdatedAt   *time.Time    `bson:"updatedAt,omitempty"`
-	ListID      string        `bson:"listID"`
-	BoardID     string        `bson:"boardID"`
+	ListID      bson.ObjectId `bson:"listID"`
+	BoardID     bson.ObjectId `bson:"boardID"`
 	Name        string        `bson:"name"`
 	Description string        `bson:"description"`
 	Position    float64       `bson:"position"`
@@ -29,13 +28,21 @@ type Card struct {
 
 // ToMongoCard creates a mongo card from a pulpe card.
 func ToMongoCard(p *pulpe.Card) *Card {
+	var id bson.ObjectId
+
+	if p.ID == "" {
+		id = bson.NewObjectId()
+		p.ID = pulpe.CardID(id.Hex())
+	} else {
+		id = bson.ObjectIdHex(string(p.ID))
+	}
+
 	return &Card{
-		ID:          bson.NewObjectId(),
-		PublicID:    string(p.ID),
+		ID:          id,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
-		ListID:      string(p.ListID),
-		BoardID:     string(p.BoardID),
+		ListID:      bson.ObjectIdHex(string(p.ListID)),
+		BoardID:     bson.ObjectIdHex(string(p.BoardID)),
 		Name:        p.Name,
 		Description: p.Description,
 		Position:    p.Position,
@@ -45,10 +52,10 @@ func ToMongoCard(p *pulpe.Card) *Card {
 // FromMongoCard creates a pulpe card from a mongo card.
 func FromMongoCard(c *Card) *pulpe.Card {
 	p := pulpe.Card{
-		ID:          pulpe.CardID(c.PublicID),
+		ID:          pulpe.CardID(c.ID.Hex()),
 		CreatedAt:   c.CreatedAt.UTC(),
-		ListID:      pulpe.ListID(c.ListID),
-		BoardID:     pulpe.BoardID(c.BoardID),
+		ListID:      pulpe.ListID(c.ListID.Hex()),
+		BoardID:     pulpe.BoardID(c.BoardID.Hex()),
 		Name:        c.Name,
 		Description: c.Description,
 		Position:    c.Position,
@@ -70,25 +77,13 @@ type CardService struct {
 func (s *CardService) ensureIndexes() error {
 	col := s.session.db.C(cardCol)
 
-	// Unique publicID
-	index := mgo.Index{
-		Key:    []string{"publicID"},
-		Unique: true,
-		Sparse: true,
-	}
-
-	err := col.EnsureIndex(index)
-	if err != nil {
-		return err
-	}
-
 	// listID
-	index = mgo.Index{
+	index := mgo.Index{
 		Key:    []string{"listID"},
 		Sparse: true,
 	}
 
-	err = col.EnsureIndex(index)
+	err := col.EnsureIndex(index)
 	if err != nil {
 		return err
 	}
@@ -112,21 +107,14 @@ func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 		return nil, pulpe.ErrCardBoardIDRequired
 	}
 
-	var err error
 	card := pulpe.Card{
+		CreatedAt:   s.session.now,
 		BoardID:     c.BoardID,
 		ListID:      c.ListID,
 		Name:        c.Name,
 		Description: c.Description,
 		Position:    c.Position,
 	}
-
-	card.ID, err = pulpe.NewCardID()
-	if err != nil {
-		return nil, err
-	}
-
-	card.CreatedAt = s.session.now
 
 	return &card, s.session.db.C(cardCol).Insert(ToMongoCard(&card))
 }
@@ -135,7 +123,7 @@ func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
 	var c Card
 
-	err := s.session.db.C(cardCol).Find(bson.M{"publicID": string(id)}).One(&c)
+	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(string(id))).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrCardNotFound
@@ -149,7 +137,7 @@ func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
 
 // DeleteCard deletes a Card by ID.
 func (s *CardService) DeleteCard(id pulpe.CardID) error {
-	err := s.session.db.C(cardCol).Remove(bson.M{"publicID": string(id)})
+	err := s.session.db.C(cardCol).RemoveId(bson.ObjectIdHex(string(id)))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrCardNotFound
 	}
@@ -159,13 +147,13 @@ func (s *CardService) DeleteCard(id pulpe.CardID) error {
 
 // DeleteCardsByListID deletes all the cards of a list.
 func (s *CardService) DeleteCardsByListID(listID pulpe.ListID) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": string(listID)})
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(string(listID))})
 	return err
 }
 
 // DeleteCardsByBoardID deletes all the cards of a board.
 func (s *CardService) DeleteCardsByBoardID(boardID pulpe.BoardID) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": string(boardID)})
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(string(boardID))})
 	return err
 }
 
@@ -190,8 +178,8 @@ func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.C
 		return s.Card(id)
 	}
 
-	err := col.Update(
-		bson.M{"publicID": string(id)},
+	err := col.UpdateId(
+		bson.ObjectIdHex(string(id)),
 		bson.M{
 			"$set":         patch,
 			"$currentDate": bson.M{"updatedAt": true},
@@ -212,7 +200,7 @@ func (s *CardService) CardsByBoard(boardID pulpe.BoardID) ([]*pulpe.Card, error)
 	var cards []Card
 
 	// TODO set a limit
-	err := s.session.db.C(cardCol).Find(bson.M{"boardID": string(boardID)}).All(&cards)
+	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(string(boardID))}).All(&cards)
 	if err != nil {
 		return nil, err
 	}
