@@ -2,10 +2,11 @@ package pulpe
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/blankrobot/pulpe/validation"
 )
 
 // BoardID represents a Board identifier.
@@ -25,35 +26,34 @@ type Board struct {
 
 // BoardCreate is used to create a board.
 type BoardCreate struct {
-	Name     string           `json:"name"`
-	Settings *json.RawMessage `json:"settings"`
+	Name     string           `json:"name" valid:"required,stringlength(1|64)"`
+	Settings *json.RawMessage `json:"settings" valid:"pulpe-json"`
 }
 
 // Validate board creation payload.
 func (b *BoardCreate) Validate() error {
 	b.Name = strings.TrimSpace(b.Name)
-	return validation.ValidateStruct(b,
-		validation.Field(&b.Name, validation.Required, validation.Length(1, 64)),
-	)
+	return validation.Validate(b)
 }
 
 // BoardUpdate is used to update a board.
 type BoardUpdate struct {
-	Name     *string          `json:"name"`
-	Settings *json.RawMessage `json:"settings"`
+	Name     *string          `json:"name" valid:"stringlength(1|64)"`
+	Settings *json.RawMessage `json:"settings" valid:"pulpe-json"`
 }
 
 // Validate board update payload.
 func (b *BoardUpdate) Validate() error {
-	if b.Name == nil {
-		return nil
+	if b.Name != nil {
+		*b.Name = strings.TrimSpace(*b.Name)
 	}
 
-	*b.Name = strings.TrimSpace(*b.Name)
+	err := validation.Validate(b)
+	if b.Name != nil && *b.Name == "" {
+		err = validation.AddError(err, "name", errors.New("name should not be empty"))
+	}
 
-	return validation.Errors{
-		"name": validation.Validate(*b.Name, validation.Required, validation.Length(1, 64)),
-	}.Filter()
+	return err
 }
 
 // BoardService represents a service for managing boards.

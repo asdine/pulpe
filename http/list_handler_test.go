@@ -85,7 +85,7 @@ func testListHandler_CreateList_ErrValidation(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "validation error", "fields": {"name": "cannot be blank", "boardID": "cannot be blank"}}`, w.Body.String())
+	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"], "boardID": ["non zero value required"]}}`, w.Body.String())
 }
 
 func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error) func(*testing.T) {

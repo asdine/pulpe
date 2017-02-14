@@ -19,10 +19,10 @@ func TestBoardCreate_Validate(t *testing.T) {
 
 	t.Run("NameOnly", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name: "    name   ",
+			Name: "    board name   ",
 		}
 		require.NoError(t, b.Validate())
-		require.Equal(t, "name", b.Name)
+		require.Equal(t, "board name", b.Name)
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
@@ -34,7 +34,7 @@ func TestBoardCreate_Validate(t *testing.T) {
 
 	t.Run("WithSettings", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "name",
+			Name:     "board name",
 			Settings: &raw,
 		}
 		require.NoError(t, b.Validate())
@@ -53,12 +53,12 @@ func TestBoardUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("NameOnly", func(t *testing.T) {
-		name := "   name   "
+		name := "   board name   "
 		b := pulpe.BoardUpdate{
 			Name: &name,
 		}
 		require.NoError(t, b.Validate())
-		require.Equal(t, "name", *b.Name)
+		require.Equal(t, "board name", *b.Name)
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestBoardUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("WithSettings", func(t *testing.T) {
-		name := "   name   "
+		name := "   board name   "
 		b := pulpe.BoardUpdate{
 			Name:     &name,
 			Settings: &raw,

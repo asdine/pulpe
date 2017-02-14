@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/blankrobot/pulpe"
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/blankrobot/pulpe/validation"
 )
 
 // HTTP errors
@@ -118,11 +118,11 @@ func Error(w http.ResponseWriter, err error, code int, logger *log.Logger) {
 	w.WriteHeader(code)
 
 	enc := json.NewEncoder(w)
-	switch e := err.(type) {
-	case validation.Errors:
+	switch {
+	case validation.IsError(err):
 		err = enc.Encode(&validationErrorResponse{
 			Err:    "validation error",
-			Fields: e,
+			Fields: err,
 		})
 	default:
 		err = enc.Encode(&errorResponse{Err: err.Error()})
@@ -140,8 +140,8 @@ type errorResponse struct {
 
 // validationErrorResponse is used for validation errors.
 type validationErrorResponse struct {
-	Err    string            `json:"err,omitempty"`
-	Fields validation.Errors `json:"fields"`
+	Err    string `json:"err,omitempty"`
+	Fields error  `json:"fields"`
 }
 
 // NotFound writes an API error message to the response.

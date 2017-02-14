@@ -4,8 +4,7 @@ import (
 	"strings"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/blankrobot/pulpe/validation"
 )
 
 // ListID represents a List identifier.
@@ -22,34 +21,31 @@ type List struct {
 
 // ListCreate is used to create a List.
 type ListCreate struct {
-	BoardID BoardID `json:"boardID"`
-	Name    string  `json:"name"`
+	BoardID BoardID `json:"boardID" valid:"required,stringlength(1|64),alphanum"`
+	Name    string  `json:"name" valid:"required,stringlength(1|64)"`
 }
 
 // Validate list creation payload.
 func (l *ListCreate) Validate(s Session) error {
-	errs := make(validation.Errors)
+	verr := validation.Validate(l)
 
-	// validate boardID existence.
-	err := validation.Validate(&l.BoardID, validation.Required, is.Alphanumeric, validation.Length(1, 64))
-	if err == nil {
-		_, err = s.BoardService().Board(l.BoardID)
-		if err != ErrBoardNotFound {
+	// validate boardID existence if boardID is valid.
+	if validation.LastError(verr, "boardID") == nil {
+		_, err := s.BoardService().Board(l.BoardID)
+		if err != nil && err != ErrBoardNotFound {
 			return err
 		}
+		if err == ErrBoardNotFound {
+			verr = validation.AddError(verr, "boardID", err)
+		}
 	}
-	errs["boardID"] = err
 
-	// validate name.
-	l.Name = strings.TrimSpace(l.Name)
-	errs["name"] = validation.Validate(&l.Name, validation.Required, validation.Length(1, 64))
-
-	return errs.Filter()
+	return verr
 }
 
 // ListUpdate is used to update a List.
 type ListUpdate struct {
-	Name *string `json:"name"`
+	Name *string `json:"name" valid:"required,stringlength(1|64)"`
 }
 
 // Validate list update payload.
@@ -58,11 +54,9 @@ func (l *ListUpdate) Validate() error {
 		return nil
 	}
 
-	name := strings.TrimSpace(*l.Name)
+	*l.Name = strings.TrimSpace(*l.Name)
 
-	return validation.Errors{
-		"name": validation.Validate(name, validation.Required, validation.Length(1, 64)),
-	}.Filter()
+	return validation.Validate(l)
 }
 
 // ListService represents a service for managing lists.

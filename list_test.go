@@ -11,7 +11,9 @@ import (
 func TestListCreate_Validate(t *testing.T) {
 	c := mock.NewClient()
 	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
-		require.Equal(t, "XXX", string(id))
+		if id != "XXX" {
+			return nil, pulpe.ErrBoardNotFound
+		}
 		return new(pulpe.Board), nil
 	}
 
@@ -23,7 +25,7 @@ func TestListCreate_Validate(t *testing.T) {
 
 	t.Run("NameOnly", func(t *testing.T) {
 		l := pulpe.ListCreate{
-			Name: "name",
+			Name: "list name",
 		}
 		require.Error(t, l.Validate(c.Connect()))
 	})
@@ -38,15 +40,23 @@ func TestListCreate_Validate(t *testing.T) {
 
 	t.Run("Valid", func(t *testing.T) {
 		l := pulpe.ListCreate{
-			Name:    "name",
+			Name:    "list name",
 			BoardID: "XXX",
 		}
 		require.NoError(t, l.Validate(c.Connect()))
 	})
+
+	t.Run("UnknownBoard", func(t *testing.T) {
+		l := pulpe.ListCreate{
+			Name:    "list name",
+			BoardID: "ZZZ",
+		}
+		require.Error(t, l.Validate(c.Connect()))
+	})
 }
 
 func TestListUpdate_Validate(t *testing.T) {
-	name := "name"
+	name := "list name"
 	emptyName := ""
 	spaces := "    "
 
@@ -56,7 +66,7 @@ func TestListUpdate_Validate(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Valid name", func(t *testing.T) {
+	t.Run("ValidName", func(t *testing.T) {
 		l := pulpe.ListUpdate{
 			Name: &name,
 		}

@@ -125,6 +125,10 @@ func (s *BoardService) CreateBoard(b *pulpe.BoardCreate) (*pulpe.Board, error) {
 func (s *BoardService) Board(id pulpe.BoardID) (*pulpe.Board, error) {
 	var b Board
 
+	if !bson.IsObjectIdHex(string(id)) {
+		return nil, pulpe.ErrBoardNotFound
+	}
+
 	err := s.session.db.C(boardCol).FindId(bson.ObjectIdHex(string(id))).One(&b)
 	if err != nil {
 		if err == mgo.ErrNotFound {
