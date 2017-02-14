@@ -1,8 +1,8 @@
 hash: 1bc6a0becd1fd2731165c1a99107a64f2efce76bbc65084876f2e6c2df4aa247
-updated: 2017-02-13T22:59:25.510701006+01:00
+updated: 2017-02-14T01:20:34.900075406+01:00
 imports:
 - name: github.com/go-ozzo/ozzo-validation
-  version: 82989da303585d624b3f67e5ee59feae36d3f2ea
+  version: 0125c12cbd372cb9e6b529aa05266b9f31461cba
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/julienschmidt/httprouter

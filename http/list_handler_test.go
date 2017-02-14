@@ -16,6 +16,7 @@ import (
 func TestListHandler_CreateList(t *testing.T) {
 	t.Run("OK", testListHandler_CreateList_OK)
 	t.Run("ErrInvalidJSON", testListHandler_CreateList_ErrInvalidJSON)
+	t.Run("ErrValidation", testListHandler_CreateList_ErrValidation)
 	t.Run("ErrListIDRequired", testListHandler_CreateList_WithResponse(t, http.StatusBadRequest, pulpe.ErrListIDRequired))
 	t.Run("ErrListBoardIDRequired", testListHandler_CreateList_WithResponse(t, http.StatusBadRequest, pulpe.ErrListBoardIDRequired))
 	t.Run("ErrListExists", testListHandler_CreateList_WithResponse(t, http.StatusConflict, pulpe.ErrListExists))
@@ -70,6 +71,16 @@ func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
 	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
 }
 
+func testListHandler_CreateList_ErrValidation(t *testing.T) {
+	h := pulpeHttp.NewHandler(mock.NewClient())
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{}`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	require.JSONEq(t, `{"err": "validation error", "fields": {"name": "cannot be blank", "boardID": "cannot be blank"}}`, w.Body.String())
+}
+
 func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
@@ -81,7 +92,7 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{}`)))
+		r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{"name": "name", "boardID": "boardID"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 	}
@@ -183,6 +194,7 @@ func TestListHandler_UpdateList(t *testing.T) {
 	t.Run("ErrInvalidJSON", testListHandler_UpdateList_ErrInvalidJSON)
 	t.Run("Not found", testListHandler_UpdateList_NotFound)
 	t.Run("Internal error", testListHandler_UpdateList_InternalError)
+	t.Run("Validation error", testListHandler_UpdateList_ValidationError)
 }
 
 func testListHandler_UpdateList_OK(t *testing.T) {
@@ -263,4 +275,21 @@ func testListHandler_UpdateList_InternalError(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func testListHandler_UpdateList_ValidationError(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	c.ListService.UpdateListFn = func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+		return nil, errors.New("internal error")
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("PATCH", "/v1/lists/XXX", bytes.NewReader([]byte(`{
+    "name": ""
+  }`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+	require.False(t, c.ListService.UpdateListInvoked)
 }

@@ -186,6 +186,8 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		encodeJSON(w, board, http.StatusOK, h.Logger)
 	case pulpe.ErrBoardNotFound:
 		NotFound(w)
+	case pulpe.ErrBoardExists:
+		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}

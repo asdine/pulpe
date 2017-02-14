@@ -203,6 +203,7 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.NotNil(t, other.UpdatedAt)
 		require.Equal(t, "new-name", other.Slug)
 		require.Equal(t, other, updatedBoard)
+
 		// Set zero values.
 		newSettings = []byte("")
 		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
@@ -210,6 +211,13 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, updatedBoard.Settings)
+
+		// Update a single field with the same value.
+		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
+			Name: &newName,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedBoard)
 
 		// Retrieve board and check.
 		other, err = s.Board(board.ID)

@@ -455,6 +455,7 @@ func TestBoardHandler_UpdateBoard(t *testing.T) {
 	t.Run("Not found", testBoardHandler_UpdateBoard_NotFound)
 	t.Run("Validation error", testBoardHandler_UpdateBoard_ValidationError)
 	t.Run("Internal error", testBoardHandler_UpdateBoard_InternalError)
+	t.Run("Board exists", testBoardHandler_UpdateBoard_BoardExists)
 }
 
 func testBoardHandler_UpdateBoard_OK(t *testing.T) {
@@ -531,6 +532,23 @@ func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.False(t, c.BoardService.UpdateBoardInvoked)
+}
+
+func testBoardHandler_UpdateBoard_BoardExists(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+		return nil, pulpe.ErrBoardExists
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("PATCH", "/v1/boards/XXX", bytes.NewReader([]byte(`{
+    "name": "dwdwd"
+  }`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusConflict, w.Code)
+	require.True(t, c.BoardService.UpdateBoardInvoked)
 }
 
 func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {

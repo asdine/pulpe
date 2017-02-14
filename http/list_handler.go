@@ -43,6 +43,12 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 
@@ -94,6 +100,12 @@ func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
 	}
 

@@ -29,6 +29,7 @@ type Board struct {
 func ToMongoBoard(p *pulpe.Board) *Board {
 	var id bson.ObjectId
 
+	// TODO fix non mongo ids.
 	if p.ID == "" {
 		id = bson.NewObjectId()
 		p.ID = pulpe.BoardID(id.Hex())
@@ -171,7 +172,7 @@ func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pul
 	if u.Name != nil {
 		// verifying if the slug already exists.
 		slug := slugify.Slugify(*u.Name)
-		total, err := col.Find(bson.M{"slug": slug}).Limit(1).Count()
+		total, err := col.Find(bson.M{"slug": slug, "_id": bson.M{"$ne": bson.ObjectIdHex(string(id))}}).Limit(1).Count()
 		if err != nil {
 			return nil, err
 		}

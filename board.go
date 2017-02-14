@@ -49,10 +49,10 @@ func (b *BoardUpdate) Validate() error {
 		return nil
 	}
 
-	name := strings.TrimSpace(*b.Name)
+	*b.Name = strings.TrimSpace(*b.Name)
 
 	return validation.Errors{
-		"name": validation.Validate(name, validation.Required, validation.Length(1, 64)),
+		"name": validation.Validate(*b.Name, validation.Required, validation.Length(1, 64)),
 	}.Filter()
 }
 
