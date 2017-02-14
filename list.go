@@ -27,12 +27,24 @@ type ListCreate struct {
 }
 
 // Validate list creation payload.
-func (l *ListCreate) Validate() error {
+func (l *ListCreate) Validate(s Session) error {
+	errs := make(validation.Errors)
+
+	// validate boardID existence.
+	err := validation.Validate(&l.BoardID, validation.Required, is.Alphanumeric, validation.Length(1, 64))
+	if err == nil {
+		_, err = s.BoardService().Board(l.BoardID)
+		if err != ErrBoardNotFound {
+			return err
+		}
+	}
+	errs["boardID"] = err
+
+	// validate name.
 	l.Name = strings.TrimSpace(l.Name)
-	return validation.ValidateStruct(l,
-		validation.Field(&l.BoardID, validation.Required, is.Alphanumeric, validation.Length(1, 64)),
-		validation.Field(&l.Name, validation.Required, validation.Length(1, 64)),
-	)
+	errs["name"] = validation.Validate(&l.Name, validation.Required, validation.Length(1, 64))
+
+	return errs.Filter()
 }
 
 // ListUpdate is used to update a List.

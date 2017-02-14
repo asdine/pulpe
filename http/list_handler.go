@@ -43,14 +43,14 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	err = req.Validate()
+	session := h.Client.Connect()
+	defer session.Close()
+
+	err = req.Validate(session)
 	if err != nil {
 		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
 	}
-
-	session := h.Client.Connect()
-	defer session.Close()
 
 	list, err := session.ListService().CreateList(&req)
 	switch err {

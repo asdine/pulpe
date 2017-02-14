@@ -4,13 +4,20 @@ import (
 	"testing"
 
 	"github.com/blankrobot/pulpe"
+	"github.com/blankrobot/pulpe/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListCreate_Validate(t *testing.T) {
+	c := mock.NewClient()
+	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", string(id))
+		return new(pulpe.Board), nil
+	}
+
 	t.Run("Empty", func(t *testing.T) {
 		var l pulpe.ListCreate
-		err := l.Validate()
+		err := l.Validate(c.Connect())
 		require.Error(t, err)
 	})
 
@@ -18,7 +25,7 @@ func TestListCreate_Validate(t *testing.T) {
 		l := pulpe.ListCreate{
 			Name: "name",
 		}
-		require.Error(t, l.Validate())
+		require.Error(t, l.Validate(c.Connect()))
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
@@ -26,15 +33,15 @@ func TestListCreate_Validate(t *testing.T) {
 			Name:    "      ",
 			BoardID: "    ",
 		}
-		require.Error(t, l.Validate())
+		require.Error(t, l.Validate(c.Connect()))
 	})
 
 	t.Run("Valid", func(t *testing.T) {
 		l := pulpe.ListCreate{
 			Name:    "name",
-			BoardID: "boardID",
+			BoardID: "XXX",
 		}
-		require.NoError(t, l.Validate())
+		require.NoError(t, l.Validate(c.Connect()))
 	})
 }
 

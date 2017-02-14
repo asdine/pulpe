@@ -42,6 +42,11 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		}, nil
 	}
 
+	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+		require.Equal(t, "456", string(id))
+		return new(pulpe.Board), nil
+	}
+
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{
     "boardID": "456",
@@ -57,6 +62,8 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		"name": "Name",
 		"createdAt": `+string(date)+`
   }`, w.Body.String())
+	require.True(t, c.ListService.CreateListInvoked)
+	require.True(t, c.BoardService.BoardInvoked)
 }
 
 func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
@@ -89,6 +96,11 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 		// Mock service.
 		c.ListService.CreateListFn = func(list *pulpe.ListCreate) (*pulpe.List, error) {
 			return nil, err
+		}
+
+		c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+			require.Equal(t, "boardID", string(id))
+			return new(pulpe.Board), nil
 		}
 
 		w := httptest.NewRecorder()
