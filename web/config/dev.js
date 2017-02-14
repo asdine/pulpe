@@ -7,7 +7,7 @@ export default merge(baseConfig, {
 
   output: {
     filename: '[name].js',
-    publicPath: 'http://localhost:8080/'
+    publicPath: '/'
   },
 
   entry: [
@@ -55,10 +55,11 @@ export default merge(baseConfig, {
   devServer: {
     hot: true,
     contentBase: './app/',
-    publicPath: 'http://localhost:8080/',
+    publicPath: '/',
     historyApiFallback: true,
     proxy: {
       '/v1': 'http://localhost:4000'
-    }
+    },
+    host: '0.0.0.0'
   }
 });
