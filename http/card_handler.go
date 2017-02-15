@@ -46,6 +46,12 @@ func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, _ h
 	session := h.Client.Connect()
 	defer session.Close()
 
+	err = req.Validate(session)
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	card, err := session.CardService().CreateCard(&req)
 	switch err {
 	case nil:
@@ -109,6 +115,12 @@ func (h *CardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
 	}
 

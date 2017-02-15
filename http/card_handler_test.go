@@ -20,6 +20,7 @@ func TestCardHandler_CreateCard(t *testing.T) {
 	t.Run("ErrCardListIDRequired", testCardHandler_CreateCard_WithResponse(t, http.StatusBadRequest, pulpe.ErrCardListIDRequired))
 	t.Run("ErrCardBoardIDRequired", testCardHandler_CreateCard_WithResponse(t, http.StatusBadRequest, pulpe.ErrCardBoardIDRequired))
 	t.Run("ErrCardExists", testCardHandler_CreateCard_WithResponse(t, http.StatusConflict, pulpe.ErrCardExists))
+	t.Run("ErrValidation", testCardHandler_CreateCard_ErrValidation)
 	t.Run("ErrInternal", testCardHandler_CreateCard_WithResponse(t, http.StatusInternalServerError, errors.New("unexpected error")))
 }
 
@@ -45,6 +46,16 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 			Description: c.Description,
 			Position:    c.Position,
 		}, nil
+	}
+
+	c.ListService.ListFn = func(id pulpe.ListID) (*pulpe.List, error) {
+		require.Equal(t, "456", string(id))
+		return new(pulpe.List), nil
+	}
+
+	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+		require.Equal(t, "789", string(id))
+		return new(pulpe.Board), nil
 	}
 
 	h := pulpeHttp.NewHandler(c)
@@ -93,11 +104,37 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 			return nil, err
 		}
 
+		c.ListService.ListFn = func(id pulpe.ListID) (*pulpe.List, error) {
+			require.Equal(t, "456", string(id))
+			return new(pulpe.List), nil
+		}
+
+		c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+			require.Equal(t, "789", string(id))
+			return new(pulpe.Board), nil
+		}
+
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/cards", bytes.NewReader([]byte(`{}`)))
+		r, _ := http.NewRequest("POST", "/v1/cards", bytes.NewReader([]byte(`{
+			"listID": "456",
+			"boardID": "789",
+			"name": "name",
+			"description": "description",
+			"position": 1
+		}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 	}
+}
+
+func testCardHandler_CreateCard_ErrValidation(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/v1/cards", bytes.NewReader([]byte(`{}`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestCardHandler_Card(t *testing.T) {
@@ -230,6 +267,7 @@ func TestCardHandler_UpdateCard(t *testing.T) {
 	t.Run("OK", testCardHandler_UpdateCard_OK)
 	t.Run("ErrInvalidJSON", testCardHandler_UpdateCard_ErrInvalidJSON)
 	t.Run("Not found", testCardHandler_UpdateCard_NotFound)
+	t.Run("Validation error", testCardHandler_UpdateCard_ErrValidation)
 	t.Run("Internal error", testCardHandler_UpdateCard_InternalError)
 }
 
@@ -288,6 +326,17 @@ func testCardHandler_UpdateCard_ErrInvalidJSON(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
+}
+
+func testCardHandler_UpdateCard_ErrValidation(t *testing.T) {
+	h := pulpeHttp.NewHandler(mock.NewClient())
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+		"name": ""
+	}`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func testCardHandler_UpdateCard_NotFound(t *testing.T) {
