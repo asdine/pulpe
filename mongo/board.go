@@ -18,7 +18,6 @@ var _ pulpe.BoardService = new(BoardService)
 // Board representation stored in MongoDB.
 type Board struct {
 	ID        bson.ObjectId `bson:"_id"`
-	CreatedAt time.Time     `bson:"createdAt"`
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
 	Name      string        `bson:"name"`
 	Slug      string        `bson:"slug"`
@@ -33,13 +32,13 @@ func ToMongoBoard(p *pulpe.Board) *Board {
 	if p.ID == "" {
 		id = bson.NewObjectId()
 		p.ID = id.Hex()
+		p.CreatedAt = id.Time()
 	} else {
 		id = bson.ObjectIdHex(p.ID)
 	}
 
 	b := Board{
 		ID:        id,
-		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
 		Name:      p.Name,
 		Slug:      p.Slug,
@@ -56,7 +55,7 @@ func ToMongoBoard(p *pulpe.Board) *Board {
 func FromMongoBoard(b *Board) *pulpe.Board {
 	p := pulpe.Board{
 		ID:        b.ID.Hex(),
-		CreatedAt: b.CreatedAt.UTC(),
+		CreatedAt: b.ID.Time(),
 		Name:      b.Name,
 		Slug:      b.Slug,
 		Lists:     []*pulpe.List{},
@@ -110,12 +109,11 @@ func (s *BoardService) CreateBoard(b *pulpe.BoardCreate) (*pulpe.Board, error) {
 	}
 
 	board := pulpe.Board{
-		CreatedAt: s.session.now,
-		Name:      b.Name,
-		Slug:      slug,
-		Lists:     []*pulpe.List{},
-		Cards:     []*pulpe.Card{},
-		Settings:  b.Settings,
+		Name:     b.Name,
+		Slug:     slug,
+		Lists:    []*pulpe.List{},
+		Cards:    []*pulpe.Card{},
+		Settings: b.Settings,
 	}
 
 	return &board, s.session.db.C(boardCol).Insert(ToMongoBoard(&board))

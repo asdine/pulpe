@@ -17,7 +17,6 @@ var _ pulpe.ListService = new(ListService)
 // List representation stored in MongoDB.
 type List struct {
 	ID        bson.ObjectId `bson:"_id"`
-	CreatedAt time.Time     `bson:"createdAt"`
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
 	BoardID   bson.ObjectId `bson:"boardID"`
 	Name      string        `bson:"name"`
@@ -30,13 +29,13 @@ func ToMongoList(p *pulpe.List) *List {
 	if p.ID == "" {
 		id = bson.NewObjectId()
 		p.ID = id.Hex()
+		p.CreatedAt = id.Time()
 	} else {
 		id = bson.ObjectIdHex(p.ID)
 	}
 
 	return &List{
 		ID:        id,
-		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
 		BoardID:   bson.ObjectIdHex(p.BoardID),
 		Name:      p.Name,
@@ -47,7 +46,7 @@ func ToMongoList(p *pulpe.List) *List {
 func FromMongoList(l *List) *pulpe.List {
 	p := pulpe.List{
 		ID:        l.ID.Hex(),
-		CreatedAt: l.CreatedAt,
+		CreatedAt: l.ID.Time(),
 		BoardID:   l.BoardID.Hex(),
 		Name:      l.Name,
 	}

@@ -17,7 +17,6 @@ var _ pulpe.CardService = new(CardService)
 // Card representation stored in MongoDB.
 type Card struct {
 	ID          bson.ObjectId `bson:"_id"`
-	CreatedAt   time.Time     `bson:"createdAt"`
 	UpdatedAt   *time.Time    `bson:"updatedAt,omitempty"`
 	ListID      bson.ObjectId `bson:"listID"`
 	BoardID     bson.ObjectId `bson:"boardID"`
@@ -33,13 +32,13 @@ func ToMongoCard(p *pulpe.Card) *Card {
 	if p.ID == "" {
 		id = bson.NewObjectId()
 		p.ID = id.Hex()
+		p.CreatedAt = id.Time()
 	} else {
 		id = bson.ObjectIdHex(p.ID)
 	}
 
 	return &Card{
 		ID:          id,
-		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
 		ListID:      bson.ObjectIdHex(p.ListID),
 		BoardID:     bson.ObjectIdHex(p.BoardID),
@@ -53,7 +52,7 @@ func ToMongoCard(p *pulpe.Card) *Card {
 func FromMongoCard(c *Card) *pulpe.Card {
 	p := pulpe.Card{
 		ID:          c.ID.Hex(),
-		CreatedAt:   c.CreatedAt.UTC(),
+		CreatedAt:   c.ID.Time(),
 		ListID:      c.ListID.Hex(),
 		BoardID:     c.BoardID.Hex(),
 		Name:        c.Name,
@@ -108,7 +107,6 @@ func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 	}
 
 	card := pulpe.Card{
-		CreatedAt:   s.session.now,
 		BoardID:     c.BoardID,
 		ListID:      c.ListID,
 		Name:        c.Name,
