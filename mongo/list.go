@@ -95,6 +95,10 @@ func (s *ListService) CreateList(l *pulpe.ListCreate) (*pulpe.List, error) {
 func (s *ListService) List(id string) (*pulpe.List, error) {
 	var l List
 
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrListNotFound
+	}
+
 	err := s.session.db.C(listCol).FindId(bson.ObjectIdHex(id)).One(&l)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -109,6 +113,10 @@ func (s *ListService) List(id string) (*pulpe.List, error) {
 
 // DeleteList deletes a List by ID.
 func (s *ListService) DeleteList(id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return pulpe.ErrListNotFound
+	}
+
 	err := s.session.db.C(listCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrListNotFound
@@ -119,12 +127,20 @@ func (s *ListService) DeleteList(id string) error {
 
 // DeleteListsByBoardID deletes all the lists of a board.
 func (s *ListService) DeleteListsByBoardID(boardID string) error {
+	if !bson.IsObjectIdHex(boardID) {
+		return pulpe.ErrBoardNotFound
+	}
+
 	_, err := s.session.db.C(listCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
 	return err
 }
 
 // UpdateList updates a List by ID.
 func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrListNotFound
+	}
+
 	col := s.session.db.C(listCol)
 
 	patch := make(bson.M)
@@ -156,6 +172,10 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 // ListsByBoard returns all the lists of a given board.
 func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
 	var lists []List
+
+	if !bson.IsObjectIdHex(boardID) {
+		return nil, pulpe.ErrBoardNotFound
+	}
 
 	// TODO set a limit
 	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&lists)

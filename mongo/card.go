@@ -121,6 +121,10 @@ func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 func (s *CardService) Card(id string) (*pulpe.Card, error) {
 	var c Card
 
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrCardNotFound
+	}
+
 	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(id)).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -135,6 +139,10 @@ func (s *CardService) Card(id string) (*pulpe.Card, error) {
 
 // DeleteCard deletes a Card by ID.
 func (s *CardService) DeleteCard(id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return pulpe.ErrCardNotFound
+	}
+
 	err := s.session.db.C(cardCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrCardNotFound
@@ -145,18 +153,30 @@ func (s *CardService) DeleteCard(id string) error {
 
 // DeleteCardsByListID deletes all the cards of a list.
 func (s *CardService) DeleteCardsByListID(listID string) error {
+	if !bson.IsObjectIdHex(listID) {
+		return pulpe.ErrListNotFound
+	}
+
 	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(listID)})
 	return err
 }
 
 // DeleteCardsByBoardID deletes all the cards of a board.
 func (s *CardService) DeleteCardsByBoardID(boardID string) error {
+	if !bson.IsObjectIdHex(boardID) {
+		return pulpe.ErrBoardNotFound
+	}
+
 	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
 	return err
 }
 
 // UpdateCard updates a Card by ID.
 func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrCardNotFound
+	}
+
 	col := s.session.db.C(cardCol)
 
 	patch := make(bson.M)
@@ -196,6 +216,10 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 // CardsByBoard returns Cards by board ID.
 func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
 	var cards []Card
+
+	if !bson.IsObjectIdHex(boardID) {
+		return nil, pulpe.ErrCardNotFound
+	}
 
 	// TODO set a limit
 	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&cards)

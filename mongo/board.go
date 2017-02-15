@@ -158,6 +158,10 @@ func (s *BoardService) Boards() ([]*pulpe.Board, error) {
 
 // DeleteBoard deletes a Board by ID, and all of its lists and cards .
 func (s *BoardService) DeleteBoard(id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return pulpe.ErrBoardNotFound
+	}
+
 	err := s.session.db.C(boardCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrBoardNotFound
@@ -168,6 +172,10 @@ func (s *BoardService) DeleteBoard(id string) error {
 
 // UpdateBoard updates a Board by ID.
 func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrBoardNotFound
+	}
+
 	col := s.session.db.C(boardCol)
 
 	patch := make(bson.M)
