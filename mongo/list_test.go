@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newListID() pulpe.ListID {
-	return pulpe.ListID(bson.NewObjectId().Hex())
+func newListID() string {
+	return bson.NewObjectId().Hex()
 }
 
 func TestListService_CreateList(t *testing.T) {

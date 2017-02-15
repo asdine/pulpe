@@ -7,19 +7,19 @@ var _ pulpe.BoardService = new(BoardService)
 
 // BoardService is a mock service that runs provided functions. Useful for testing.
 type BoardService struct {
-	CreateBoardFn      func(Board *pulpe.BoardCreate) (*pulpe.Board, error)
+	CreateBoardFn      func(board *pulpe.BoardCreate) (*pulpe.Board, error)
 	CreateBoardInvoked bool
 
-	BoardFn      func(id pulpe.BoardID) (*pulpe.Board, error)
+	BoardFn      func(id string) (*pulpe.Board, error)
 	BoardInvoked bool
 
 	BoardsFn      func() ([]*pulpe.Board, error)
 	BoardsInvoked bool
 
-	DeleteBoardFn      func(id pulpe.BoardID) error
+	DeleteBoardFn      func(id string) error
 	DeleteBoardInvoked bool
 
-	UpdateBoardFn      func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error)
+	UpdateBoardFn      func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error)
 	UpdateBoardInvoked bool
 }
 
@@ -30,7 +30,7 @@ func (s *BoardService) CreateBoard(Board *pulpe.BoardCreate) (*pulpe.Board, erro
 }
 
 // Board runs BoardFn and sets BoardInvoked to true when invoked.
-func (s *BoardService) Board(id pulpe.BoardID) (*pulpe.Board, error) {
+func (s *BoardService) Board(id string) (*pulpe.Board, error) {
 	s.BoardInvoked = true
 	return s.BoardFn(id)
 }
@@ -42,13 +42,13 @@ func (s *BoardService) Boards() ([]*pulpe.Board, error) {
 }
 
 // DeleteBoard runs DeleteBoardFn and sets DeleteBoardInvoked to true when invoked.
-func (s *BoardService) DeleteBoard(id pulpe.BoardID) error {
+func (s *BoardService) DeleteBoard(id string) error {
 	s.DeleteBoardInvoked = true
 	return s.DeleteBoardFn(id)
 }
 
 // UpdateBoard runs UpdateBoardFn and sets UpdateBoardInvoked to true when invoked.
-func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 	s.UpdateBoardInvoked = true
 	return s.UpdateBoardFn(id, u)
 }

@@ -32,9 +32,9 @@ func ToMongoBoard(p *pulpe.Board) *Board {
 	// TODO fix non mongo ids.
 	if p.ID == "" {
 		id = bson.NewObjectId()
-		p.ID = pulpe.BoardID(id.Hex())
+		p.ID = id.Hex()
 	} else {
-		id = bson.ObjectIdHex(string(p.ID))
+		id = bson.ObjectIdHex(p.ID)
 	}
 
 	b := Board{
@@ -55,7 +55,7 @@ func ToMongoBoard(p *pulpe.Board) *Board {
 // FromMongoBoard creates a pulpe board from a mongo board.
 func FromMongoBoard(b *Board) *pulpe.Board {
 	p := pulpe.Board{
-		ID:        pulpe.BoardID(b.ID.Hex()),
+		ID:        b.ID.Hex(),
 		CreatedAt: b.CreatedAt.UTC(),
 		Name:      b.Name,
 		Slug:      b.Slug,
@@ -122,14 +122,14 @@ func (s *BoardService) CreateBoard(b *pulpe.BoardCreate) (*pulpe.Board, error) {
 }
 
 // Board returns a Board by ID.
-func (s *BoardService) Board(id pulpe.BoardID) (*pulpe.Board, error) {
+func (s *BoardService) Board(id string) (*pulpe.Board, error) {
 	var b Board
 
-	if !bson.IsObjectIdHex(string(id)) {
+	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrBoardNotFound
 	}
 
-	err := s.session.db.C(boardCol).FindId(bson.ObjectIdHex(string(id))).One(&b)
+	err := s.session.db.C(boardCol).FindId(bson.ObjectIdHex(id)).One(&b)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrBoardNotFound
@@ -159,8 +159,8 @@ func (s *BoardService) Boards() ([]*pulpe.Board, error) {
 }
 
 // DeleteBoard deletes a Board by ID, and all of its lists and cards .
-func (s *BoardService) DeleteBoard(id pulpe.BoardID) error {
-	err := s.session.db.C(boardCol).RemoveId(bson.ObjectIdHex(string(id)))
+func (s *BoardService) DeleteBoard(id string) error {
+	err := s.session.db.C(boardCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrBoardNotFound
 	}
@@ -169,14 +169,14 @@ func (s *BoardService) DeleteBoard(id pulpe.BoardID) error {
 }
 
 // UpdateBoard updates a Board by ID.
-func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 	col := s.session.db.C(boardCol)
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		// verifying if the slug already exists.
 		slug := slugify.Slugify(*u.Name)
-		total, err := col.Find(bson.M{"slug": slug, "_id": bson.M{"$ne": bson.ObjectIdHex(string(id))}}).Limit(1).Count()
+		total, err := col.Find(bson.M{"slug": slug, "_id": bson.M{"$ne": bson.ObjectIdHex(id)}}).Limit(1).Count()
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +198,7 @@ func (s *BoardService) UpdateBoard(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pul
 	}
 
 	err := col.UpdateId(
-		bson.ObjectIdHex(string(id)),
+		bson.ObjectIdHex(id),
 		bson.M{
 			"$set":         patch,
 			"$currentDate": bson.M{"updatedAt": true},

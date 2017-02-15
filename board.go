@@ -9,12 +9,9 @@ import (
 	"github.com/blankrobot/pulpe/validation"
 )
 
-// BoardID represents a Board identifier.
-type BoardID string
-
 // A Board is a container of lists.
 type Board struct {
-	ID        BoardID          `json:"id"`
+	ID        string           `json:"id"`
 	CreatedAt time.Time        `json:"createdAt"`
 	UpdatedAt *time.Time       `json:"updatedAt,omitempty"`
 	Name      string           `json:"name"`
@@ -59,8 +56,8 @@ func (b *BoardUpdate) Validate() error {
 // BoardService represents a service for managing boards.
 type BoardService interface {
 	CreateBoard(board *BoardCreate) (*Board, error)
-	Board(id BoardID) (*Board, error)
+	Board(id string) (*Board, error)
 	Boards() ([]*Board, error)
-	DeleteBoard(id BoardID) error
-	UpdateBoard(id BoardID, u *BoardUpdate) (*Board, error)
+	DeleteBoard(id string) error
+	UpdateBoard(id string, u *BoardUpdate) (*Board, error)
 }

@@ -10,14 +10,14 @@ import (
 
 func TestCardCreate_Validate(t *testing.T) {
 	c := mock.NewClient()
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		if id != "XXX" {
 			return nil, pulpe.ErrBoardNotFound
 		}
 		return new(pulpe.Board), nil
 	}
 
-	c.ListService.ListFn = func(id pulpe.ListID) (*pulpe.List, error) {
+	c.ListService.ListFn = func(id string) (*pulpe.List, error) {
 		if id != "XXX" {
 			return nil, pulpe.ErrListNotFound
 		}

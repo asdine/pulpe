@@ -8,16 +8,13 @@ import (
 	"github.com/blankrobot/pulpe/validation"
 )
 
-// CardID represents a Card identifier.
-type CardID string
-
 // A Card is a unit of information that is stored in a list.
 type Card struct {
-	ID          CardID     `json:"id"`
+	ID          string     `json:"id"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
-	ListID      ListID     `json:"listID"`
-	BoardID     BoardID    `json:"boardID"`
+	ListID      string     `json:"listID"`
+	BoardID     string     `json:"boardID"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Position    float64    `json:"position"`
@@ -25,8 +22,8 @@ type Card struct {
 
 // CardCreate is used to create a Card.
 type CardCreate struct {
-	ListID      ListID  `json:"listID" valid:"required,stringlength(1|64),alphanum"`
-	BoardID     BoardID `json:"boardID" valid:"required,stringlength(1|64),alphanum"`
+	ListID      string  `json:"listID" valid:"required,stringlength(1|64),alphanum"`
+	BoardID     string  `json:"boardID" valid:"required,stringlength(1|64),alphanum"`
 	Name        string  `json:"name" valid:"required,stringlength(1|64)"`
 	Description string  `json:"description" valid:"stringlength(1|100000)"`
 	Position    float64 `json:"position"`
@@ -98,10 +95,10 @@ func (c *CardUpdate) Validate() error {
 // CardService represents a service for managing cards.
 type CardService interface {
 	CreateCard(card *CardCreate) (*Card, error)
-	Card(id CardID) (*Card, error)
-	DeleteCard(id CardID) error
-	DeleteCardsByListID(listID ListID) error
-	DeleteCardsByBoardID(boardID BoardID) error
-	UpdateCard(id CardID, u *CardUpdate) (*Card, error)
-	CardsByBoard(boardID BoardID) ([]*Card, error)
+	Card(id string) (*Card, error)
+	DeleteCard(id string) error
+	DeleteCardsByListID(listID string) error
+	DeleteCardsByBoardID(boardID string) error
+	UpdateCard(id string, u *CardUpdate) (*Card, error)
+	CardsByBoard(boardID string) ([]*Card, error)
 }

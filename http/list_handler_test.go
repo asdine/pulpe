@@ -42,7 +42,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "456", string(id))
 		return new(pulpe.Board), nil
 	}
@@ -98,7 +98,7 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 			return nil, err
 		}
 
-		c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+		c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 			require.Equal(t, "boardID", string(id))
 			return new(pulpe.Board), nil
 		}
@@ -122,12 +122,12 @@ func testListHandler_DeleteList_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.ListService.DeleteListFn = func(id pulpe.ListID) error {
+	c.ListService.DeleteListFn = func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
 
-	c.CardService.DeleteCardsByListIDFn = func(id pulpe.ListID) error {
+	c.CardService.DeleteCardsByListIDFn = func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
@@ -146,7 +146,7 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.ListService.DeleteListFn = func(id pulpe.ListID) error {
+	c.ListService.DeleteListFn = func(id string) error {
 		return pulpe.ErrListNotFound
 	}
 
@@ -166,7 +166,7 @@ func testListHandler_DeleteList_InternalErrorOnDeleteList(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.ListService.DeleteListFn = func(id pulpe.ListID) error {
+	c.ListService.DeleteListFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 
@@ -184,11 +184,11 @@ func testListHandler_DeleteList_InternalErrorOnDeleteCardsByListID(t *testing.T)
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.ListService.DeleteListFn = func(id pulpe.ListID) error {
+	c.ListService.DeleteListFn = func(id string) error {
 		return nil
 	}
 
-	c.CardService.DeleteCardsByListIDFn = func(id pulpe.ListID) error {
+	c.CardService.DeleteCardsByListIDFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 
@@ -214,7 +214,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.ListService.UpdateListFn = func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
 		require.NotNil(t, u.Name)
 		require.Equal(t, "new name", *u.Name)
@@ -259,7 +259,7 @@ func testListHandler_UpdateList_NotFound(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.ListService.UpdateListFn = func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, pulpe.ErrListNotFound
 	}
 
@@ -277,7 +277,7 @@ func testListHandler_UpdateList_InternalError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.ListService.UpdateListFn = func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, errors.New("internal error")
 	}
 
@@ -293,7 +293,7 @@ func testListHandler_UpdateList_ValidationError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.ListService.UpdateListFn = func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, errors.New("internal error")
 	}
 

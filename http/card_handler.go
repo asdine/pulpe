@@ -72,7 +72,7 @@ func (h *CardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 	session := h.Client.Connect()
 	defer session.Close()
 
-	card, err := session.CardService().Card(pulpe.CardID(id))
+	card, err := session.CardService().Card(id)
 	if err != nil {
 		if err == pulpe.ErrCardNotFound {
 			NotFound(w)
@@ -93,7 +93,7 @@ func (h *CardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, p
 	session := h.Client.Connect()
 	defer session.Close()
 
-	err := session.CardService().DeleteCard(pulpe.CardID(id))
+	err := session.CardService().DeleteCard(id)
 	if err != nil {
 		if err == pulpe.ErrCardNotFound {
 			NotFound(w)
@@ -127,7 +127,7 @@ func (h *CardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 	session := h.Client.Connect()
 	defer session.Close()
 
-	card, err := session.CardService().UpdateCard(pulpe.CardID(id), &req)
+	card, err := session.CardService().UpdateCard(id, &req)
 	switch err {
 	case nil:
 		encodeJSON(w, card, http.StatusOK, h.Logger)

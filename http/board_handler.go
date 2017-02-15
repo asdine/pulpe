@@ -95,7 +95,7 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	defer session.Close()
 
 	// Get the board
-	board, err := session.BoardService().Board(pulpe.BoardID(id))
+	board, err := session.BoardService().Board(id)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			NotFound(w)
@@ -111,14 +111,14 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// Get the board's lists
-	board.Lists, err = session.ListService().ListsByBoard(pulpe.BoardID(id))
+	board.Lists, err = session.ListService().ListsByBoard(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
 	}
 
 	// Get the board's cards
-	board.Cards, err = session.CardService().CardsByBoard(pulpe.BoardID(id))
+	board.Cards, err = session.CardService().CardsByBoard(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -134,7 +134,7 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 	session := h.Client.Connect()
 	defer session.Close()
 
-	err := session.BoardService().DeleteBoard(pulpe.BoardID(id))
+	err := session.BoardService().DeleteBoard(id)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			NotFound(w)
@@ -145,13 +145,13 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	err = session.ListService().DeleteListsByBoardID(pulpe.BoardID(id))
+	err = session.ListService().DeleteListsByBoardID(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
 	}
 
-	err = session.CardService().DeleteCardsByBoardID(pulpe.BoardID(id))
+	err = session.CardService().DeleteCardsByBoardID(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -180,7 +180,7 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 	session := h.Client.Connect()
 	defer session.Close()
 
-	board, err := session.BoardService().UpdateBoard(pulpe.BoardID(id), &req)
+	board, err := session.BoardService().UpdateBoard(id, &req)
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusOK, h.Logger)

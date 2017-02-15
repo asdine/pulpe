@@ -196,17 +196,17 @@ func testBoardHandler_Board_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
 		return new(pulpe.Board), nil
 	}
 
-	c.ListService.ListsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.List, error) {
+	c.ListService.ListsByBoardFn = func(id string) ([]*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
 		return nil, nil
 	}
 
-	c.CardService.CardsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.Card, error) {
+	c.CardService.CardsByBoardFn = func(id string) ([]*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
 		return nil, nil
 	}
@@ -228,7 +228,7 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		return nil, pulpe.ErrBoardNotFound
 	}
 
@@ -247,7 +247,7 @@ func testBoardHandler_Board_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -264,12 +264,12 @@ func testBoardHandler_Board_ListInternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
 		return &pulpe.Board{ID: id, Name: "name", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
 	}
 
-	c.ListService.ListsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.List, error) {
+	c.ListService.ListsByBoardFn = func(id string) ([]*pulpe.List, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -287,17 +287,17 @@ func testBoardHandler_Board_CardInternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
 		return new(pulpe.Board), nil
 	}
 
-	c.ListService.ListsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.List, error) {
+	c.ListService.ListsByBoardFn = func(id string) ([]*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
 		return []*pulpe.List{}, nil
 	}
 
-	c.CardService.CardsByBoardFn = func(id pulpe.BoardID) ([]*pulpe.Card, error) {
+	c.CardService.CardsByBoardFn = func(id string) ([]*pulpe.Card, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -324,7 +324,7 @@ func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	byBoardID := func(id pulpe.BoardID) error {
+	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
@@ -348,11 +348,11 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.DeleteBoardFn = func(id pulpe.BoardID) error {
+	c.BoardService.DeleteBoardFn = func(id string) error {
 		return pulpe.ErrBoardNotFound
 	}
 
-	byBoardID := func(id pulpe.BoardID) error {
+	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
@@ -376,11 +376,11 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.DeleteBoardFn = func(id pulpe.BoardID) error {
+	c.BoardService.DeleteBoardFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 
-	byBoardID := func(id pulpe.BoardID) error {
+	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
@@ -402,13 +402,13 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteListsByBoardID(t *testing
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	byBoardID := func(id pulpe.BoardID) error {
+	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
 
 	c.BoardService.DeleteBoardFn = byBoardID
-	c.ListService.DeleteListsByBoardIDFn = func(id pulpe.BoardID) error {
+	c.ListService.DeleteListsByBoardIDFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 	c.CardService.DeleteCardsByBoardIDFn = byBoardID
@@ -428,14 +428,14 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteCardsByBoardID(t *testing
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	byBoardID := func(id pulpe.BoardID) error {
+	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
 
 	c.BoardService.DeleteBoardFn = byBoardID
 	c.ListService.DeleteListsByBoardIDFn = byBoardID
-	c.CardService.DeleteCardsByBoardIDFn = func(id pulpe.BoardID) error {
+	c.CardService.DeleteCardsByBoardIDFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 
@@ -463,7 +463,7 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
 		require.NotNil(t, u.Name)
 		require.Equal(t, "new name", *u.Name)
@@ -502,7 +502,7 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, pulpe.ErrBoardNotFound
 	}
 
@@ -521,7 +521,7 @@ func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, errors.New("internal error")
 	}
 
@@ -538,7 +538,7 @@ func testBoardHandler_UpdateBoard_BoardExists(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, pulpe.ErrBoardExists
 	}
 
@@ -555,7 +555,7 @@ func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.BoardService.UpdateBoardFn = func(id pulpe.BoardID, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
+	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, errors.New("internal error")
 	}
 

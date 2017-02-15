@@ -7,22 +7,19 @@ import (
 	"github.com/blankrobot/pulpe/validation"
 )
 
-// ListID represents a List identifier.
-type ListID string
-
 // A List is a container of cards.
 type List struct {
-	ID        ListID     `json:"id"`
+	ID        string     `json:"id"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-	BoardID   BoardID    `json:"boardID"`
+	BoardID   string     `json:"boardID"`
 	Name      string     `json:"name"`
 }
 
 // ListCreate is used to create a List.
 type ListCreate struct {
-	BoardID BoardID `json:"boardID" valid:"required,stringlength(1|64),alphanum"`
-	Name    string  `json:"name" valid:"required,stringlength(1|64)"`
+	BoardID string `json:"boardID" valid:"required,stringlength(1|64),alphanum"`
+	Name    string `json:"name" valid:"required,stringlength(1|64)"`
 }
 
 // Validate list creation payload.
@@ -62,9 +59,9 @@ func (l *ListUpdate) Validate() error {
 // ListService represents a service for managing lists.
 type ListService interface {
 	CreateList(list *ListCreate) (*List, error)
-	List(id ListID) (*List, error)
-	DeleteList(id ListID) error
-	DeleteListsByBoardID(boardID BoardID) error
-	UpdateList(id ListID, u *ListUpdate) (*List, error)
-	ListsByBoard(boardID BoardID) ([]*List, error)
+	List(id string) (*List, error)
+	DeleteList(id string) error
+	DeleteListsByBoardID(boardID string) error
+	UpdateList(id string, u *ListUpdate) (*List, error)
+	ListsByBoard(boardID string) ([]*List, error)
 }

@@ -29,16 +29,16 @@ func ToMongoList(p *pulpe.List) *List {
 
 	if p.ID == "" {
 		id = bson.NewObjectId()
-		p.ID = pulpe.ListID(id.Hex())
+		p.ID = id.Hex()
 	} else {
-		id = bson.ObjectIdHex(string(p.ID))
+		id = bson.ObjectIdHex(p.ID)
 	}
 
 	return &List{
 		ID:        id,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
-		BoardID:   bson.ObjectIdHex(string(p.BoardID)),
+		BoardID:   bson.ObjectIdHex(p.BoardID),
 		Name:      p.Name,
 	}
 }
@@ -46,9 +46,9 @@ func ToMongoList(p *pulpe.List) *List {
 // FromMongoList creates a pulpe list from a mongo list.
 func FromMongoList(l *List) *pulpe.List {
 	p := pulpe.List{
-		ID:        pulpe.ListID(l.ID.Hex()),
+		ID:        l.ID.Hex(),
 		CreatedAt: l.CreatedAt,
-		BoardID:   pulpe.BoardID(l.BoardID.Hex()),
+		BoardID:   l.BoardID.Hex(),
 		Name:      l.Name,
 	}
 
@@ -93,10 +93,10 @@ func (s *ListService) CreateList(l *pulpe.ListCreate) (*pulpe.List, error) {
 }
 
 // List returns a List by ID.
-func (s *ListService) List(id pulpe.ListID) (*pulpe.List, error) {
+func (s *ListService) List(id string) (*pulpe.List, error) {
 	var l List
 
-	err := s.session.db.C(listCol).FindId(bson.ObjectIdHex(string(id))).One(&l)
+	err := s.session.db.C(listCol).FindId(bson.ObjectIdHex(id)).One(&l)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrListNotFound
@@ -109,8 +109,8 @@ func (s *ListService) List(id pulpe.ListID) (*pulpe.List, error) {
 }
 
 // DeleteList deletes a List by ID.
-func (s *ListService) DeleteList(id pulpe.ListID) error {
-	err := s.session.db.C(listCol).RemoveId(bson.ObjectIdHex(string(id)))
+func (s *ListService) DeleteList(id string) error {
+	err := s.session.db.C(listCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrListNotFound
 	}
@@ -119,13 +119,13 @@ func (s *ListService) DeleteList(id pulpe.ListID) error {
 }
 
 // DeleteListsByBoardID deletes all the lists of a board.
-func (s *ListService) DeleteListsByBoardID(boardID pulpe.BoardID) error {
-	_, err := s.session.db.C(listCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(string(boardID))})
+func (s *ListService) DeleteListsByBoardID(boardID string) error {
+	_, err := s.session.db.C(listCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
 	return err
 }
 
 // UpdateList updates a List by ID.
-func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 	col := s.session.db.C(listCol)
 
 	patch := make(bson.M)
@@ -138,7 +138,7 @@ func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.L
 	}
 
 	err := col.UpdateId(
-		bson.ObjectIdHex(string(id)),
+		bson.ObjectIdHex(id),
 		bson.M{
 			"$set":         patch,
 			"$currentDate": bson.M{"updatedAt": true},
@@ -155,11 +155,11 @@ func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.L
 }
 
 // ListsByBoard returns all the lists of a given board.
-func (s *ListService) ListsByBoard(boardID pulpe.BoardID) ([]*pulpe.List, error) {
+func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
 	var lists []List
 
 	// TODO set a limit
-	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(string(boardID))}).All(&lists)
+	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&lists)
 	if err != nil {
 		return nil, err
 	}

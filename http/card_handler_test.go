@@ -48,12 +48,12 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.ListService.ListFn = func(id pulpe.ListID) (*pulpe.List, error) {
+	c.ListService.ListFn = func(id string) (*pulpe.List, error) {
 		require.Equal(t, "456", string(id))
 		return new(pulpe.List), nil
 	}
 
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "789", string(id))
 		return new(pulpe.Board), nil
 	}
@@ -104,12 +104,12 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 			return nil, err
 		}
 
-		c.ListService.ListFn = func(id pulpe.ListID) (*pulpe.List, error) {
+		c.ListService.ListFn = func(id string) (*pulpe.List, error) {
 			require.Equal(t, "456", string(id))
 			return new(pulpe.List), nil
 		}
 
-		c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+		c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 			require.Equal(t, "789", string(id))
 			return new(pulpe.Board), nil
 		}
@@ -148,7 +148,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.CardFn = func(id pulpe.CardID) (*pulpe.Card, error) {
+	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
 		return &pulpe.Card{ID: id, Name: "name", Description: "description", Position: 2 << 3, ListID: "YYY", BoardID: "ZZZ", CreatedAt: mock.Now, UpdatedAt: &mock.Now}, nil
 	}
@@ -177,7 +177,7 @@ func testCardHandler_Card_NotFound(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.CardFn = func(id pulpe.CardID) (*pulpe.Card, error) {
+	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
 		return nil, pulpe.ErrCardNotFound
 	}
 
@@ -195,7 +195,7 @@ func testCardHandler_Card_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.CardFn = func(id pulpe.CardID) (*pulpe.Card, error) {
+	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -217,7 +217,7 @@ func testCardHandler_DeleteCard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.DeleteCardFn = func(id pulpe.CardID) error {
+	c.CardService.DeleteCardFn = func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
 	}
@@ -234,7 +234,7 @@ func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.DeleteCardFn = func(id pulpe.CardID) error {
+	c.CardService.DeleteCardFn = func(id string) error {
 		return pulpe.ErrCardNotFound
 	}
 
@@ -252,7 +252,7 @@ func testCardHandler_DeleteCard_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.DeleteCardFn = func(id pulpe.CardID) error {
+	c.CardService.DeleteCardFn = func(id string) error {
 		return errors.New("unexpected error")
 	}
 
@@ -276,7 +276,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.CardService.UpdateCardFn = func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
 		require.NotNil(t, u.Name)
 		require.Equal(t, "new name", *u.Name)
@@ -343,7 +343,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.CardService.UpdateCardFn = func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		return nil, pulpe.ErrCardNotFound
 	}
 
@@ -362,7 +362,7 @@ func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.CardService.UpdateCardFn = func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		return nil, errors.New("internal error")
 	}
 

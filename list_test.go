@@ -10,7 +10,7 @@ import (
 
 func TestListCreate_Validate(t *testing.T) {
 	c := mock.NewClient()
-	c.BoardService.BoardFn = func(id pulpe.BoardID) (*pulpe.Board, error) {
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		if id != "XXX" {
 			return nil, pulpe.ErrBoardNotFound
 		}

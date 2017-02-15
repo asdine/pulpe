@@ -32,17 +32,17 @@ func ToMongoCard(p *pulpe.Card) *Card {
 
 	if p.ID == "" {
 		id = bson.NewObjectId()
-		p.ID = pulpe.CardID(id.Hex())
+		p.ID = id.Hex()
 	} else {
-		id = bson.ObjectIdHex(string(p.ID))
+		id = bson.ObjectIdHex(p.ID)
 	}
 
 	return &Card{
 		ID:          id,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
-		ListID:      bson.ObjectIdHex(string(p.ListID)),
-		BoardID:     bson.ObjectIdHex(string(p.BoardID)),
+		ListID:      bson.ObjectIdHex(p.ListID),
+		BoardID:     bson.ObjectIdHex(p.BoardID),
 		Name:        p.Name,
 		Description: p.Description,
 		Position:    p.Position,
@@ -52,10 +52,10 @@ func ToMongoCard(p *pulpe.Card) *Card {
 // FromMongoCard creates a pulpe card from a mongo card.
 func FromMongoCard(c *Card) *pulpe.Card {
 	p := pulpe.Card{
-		ID:          pulpe.CardID(c.ID.Hex()),
+		ID:          c.ID.Hex(),
 		CreatedAt:   c.CreatedAt.UTC(),
-		ListID:      pulpe.ListID(c.ListID.Hex()),
-		BoardID:     pulpe.BoardID(c.BoardID.Hex()),
+		ListID:      c.ListID.Hex(),
+		BoardID:     c.BoardID.Hex(),
 		Name:        c.Name,
 		Description: c.Description,
 		Position:    c.Position,
@@ -120,10 +120,10 @@ func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
 }
 
 // Card returns a Card by ID.
-func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
+func (s *CardService) Card(id string) (*pulpe.Card, error) {
 	var c Card
 
-	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(string(id))).One(&c)
+	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(id)).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrCardNotFound
@@ -136,8 +136,8 @@ func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
 }
 
 // DeleteCard deletes a Card by ID.
-func (s *CardService) DeleteCard(id pulpe.CardID) error {
-	err := s.session.db.C(cardCol).RemoveId(bson.ObjectIdHex(string(id)))
+func (s *CardService) DeleteCard(id string) error {
+	err := s.session.db.C(cardCol).RemoveId(bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrCardNotFound
 	}
@@ -146,19 +146,19 @@ func (s *CardService) DeleteCard(id pulpe.CardID) error {
 }
 
 // DeleteCardsByListID deletes all the cards of a list.
-func (s *CardService) DeleteCardsByListID(listID pulpe.ListID) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(string(listID))})
+func (s *CardService) DeleteCardsByListID(listID string) error {
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(listID)})
 	return err
 }
 
 // DeleteCardsByBoardID deletes all the cards of a board.
-func (s *CardService) DeleteCardsByBoardID(boardID pulpe.BoardID) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(string(boardID))})
+func (s *CardService) DeleteCardsByBoardID(boardID string) error {
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
 	return err
 }
 
 // UpdateCard updates a Card by ID.
-func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 	col := s.session.db.C(cardCol)
 
 	patch := make(bson.M)
@@ -179,7 +179,7 @@ func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.C
 	}
 
 	err := col.UpdateId(
-		bson.ObjectIdHex(string(id)),
+		bson.ObjectIdHex(id),
 		bson.M{
 			"$set":         patch,
 			"$currentDate": bson.M{"updatedAt": true},
@@ -196,11 +196,11 @@ func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.C
 }
 
 // CardsByBoard returns Cards by board ID.
-func (s *CardService) CardsByBoard(boardID pulpe.BoardID) ([]*pulpe.Card, error) {
+func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
 	var cards []Card
 
 	// TODO set a limit
-	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(string(boardID))}).All(&cards)
+	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&cards)
 	if err != nil {
 		return nil, err
 	}

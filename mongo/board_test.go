@@ -13,8 +13,8 @@ import (
 
 var settings = json.RawMessage([]byte("{}"))
 
-func newBoardID() pulpe.BoardID {
-	return pulpe.BoardID(bson.NewObjectId().Hex())
+func newBoardID() string {
+	return bson.NewObjectId().Hex()
 }
 
 // Ensure boards can be created and retrieved.
@@ -90,7 +90,7 @@ func TestBoardService_Board(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a board that doesn't exist.
-		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		id := bson.NewObjectId().Hex()
 		_, err := s.Board(id)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
@@ -162,7 +162,7 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a board that doesn't exist.
-		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		id := bson.NewObjectId().Hex()
 		err := s.DeleteBoard(id)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
@@ -227,7 +227,7 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to update a board that doesn't exist with no patch.
-		id := pulpe.BoardID(bson.NewObjectId().Hex())
+		id := bson.NewObjectId().Hex()
 		updatedBoard, err := s.UpdateBoard(id, &pulpe.BoardUpdate{})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)

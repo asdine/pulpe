@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCardID() pulpe.CardID {
-	return pulpe.CardID(bson.NewObjectId().Hex())
+func newCardID() string {
+	return bson.NewObjectId().Hex()
 }
 
 // Ensure cards can be created and retrieved.
