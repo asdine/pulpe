@@ -115,12 +115,20 @@ func TestBoardService_Boards(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		// Retrieve boards.
-		boards, err := s.Boards()
+		// Retrieve boards without filter.
+		boards, err := s.Boards(nil)
 		require.NoError(t, err)
 		require.Len(t, boards, 5)
 		require.Equal(t, boards[0].Name, "board0")
 		require.Equal(t, boards[4].Name, "board4")
+
+		// Retrieve boards with filter.
+		boards, err = s.Boards(map[string]string{
+			"slug": "board4",
+		})
+		require.NoError(t, err)
+		require.Len(t, boards, 1)
+		require.Equal(t, boards[0].Name, "board4")
 	})
 
 	t.Run("No boards", func(t *testing.T) {
@@ -129,7 +137,7 @@ func TestBoardService_Boards(t *testing.T) {
 
 		s := session.BoardService()
 
-		boards, err := s.Boards()
+		boards, err := s.Boards(nil)
 		require.NoError(t, err)
 		require.Len(t, boards, 0)
 	})

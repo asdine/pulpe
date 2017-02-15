@@ -57,7 +57,7 @@ func (b *BoardUpdate) Validate() error {
 type BoardService interface {
 	CreateBoard(board *BoardCreate) (*Board, error)
 	Board(id string) (*Board, error)
-	Boards() ([]*Board, error)
+	Boards(map[string]string) ([]*Board, error)
 	DeleteBoard(id string) error
 	UpdateBoard(id string, u *BoardUpdate) (*Board, error)
 }

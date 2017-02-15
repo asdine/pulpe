@@ -140,10 +140,10 @@ func (s *BoardService) Board(id string) (*pulpe.Board, error) {
 }
 
 // Boards returns all the boards.
-func (s *BoardService) Boards() ([]*pulpe.Board, error) {
+func (s *BoardService) Boards(filters map[string]string) ([]*pulpe.Board, error) {
 	var bs []Board
 
-	err := s.session.db.C(boardCol).Find(nil).All(&bs)
+	err := s.session.db.C(boardCol).Find(filters).All(&bs)
 	if err != nil {
 		return nil, err
 	}

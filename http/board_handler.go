@@ -44,7 +44,14 @@ func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 	session := h.Client.Connect()
 	defer session.Close()
 
-	boards, err := session.BoardService().Boards()
+	var filters map[string]string
+	slug := r.URL.Query().Get("slug")
+	if slug != "" {
+		filters = make(map[string]string)
+		filters["slug"] = slug
+	}
+
+	boards, err := session.BoardService().Boards(filters)
 	switch err {
 	case nil:
 		encodeJSON(w, boards, http.StatusOK, h.Logger)

@@ -16,6 +16,7 @@ import (
 
 func TestBoardHandler_Boards(t *testing.T) {
 	t.Run("OK", testBoardHandler_Boards_OK)
+	t.Run("With filters", testBoardHandler_Boards_WithFilter)
 	t.Run("Internal error", testBoardHandler_Boards_InternalError)
 }
 
@@ -24,7 +25,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
+	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
 		s := json.RawMessage([]byte(`{"a": "b"}`))
 		return []*pulpe.Board{
 			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}, Settings: &s},
@@ -59,7 +60,7 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
+	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -68,6 +69,24 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.True(t, c.BoardService.BoardsInvoked)
+}
+
+func testBoardHandler_Boards_WithFilter(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
+		require.Equal(t, "name", filters["slug"])
+		return nil, nil
+	}
+
+	// Retrieve Board.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/v1/boards?slug=name", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusOK, w.Code)
 	require.True(t, c.BoardService.BoardsInvoked)
 }
 

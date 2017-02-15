@@ -13,7 +13,7 @@ type BoardService struct {
 	BoardFn      func(id string) (*pulpe.Board, error)
 	BoardInvoked bool
 
-	BoardsFn      func() ([]*pulpe.Board, error)
+	BoardsFn      func(map[string]string) ([]*pulpe.Board, error)
 	BoardsInvoked bool
 
 	DeleteBoardFn      func(id string) error
@@ -36,9 +36,9 @@ func (s *BoardService) Board(id string) (*pulpe.Board, error) {
 }
 
 // Boards runs BoardsFn and sets BoardsInvoked to true when invoked.
-func (s *BoardService) Boards() ([]*pulpe.Board, error) {
+func (s *BoardService) Boards(filters map[string]string) ([]*pulpe.Board, error) {
 	s.BoardsInvoked = true
-	return s.BoardsFn()
+	return s.BoardsFn(filters)
 }
 
 // DeleteBoard runs DeleteBoardFn and sets DeleteBoardInvoked to true when invoked.
