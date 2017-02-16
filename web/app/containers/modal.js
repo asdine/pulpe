@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { getModalType, getModalProps, isEditing, getActiveBoard, getEditLevel, getBoards } from '../reducers';
+import { getModalType, getModalProps, isEditing, getActiveBoard, getEditLevel, getBoards, getCardsByListID, getBoardByID } from '../reducers';
 import * as actions from '../actions';
-import { MainModal as BasicModal, CreateBoardModal, DeleteBoardModal, CreateListModal, DeleteListModal, DeleteCardModal } from '../components/Modal';
+import { MainModal as BasicModal, CreateBoardModal, DeleteBoardModal, CreateListModal, DeleteListModal, DeleteCardModal, CreateCardModal } from '../components/Modal';
 import * as ActionTypes from '../actions/types';
 
 export const MainModal = connect(
@@ -24,10 +24,11 @@ const CreateBoard = connect(
 const DeleteBoard = connect(
   (state) => {
     const id = getModalProps(state).id;
+    const nextBoard = getBoards(state).find(b => b.id !== id) || {};
     return ({
       id,
       isOpen: getModalType(state) === ActionTypes.MODAL_DELETE_BOARD,
-      redirectTo: getBoards(state).find(b => b.id !== id)
+      redirectTo: nextBoard.slug
     });
   },
   actions,
@@ -49,11 +50,29 @@ const DeleteList = connect(
   actions,
 )(DeleteListModal);
 
+const CreateCard = connect(
+  (state) => {
+    const list = getModalProps(state);
+    return ({
+      list,
+      board: getBoardByID(state, list.boardID),
+      cards: getCardsByListID(state, list.boardID, list.id),
+      isOpen: getModalType(state) === ActionTypes.MODAL_CREATE_CARD
+    });
+  },
+  actions,
+)(CreateCardModal);
+
 const DeleteCard = connect(
-  (state) => ({
-    card: getModalProps(state),
-    isOpen: getModalType(state) === ActionTypes.MODAL_DELETE_CARD
-  }),
+  (state) => {
+    const card = getModalProps(state);
+    const board = getBoardByID(state, card.boardID) || {};
+    return ({
+      card,
+      isOpen: getModalType(state) === ActionTypes.MODAL_DELETE_CARD,
+      redirectTo: board.slug
+    });
+  },
   actions,
 )(DeleteCardModal);
 
@@ -63,6 +82,7 @@ const Modals = () =>
     <DeleteBoard />
     <CreateList />
     <DeleteList />
+    <CreateCard />
     <DeleteCard />
   </div>;
 

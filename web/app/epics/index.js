@@ -4,6 +4,7 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/observable/of';
+import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/dom/ajax';
 import { combineEpics } from 'redux-observable';
 import client from './client';
@@ -16,7 +17,7 @@ import onSuccess from './onSuccess';
 export default combineEpics(
   ajaxEpic(
     ActionTypes.FETCH_BOARDS,
-    () => client.allBoards(),
+    (action) => client.getBoards(action.filters),
     [schema.board]
   ),
   ajaxEpic(

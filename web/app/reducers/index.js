@@ -26,11 +26,14 @@ export default combineReducers(reducers);
 export const getBoardByID = (state, id) =>
   fromBoards.getBoardByID(state.boards, id);
 
+export const getBoardBySlug = (state, slug) =>
+  fromBoards.getBoardBySlug(state.boards, slug);
+
 export const getBoards = (state) =>
   fromBoards.getBoards(state.boards);
 
-export const getFirstBoardID = (state) =>
-  fromBoards.getFirstBoardID(state.boards);
+export const getFirstBoardSlug = (state) =>
+  fromBoards.getFirstBoardSlug(state.boards);
 
 export const getListsByBoardID = (state, boardID) =>
   fromLists.getListsByBoardID(state.lists, boardID);

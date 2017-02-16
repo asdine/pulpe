@@ -1,6 +1,5 @@
 import React from 'react';
 import { findDOMNode } from 'react-dom';
-import { Link } from 'react-router';
 import { Button } from 'reactstrap';
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
@@ -129,7 +128,9 @@ class List extends React.Component {
   }
 
   render() {
-    const { cards = [], list = {}, index, showModal, updateList, deleteList } = this.props;
+    const { cards = [], list = {}, board = {}, index,
+            showModal, updateList, deleteList } = this.props;
+
     let input;
 
     const save = () => {
@@ -166,17 +167,20 @@ class List extends React.Component {
           {cards.map((card) => (
             <Draggable
               key={card.id}
-              id={card.id}
-              name={card.name}
+              card={card}
+              board={board}
               onDrag={this.onDrag}
               onEndDrag={this.onEndDrag}
               userIsDragging={this.state.userIsDragging}
             />
         ))}
           <div className="plp-list-bottom">
-            <Link to={`/b/${list.boardID}/${list.id}/newcard`}>
-              <Button color="secondary" size="sm" className="btn-new-card">+ Add a new card</Button>
-            </Link>
+            <Button
+              color="secondary"
+              size="sm"
+              className="btn-new-card"
+              onClick={() => showModal(ActionTypes.MODAL_CREATE_CARD, list)}
+            >+ Add a new card</Button>
             <Button
               color="secondary"
               size="sm"

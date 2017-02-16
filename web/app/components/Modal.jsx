@@ -1,19 +1,28 @@
 import React from 'react';
 import { Modal } from 'reactstrap';
 import { browserHistory } from 'react-router';
+import { LargeCreate } from './Card';
+import { MainModal as ContainerModal } from '../containers/modal';
 
 export class MainModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      modal: true
+      modal: props.isOpen !== undefined ? props.isOpen : true
     };
 
     this.toggle = this.toggle.bind(this);
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      modal: nextProps.isOpen !== undefined ? nextProps.isOpen : true
+    });
+  }
+
   toggle() {
-    const { board, editLevel, decrementEditLevel, disableAllEditModes } = this.props;
+    const { onExit = () => {}, editLevel,
+            decrementEditLevel, disableAllEditModes, hideModal } = this.props;
 
     disableAllEditModes();
 
@@ -26,9 +35,11 @@ export class MainModal extends React.Component {
       modal: !this.state.modal
     });
 
-    return board ?
-      setTimeout(() => browserHistory.push(`/b/${board.id}`), 500) :
-      setTimeout(() => browserHistory.push('/'), 500);
+    hideModal();
+
+    setTimeout(() => {
+      onExit();
+    }, 200);
   }
 
   render() {
@@ -135,7 +146,7 @@ export const DeleteBoardModal = ({
         onConfirm={() => {
           deleteBoard(id);
           return redirectTo !== undefined ?
-            browserHistory.push(`/b/${redirectTo.id}`) :
+            browserHistory.push(`${redirectTo}`) :
             browserHistory.push('/');
         }}
         text="Delete the board"
@@ -157,12 +168,21 @@ export const DeleteListModal = ({ list, isOpen, deleteList, hideModal }) =>
     toggle={hideModal}
   />;
 
-export const DeleteCardModal = ({ card, isOpen, deleteCard, hideModal }) =>
+export const CreateCardModal = ({ isOpen, hideModal, ...rest }) =>
+  <ContainerModal
+    isOpen={isOpen}
+    text="Create a card"
+    toggle={hideModal}
+  >
+    <LargeCreate hideModal={hideModal} {...rest} />
+  </ContainerModal>;
+
+export const DeleteCardModal = ({ card, redirectTo, isOpen, deleteCard, hideModal }) =>
   <ConfirmModal
     isOpen={isOpen}
     onConfirm={() => {
       deleteCard(card);
-      browserHistory.push(`/b/${card.boardID}`);
+      browserHistory.push(`/${redirectTo}`);
     }}
     text="Delete the card"
     toggle={hideModal}
