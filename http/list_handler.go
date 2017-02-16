@@ -46,6 +46,12 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ h
 	session := h.Client.Connect()
 	defer session.Close()
 
+	err = req.Validate(session)
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	list, err := session.ListService().CreateList(&req)
 	switch err {
 	case nil:
@@ -66,7 +72,7 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 	session := h.Client.Connect()
 	defer session.Close()
 
-	err := session.ListService().DeleteList(pulpe.ListID(id))
+	err := session.ListService().DeleteList(id)
 	if err != nil {
 		if err == pulpe.ErrListNotFound {
 			NotFound(w)
@@ -77,7 +83,7 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	err = session.CardService().DeleteCardsByListID(pulpe.ListID(id))
+	err = session.CardService().DeleteCardsByListID(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -97,10 +103,16 @@ func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 
-	card, err := session.ListService().UpdateList(pulpe.ListID(id), &req)
+	card, err := session.ListService().UpdateList(id, &req)
 	switch err {
 	case nil:
 		encodeJSON(w, card, http.StatusOK, h.Logger)

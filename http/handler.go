@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blankrobot/pulpe"
+	"github.com/blankrobot/pulpe/validation"
 )
 
 // HTTP errors
@@ -113,14 +114,34 @@ func Error(w http.ResponseWriter, err error, code int, logger *log.Logger) {
 		err = pulpe.ErrInternal
 	}
 
-	// Write generic error response.
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(&errorResponse{Err: err.Error()})
+
+	enc := json.NewEncoder(w)
+	switch {
+	case validation.IsError(err):
+		err = enc.Encode(&validationErrorResponse{
+			Err:    "validation error",
+			Fields: err,
+		})
+	default:
+		err = enc.Encode(&errorResponse{Err: err.Error()})
+	}
+
+	if err != nil {
+		logger.Println(err)
+	}
 }
 
 // errorResponse is a generic response for sending an error.
 type errorResponse struct {
 	Err string `json:"err,omitempty"`
+}
+
+// validationErrorResponse is used for validation errors.
+type validationErrorResponse struct {
+	Err    string `json:"err,omitempty"`
+	Fields error  `json:"fields"`
 }
 
 // NotFound writes an API error message to the response.

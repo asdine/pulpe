@@ -28,7 +28,7 @@ const allIDs = (state = [], action) => {
       ];
     }
     case successType(FETCH_BOARDS): {
-      return action.response.result;
+      return [...new Set([...state, ...action.response.result])];
     }
     case successType(DELETE_BOARD):
       return state.filter((id) => id !== action.id);
@@ -45,6 +45,8 @@ const boards = combineReducers({
 export default boards;
 
 export const getBoardByID = (state, id) => state.byID[id];
+export const getBoardBySlug = (state, slug) =>
+  Object.keys(state.byID).map(k => state.byID[k]).find(board => board.slug === slug);
 export const getBoards = (state) => state.allIDs.map(id => state.byID[id]);
-export const getFirstBoardID = (state) =>
-  state.allIDs.length > 0 ? state.allIDs[0] : undefined;
+export const getFirstBoardSlug = (state) =>
+  state.allIDs.length > 0 ? state.byID[state.allIDs[0]].slug : undefined;

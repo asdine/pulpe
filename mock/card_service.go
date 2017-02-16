@@ -10,22 +10,22 @@ type CardService struct {
 	CreateCardFn      func(card *pulpe.CardCreate) (*pulpe.Card, error)
 	CreateCardInvoked bool
 
-	CardFn      func(id pulpe.CardID) (*pulpe.Card, error)
+	CardFn      func(id string) (*pulpe.Card, error)
 	CardInvoked bool
 
-	DeleteCardFn      func(id pulpe.CardID) error
+	DeleteCardFn      func(id string) error
 	DeleteCardInvoked bool
 
-	DeleteCardsByListIDFn      func(listID pulpe.ListID) error
+	DeleteCardsByListIDFn      func(listID string) error
 	DeleteCardsByListIDInvoked bool
 
-	DeleteCardsByBoardIDFn      func(boardID pulpe.BoardID) error
+	DeleteCardsByBoardIDFn      func(boardID string) error
 	DeleteCardsByBoardIDInvoked bool
 
-	UpdateCardFn      func(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error)
+	UpdateCardFn      func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error)
 	UpdateCardInvoked bool
 
-	CardsByBoardFn      func(boardID pulpe.BoardID) ([]*pulpe.Card, error)
+	CardsByBoardFn      func(boardID string) ([]*pulpe.Card, error)
 	CardsByBoardInvoked bool
 }
 
@@ -36,37 +36,37 @@ func (s *CardService) CreateCard(card *pulpe.CardCreate) (*pulpe.Card, error) {
 }
 
 // Card runs CardFn and sets CardInvoked to true when invoked.
-func (s *CardService) Card(id pulpe.CardID) (*pulpe.Card, error) {
+func (s *CardService) Card(id string) (*pulpe.Card, error) {
 	s.CardInvoked = true
 	return s.CardFn(id)
 }
 
 // DeleteCard runs DeleteCardFn and sets DeleteCardInvoked to true when invoked.
-func (s *CardService) DeleteCard(id pulpe.CardID) error {
+func (s *CardService) DeleteCard(id string) error {
 	s.DeleteCardInvoked = true
 	return s.DeleteCardFn(id)
 }
 
 // DeleteCardsByListID runs DeleteCardsByListIDFn and sets DeleteCardsByListIDInvoked to true when invoked.
-func (s *CardService) DeleteCardsByListID(listID pulpe.ListID) error {
+func (s *CardService) DeleteCardsByListID(listID string) error {
 	s.DeleteCardsByListIDInvoked = true
 	return s.DeleteCardsByListIDFn(listID)
 }
 
 // DeleteCardsByBoardID runs DeleteCardsByBoardIDFn and sets DeleteCardsByBoardIDInvoked to true when invoked.
-func (s *CardService) DeleteCardsByBoardID(boardID pulpe.BoardID) error {
+func (s *CardService) DeleteCardsByBoardID(boardID string) error {
 	s.DeleteCardsByBoardIDInvoked = true
 	return s.DeleteCardsByBoardIDFn(boardID)
 }
 
 // UpdateCard runs UpdateCardFn and sets UpdateCardInvoked to true when invoked.
-func (s *CardService) UpdateCard(id pulpe.CardID, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 	s.UpdateCardInvoked = true
 	return s.UpdateCardFn(id, u)
 }
 
 // CardsByBoard runs CardsByBoardFn and sets CardsByBoardInvoked to true when invoked.
-func (s *CardService) CardsByBoard(boardID pulpe.BoardID) ([]*pulpe.Card, error) {
+func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
 	s.CardsByBoardInvoked = true
 	return s.CardsByBoardFn(boardID)
 }

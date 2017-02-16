@@ -6,8 +6,6 @@ import configureStore from './configureStore';
 import FirstBoard from './containers/firstBoard';
 import BoardActivate from './containers/boardActivate';
 import CardDetail from './containers/cardDetail';
-import CardCreate from './containers/cardCreate';
-import { MainModal } from './containers/modal';
 import { fetchBoards } from './actions';
 import Home from './layouts/Home';
 
@@ -22,13 +20,8 @@ render(
     <Router history={browserHistory}>
       <Route path="/" component={Home}>
         <IndexRoute component={FirstBoard} />
-        <Route path="/b/:id" component={BoardActivate} />
-        <Route path="/b/:id/:listID" component={MainModal}>
-          <Route path="/b/:id/:listID/newcard" component={CardCreate} />
-        </Route>
-        <Route path="/c" component={MainModal}>
-          <Route path="/c/:id" component={CardDetail} />
-        </Route>
+        <Route path="/:slug" component={BoardActivate} />
+        <Route path="/:slug/:id" component={CardDetail} />
       </Route>
     </Router>
   </Provider>,

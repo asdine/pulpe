@@ -1,21 +1,38 @@
 import { Component } from 'react';
 import { connect } from 'react-redux';
 import * as actions from '../actions';
+import { getBoardBySlug } from '../reducers';
 
 class BoardActivate extends Component {
   componentDidMount() {
-    const { setActiveBoard, params } = this.props;
-    if (!params.id) {
+    const { slug, board, setActiveBoard, fetchBoards } = this.props;
+    if (!slug) {
       return;
     }
-    setActiveBoard(params.id);
+
+    if (board && board.id) {
+      setActiveBoard(board.id);
+      return;
+    }
+
+    fetchBoards({ slug });
   }
 
   componentDidUpdate(prevProps) {
-    const { setActiveBoard, params } = this.props;
-    if (params.id !== prevProps.id) {
-      setActiveBoard(params.id);
+    const { slug, board, setActiveBoard, fetchBoards } = this.props;
+    if (!slug) {
+      return;
     }
+
+    if (board && board.id) {
+      setActiveBoard(board.id);
+      return;
+    }
+
+    if (this.props.slug && this.props.slug === prevProps.slug) {
+      return;
+    }
+    fetchBoards({ slug });
   }
 
   render() {
@@ -24,8 +41,9 @@ class BoardActivate extends Component {
 }
 
 export default connect(
-  null,
-  {
-    setActiveBoard: actions.setActiveBoard
-  }
+  (state, { params }) => ({
+    slug: params.slug,
+    board: getBoardBySlug(state, params.slug)
+  }),
+  actions,
 )(BoardActivate);

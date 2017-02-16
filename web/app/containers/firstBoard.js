@@ -1,17 +1,17 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
-import { getFirstBoardID } from '../reducers';
+import { getFirstBoardSlug } from '../reducers';
 
 const mapStateToProps = (state) => ({
-  id: getFirstBoardID(state)
+  slug: getFirstBoardSlug(state)
 });
 
 class FirstBoard extends React.Component {
   componentWillReceiveProps(nextProps) {
-    const { id } = nextProps;
-    if (id) {
-      browserHistory.push(`/b/${id}`);
+    const { slug } = nextProps;
+    if (slug) {
+      browserHistory.push(`/${slug}`);
     }
   }
 

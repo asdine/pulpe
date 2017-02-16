@@ -1,14 +1,20 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { browserHistory } from 'react-router';
+import { MainModal } from './modal';
 import { Large } from '../components/Card';
-import { getCardByID, isEditing } from '../reducers';
+import { getCardByID, isEditing, getBoardByID } from '../reducers';
 import * as actions from '../actions';
 
-const mapStateToProps = (state, { params }) => ({
-  card: getCardByID(state, params.id),
-  isEditingName: isEditing(state, 'card-name'),
-  isEditingDesc: isEditing(state, 'card-desc')
-});
+const mapStateToProps = (state, { params }) => {
+  const card = getCardByID(state, params.id) || {};
+  return ({
+    card,
+    board: getBoardByID(state, card.boardID),
+    isEditingName: isEditing(state, 'card-name'),
+    isEditingDesc: isEditing(state, 'card-desc')
+  });
+};
 
 class CardDetail extends React.Component {
   constructor(props) {
@@ -16,6 +22,7 @@ class CardDetail extends React.Component {
 
     this.saveName = this.saveName.bind(this);
     this.saveDesc = this.saveDesc.bind(this);
+    this.onExit = this.onExit.bind(this);
   }
 
   componentDidMount() {
@@ -28,6 +35,10 @@ class CardDetail extends React.Component {
     if (prevProps.params.id !== params.id) {
       fetchCard(params.id);
     }
+  }
+
+  onExit() {
+    browserHistory.push(`/${this.props.board.slug || ''}`);
   }
 
   saveName(input) {
@@ -79,11 +90,13 @@ class CardDetail extends React.Component {
 
   render() {
     return (
-      <Large
-        saveName={this.saveName}
-        saveDesc={this.saveDesc}
-        {...this.props}
-      />
+      <MainModal onExit={this.onExit}>
+        <Large
+          saveName={this.saveName}
+          saveDesc={this.saveDesc}
+          {...this.props}
+        />
+      </MainModal>
     );
   }
 }

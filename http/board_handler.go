@@ -44,7 +44,14 @@ func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 	session := h.Client.Connect()
 	defer session.Close()
 
-	boards, err := session.BoardService().Boards()
+	var filters map[string]string
+	slug := r.URL.Query().Get("slug")
+	if slug != "" {
+		filters = make(map[string]string)
+		filters["slug"] = slug
+	}
+
+	boards, err := session.BoardService().Boards(filters)
 	switch err {
 	case nil:
 		encodeJSON(w, boards, http.StatusOK, h.Logger)
@@ -67,6 +74,12 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 		req.Settings = &defaultSettings
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 
@@ -74,6 +87,8 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusCreated, h.Logger)
+	case pulpe.ErrBoardExists:
+		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
@@ -87,7 +102,7 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	defer session.Close()
 
 	// Get the board
-	board, err := session.BoardService().Board(pulpe.BoardID(id))
+	board, err := session.BoardService().Board(id)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			NotFound(w)
@@ -103,14 +118,14 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// Get the board's lists
-	board.Lists, err = session.ListService().ListsByBoard(pulpe.BoardID(id))
+	board.Lists, err = session.ListService().ListsByBoard(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
 	}
 
 	// Get the board's cards
-	board.Cards, err = session.CardService().CardsByBoard(pulpe.BoardID(id))
+	board.Cards, err = session.CardService().CardsByBoard(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -126,7 +141,7 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 	session := h.Client.Connect()
 	defer session.Close()
 
-	err := session.BoardService().DeleteBoard(pulpe.BoardID(id))
+	err := session.BoardService().DeleteBoard(id)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			NotFound(w)
@@ -137,13 +152,13 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	err = session.ListService().DeleteListsByBoardID(pulpe.BoardID(id))
+	err = session.ListService().DeleteListsByBoardID(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
 	}
 
-	err = session.CardService().DeleteCardsByBoardID(pulpe.BoardID(id))
+	err = session.CardService().DeleteCardsByBoardID(id)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -163,15 +178,23 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	err = req.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
 	session := h.Client.Connect()
 	defer session.Close()
 
-	board, err := session.BoardService().UpdateBoard(pulpe.BoardID(id), &req)
+	board, err := session.BoardService().UpdateBoard(id, &req)
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusOK, h.Logger)
 	case pulpe.ErrBoardNotFound:
 		NotFound(w)
+	case pulpe.ErrBoardExists:
+		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}

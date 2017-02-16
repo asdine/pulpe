@@ -5,7 +5,12 @@ class Client {
     this.url = url;
   }
 
-  allBoards = () => get(`${this.url}/boards`)
+  getBoards = (filters = {}) => get(`${this.url}/boards${
+    filters ?
+      Object.keys(filters)
+        .map((k, i) => `${i > 0 ? ',' : '?'}${k}=${filters[k]}`)
+        .reduce((a, c) => a + c, '')
+      : ''}`)
 
   getBoard = (id) => get(`${this.url}/boards/${id}`)
 

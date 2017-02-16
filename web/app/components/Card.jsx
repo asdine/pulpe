@@ -4,16 +4,16 @@ import { Button, ModalBody } from 'reactstrap';
 import * as ActionTypes from '../actions/types';
 
 export const Compact = ({
-  connectDragSource, connectDropTarget,
-  id, name, isDragging, userIsDragging }) =>
+  connectDragSource, connectDropTarget, board,
+  card, isDragging, userIsDragging }) =>
   connectDragSource(connectDropTarget(
     <div
       className={`card ${userIsDragging ? '' : 'card-hover'}`}
       style={{ opacity: isDragging ? 0 : 1 }}
-      onClick={() => browserHistory.push(`/c/${id}`)}
+      onClick={() => browserHistory.push(`/${board.slug}/${card.id}`)}
     >
       <div className="card-block">
-        <h3 className="card-title">{ name }</h3>
+        <h3 className="card-title">{ card.name }</h3>
       </div>
     </div>
   ));
@@ -136,43 +136,40 @@ const Description = ({ card, toggleEditMode, disableAllEditModes, saveDesc, isEd
   );
 };
 
-export const LargeCreate = ({ card, cards, createCard, ...rest }) => (
-  <LargeForm
-    card={card}
-    {...rest}
-    onSave={(input, textarea) => {
-      const name = input.value.trim();
-      const description = textarea.value.trim();
+export const LargeCreate = (props) => {
+  const { list = {}, board = {}, cards = [], createCard, hideModal } = props;
 
-      if (!name) {
-        return;
-      }
+  return (
+    <LargeForm
+      {...props}
+      onSave={(input, textarea) => {
+        const name = input.value.trim();
+        const description = textarea.value.trim();
 
-      const newCard = {
-        boardID: card.boardID,
-        listID: card.listID,
-        name,
-        description
-      };
+        if (!name) {
+          return;
+        }
 
-      newCard.position = cards.length > 0 ?
-          cards[cards.length - 1].position + (1 << 16) :
-          1 << 16;
+        const newCard = {
+          boardID: board.id,
+          listID: list.id,
+          name,
+          description
+        };
 
-      createCard(newCard);
+        newCard.position = cards.length > 0 ?
+            cards[cards.length - 1].position + (1 << 16) :
+            1 << 16;
 
-      return browserHistory.push(`/b/${card.boardID}`);
-    }}
-  />
-  );
+        createCard(newCard);
+        hideModal();
+      }}
+    />);
+};
 
-const LargeForm = ({ card, toggle, onSave }) => {
+const LargeForm = ({ card = {}, toggle, onSave }) => {
   let input;
   let textarea;
-
-  if (card === undefined) {
-    return null;
-  }
 
   return (
     <div>

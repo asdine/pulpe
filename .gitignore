@@ -1,6 +1,7 @@
 # IDE
 *.iml
 .idea/
+.vscode/
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o

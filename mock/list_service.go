@@ -10,19 +10,19 @@ type ListService struct {
 	CreateListFn      func(list *pulpe.ListCreate) (*pulpe.List, error)
 	CreateListInvoked bool
 
-	ListFn      func(id pulpe.ListID) (*pulpe.List, error)
+	ListFn      func(id string) (*pulpe.List, error)
 	ListInvoked bool
 
-	DeleteListFn      func(id pulpe.ListID) error
+	DeleteListFn      func(id string) error
 	DeleteListInvoked bool
 
-	DeleteListsByBoardIDFn      func(boardID pulpe.BoardID) error
+	DeleteListsByBoardIDFn      func(boardID string) error
 	DeleteListsByBoardIDInvoked bool
 
-	UpdateListFn      func(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error)
+	UpdateListFn      func(id string, u *pulpe.ListUpdate) (*pulpe.List, error)
 	UpdateListInvoked bool
 
-	ListsByBoardFn      func(boardID pulpe.BoardID) ([]*pulpe.List, error)
+	ListsByBoardFn      func(boardID string) ([]*pulpe.List, error)
 	ListsByBoardInvoked bool
 }
 
@@ -33,31 +33,31 @@ func (s *ListService) CreateList(list *pulpe.ListCreate) (*pulpe.List, error) {
 }
 
 // List runs ListFn and sets ListInvoked to true when invoked.
-func (s *ListService) List(id pulpe.ListID) (*pulpe.List, error) {
+func (s *ListService) List(id string) (*pulpe.List, error) {
 	s.ListInvoked = true
 	return s.ListFn(id)
 }
 
 // DeleteList runs DeleteListFn and sets DeleteListInvoked to true when invoked.
-func (s *ListService) DeleteList(id pulpe.ListID) error {
+func (s *ListService) DeleteList(id string) error {
 	s.DeleteListInvoked = true
 	return s.DeleteListFn(id)
 }
 
 // DeleteListsByBoardID runs DeleteListsByBoardIDFn and sets DeleteListsByBoardIDInvoked to true when invoked.
-func (s *ListService) DeleteListsByBoardID(boardID pulpe.BoardID) error {
+func (s *ListService) DeleteListsByBoardID(boardID string) error {
 	s.DeleteListsByBoardIDInvoked = true
 	return s.DeleteListsByBoardIDFn(boardID)
 }
 
 // UpdateList runs UpdateListFn and sets UpdateListInvoked to true when invoked.
-func (s *ListService) UpdateList(id pulpe.ListID, u *pulpe.ListUpdate) (*pulpe.List, error) {
+func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 	s.UpdateListInvoked = true
 	return s.UpdateListFn(id, u)
 }
 
 // ListsByBoard runs ListsByBoardFn and sets ListsByBoardInvoked to true when invoked.
-func (s *ListService) ListsByBoard(boardID pulpe.BoardID) ([]*pulpe.List, error) {
+func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
 	s.ListsByBoardInvoked = true
 	return s.ListsByBoardFn(boardID)
 }

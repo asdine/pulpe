@@ -1,12 +1,17 @@
 package mongo_test
 
 import (
-	"fmt"
 	"testing"
+
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/blankrobot/pulpe"
 	"github.com/stretchr/testify/require"
 )
+
+func newCardID() string {
+	return bson.NewObjectId().Hex()
+}
 
 // Ensure cards can be created and retrieved.
 func TestCardService_CreateCard(t *testing.T) {
@@ -20,8 +25,8 @@ func TestCardService_CreateCard(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		c := pulpe.CardCreate{
 			Name:        "YYY",
-			ListID:      "ListX",
-			BoardID:     "BoardX",
+			ListID:      newListID(),
+			BoardID:     newBoardID(),
 			Description: "MY CARD",
 			Position:    1,
 		}
@@ -47,7 +52,7 @@ func TestCardService_CreateCard(t *testing.T) {
 	t.Run("No BoardID", func(t *testing.T) {
 		// Trying to create a card with no ID.
 		c := pulpe.CardCreate{
-			ListID: "ListX",
+			ListID: newListID(),
 		}
 
 		_, err := s.CreateCard(&c)
@@ -65,8 +70,8 @@ func TestCardService_Card(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		c := pulpe.CardCreate{
-			ListID:  "ListX",
-			BoardID: "BoardX",
+			ListID:  newListID(),
+			BoardID: newBoardID(),
 		}
 
 		// Create new card.
@@ -81,7 +86,7 @@ func TestCardService_Card(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a card that doesn't exist.
-		_, err := s.Card("QQQ")
+		_, err := s.Card(newCardID())
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
@@ -95,8 +100,8 @@ func TestCardService_DeleteCard(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		c := pulpe.CardCreate{
-			ListID:  "ListX",
-			BoardID: "BoardX",
+			ListID:  newListID(),
+			BoardID: newBoardID(),
 		}
 
 		// Create new card.
@@ -114,7 +119,7 @@ func TestCardService_DeleteCard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a card that doesn't exist.
-		err := s.DeleteCard("QQQ")
+		err := s.DeleteCard(newCardID())
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
@@ -128,9 +133,9 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("Exists", func(t *testing.T) {
-		const list1 = pulpe.ListID("List1")
-		const list2 = pulpe.ListID("List2")
-		const boardID = pulpe.BoardID("board1")
+		list1 := newListID()
+		list2 := newListID()
+		boardID := newBoardID()
 
 		for i := 0; i < 10; i++ {
 			c := pulpe.CardCreate{
@@ -162,7 +167,7 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Calling with a listID with no associated cards.
-		err := s.DeleteCardsByListID("QQQ")
+		err := s.DeleteCardsByListID(newListID())
 		require.NoError(t, err)
 	})
 }
@@ -176,8 +181,8 @@ func TestCardService_UpdateCard(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		c := pulpe.CardCreate{
-			ListID:      "ListX",
-			BoardID:     "BoardX",
+			ListID:      newListID(),
+			BoardID:     newBoardID(),
 			Name:        "name",
 			Description: "description",
 			Position:    1,
@@ -245,13 +250,13 @@ func TestCardService_UpdateCard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to update a card that doesn't exist with no patch
-		updatedCard, err := s.UpdateCard("QQQ", &pulpe.CardUpdate{})
+		updatedCard, err := s.UpdateCard(newCardID(), &pulpe.CardUpdate{})
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 		require.Nil(t, updatedCard)
 
 		// Trying to update a card that doesn't exist with a patch
 		newName := "new name"
-		updatedCard, err = s.UpdateCard("QQQ", &pulpe.CardUpdate{Name: &newName})
+		updatedCard, err = s.UpdateCard(newCardID(), &pulpe.CardUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 		require.Nil(t, updatedCard)
 	})
@@ -266,12 +271,19 @@ func TestCardService_CardsByBoard(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("Exists", func(t *testing.T) {
+		boardID1 := newBoardID()
+		boardID2 := newBoardID()
 		for i := 0; i < 6; i++ {
 			c := pulpe.CardCreate{
-				ListID:      "ListX",
-				BoardID:     pulpe.BoardID(fmt.Sprintf("Board%d", i%2)),
+				ListID:      newListID(),
 				Name:        "name",
 				Description: "description",
+			}
+
+			if i%2 == 0 {
+				c.BoardID = boardID1
+			} else {
+				c.BoardID = boardID2
 			}
 
 			// Create new card.
@@ -279,14 +291,14 @@ func TestCardService_CardsByBoard(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		cards, err := s.CardsByBoard("Board0")
+		cards, err := s.CardsByBoard(boardID1)
 		require.NoError(t, err)
 		require.Len(t, cards, 3)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to find cards of a board that doesn't exist.
-		cards, err := s.CardsByBoard("QQQ")
+		cards, err := s.CardsByBoard(newBoardID())
 		require.NoError(t, err)
 		require.Len(t, cards, 0)
 	})

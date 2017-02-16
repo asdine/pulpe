@@ -9,8 +9,9 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-export const fetchBoards = () => ({
-  type: types.requestType(types.FETCH_BOARDS)
+export const fetchBoards = (filters) => ({
+  type: types.requestType(types.FETCH_BOARDS),
+  filters
 });
 
 export const createBoard = ({ name }) => ({
@@ -86,9 +87,9 @@ export const deleteCard = ({ id, boardID }) => ({
   boardID
 });
 
-export const setActiveBoard = (id) => ({
+export const setActiveBoard = (slug) => ({
   type: types.SET_ACTIVE_BOARD,
-  activeBoard: id
+  activeBoard: slug
 });
 
 export const showModal = (modalType, modalProps = {}) => ({

@@ -12,7 +12,7 @@ const BoardList = ({ boards = [], showModal, activeBoard = {} }) =>
             {board.name}
           </li> :
           <li key={board.id}>
-            <Link to={`/b/${board.id}`}>{board.name}</Link>
+            <Link to={`/${board.slug}`}>{board.name}</Link>
           </li>
       ))}
     </ul>
