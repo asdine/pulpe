@@ -247,3 +247,42 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.Nil(t, updatedBoard)
 	})
 }
+
+func BenchmarkCreateBoard(b *testing.B) {
+	session, cleanup := MustGetSession(b)
+	defer cleanup()
+
+	s := session.BoardService()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bc := pulpe.BoardCreate{
+			Name: fmt.Sprintf("name%d", i),
+		}
+		_, err := s.CreateBoard(&bc)
+		require.NoError(b, err)
+	}
+}
+
+func BenchmarkGetBoard(b *testing.B) {
+	session, cleanup := MustGetSession(b)
+	defer cleanup()
+
+	s := session.BoardService()
+
+	var id string
+	for i := 0; i < 1000; i++ {
+		bc := pulpe.BoardCreate{
+			Name: fmt.Sprintf("name%d", i),
+		}
+		board, err := s.CreateBoard(&bc)
+		require.NoError(b, err)
+		id = board.ID
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := s.Board(id)
+		require.NoError(b, err)
+	}
+}

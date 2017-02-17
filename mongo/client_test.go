@@ -3,7 +3,6 @@ package mongo_test
 import (
 	"fmt"
 	"os"
-	"testing"
 	"time"
 
 	"github.com/blankrobot/pulpe/mock"
@@ -26,7 +25,7 @@ func NewClient(uri string) *Client {
 }
 
 // MustOpenClient returns an new, open instance of Client.
-func MustOpenClient(t *testing.T) *Client {
+func MustOpenClient(t tester) *Client {
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
 		t.Skip("Missing MONGO_URI environment variable.")
@@ -48,4 +47,9 @@ func (c *Client) Close() error {
 	}
 
 	return c.Client.Close()
+}
+
+type tester interface {
+	Skip(...interface{})
+	Error(...interface{})
 }

@@ -1,12 +1,8 @@
 package mongo_test
 
-import (
-	"testing"
+import "github.com/blankrobot/pulpe"
 
-	"github.com/blankrobot/pulpe"
-)
-
-func MustGetSession(t *testing.T) (pulpe.Session, func()) {
+func MustGetSession(t tester) (pulpe.Session, func()) {
 	c := MustOpenClient(t)
 
 	s := c.Connect()

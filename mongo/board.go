@@ -28,7 +28,6 @@ type Board struct {
 func ToMongoBoard(p *pulpe.Board) *Board {
 	var id bson.ObjectId
 
-	// TODO fix non mongo ids.
 	if p.ID == "" {
 		id = bson.NewObjectId()
 		p.ID = id.Hex()
