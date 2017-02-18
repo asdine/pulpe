@@ -11,9 +11,18 @@
 			word-wrap  : break-word;
 		}
 
-		&:active {
+		&.shadow {
 			background: rgba(0,0,0, .1);
-			box-shadow: 1px 1px 0 0 rgba(0,0,0, .2);
+			box-shadow: 0;
+
+			h3 {
+				visibility: hidden;
+			}
+		}
+
+		&.dragged {
+			transform : rotate(6deg);
+			box-shadow: 1px 1px 0 0 rgba(0,0,0, .1);
 		}
 	}
 
@@ -39,9 +48,18 @@
 			word-wrap  : break-word;
 		}
 
-		&:active {
+		&.shadow {
 			background: rgba(0,0,0, .1);
-			box-shadow: 1px 1px 0 0 rgba(0,0,0, .2);
+			box-shadow: 0;
+
+			h3 {
+				visibility: hidden;
+			}
+		}
+
+		&.dragged {
+			transform : rotate(6deg);
+			box-shadow: 1px 1px 0 0 rgba(0,0,0, .1);
 		}
 	}
 
