@@ -2,29 +2,28 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/blankrobot/pulpe"
+	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
-var (
-	defaultSettings = json.RawMessage([]byte(`{}`))
-)
-
 // NewBoardHandler returns a new instance of BoardHandler.
-func NewBoardHandler(c pulpe.Client) *BoardHandler {
+func NewBoardHandler(router *httprouter.Router, c pulpe.Client) *BoardHandler {
 	h := BoardHandler{
-		Router: httprouter.New(),
+		Router: router,
 		Client: c,
 		Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
 	h.GET("/v1/boards", h.handleGetBoards)
 	h.POST("/v1/boards", h.handlePostBoard)
-	h.GET("/v1/boards/:id", h.handleGetBoard)
+	h.GET("/v1/boards/:board", h.handleGetBoard)
 	h.DELETE("/v1/boards/:id", h.handleDeleteBoard)
 	h.PATCH("/v1/boards/:id", h.handlePatchBoard)
 	return &h
@@ -44,14 +43,7 @@ func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 	session := h.Client.Connect()
 	defer session.Close()
 
-	var filters map[string]string
-	slug := r.URL.Query().Get("slug")
-	if slug != "" {
-		filters = make(map[string]string)
-		filters["slug"] = slug
-	}
-
-	boards, err := session.BoardService().Boards(filters)
+	boards, err := session.BoardService().Boards()
 	switch err {
 	case nil:
 		encodeJSON(w, boards, http.StatusOK, h.Logger)
@@ -62,7 +54,7 @@ func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 
 // handlePostBoard handles requests to create a new board.
 func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var req pulpe.BoardCreate
+	var req BoardCreateRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -70,11 +62,7 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	if req.Settings == nil {
-		req.Settings = &defaultSettings
-	}
-
-	err = req.Validate()
+	cr, err := req.Validate()
 	if err != nil {
 		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
@@ -83,12 +71,10 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	session := h.Client.Connect()
 	defer session.Close()
 
-	board, err := session.BoardService().CreateBoard(&req)
+	board, err := session.BoardService().CreateBoard(cr)
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusCreated, h.Logger)
-	case pulpe.ErrBoardExists:
-		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
@@ -96,16 +82,16 @@ func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 
 // handleGetBoard handles requests to fetch a single board.
 func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
+	selector := ps.ByName("board")
 
 	session := h.Client.Connect()
 	defer session.Close()
 
 	// Get the board
-	board, err := session.BoardService().Board(id)
+	board, err := session.BoardService().Board(selector)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
-			NotFound(w)
+			http.NotFound(w, r)
 			return
 		}
 
@@ -113,19 +99,15 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	if board.Settings == nil {
-		board.Settings = &defaultSettings
-	}
-
 	// Get the board's lists
-	board.Lists, err = session.ListService().ListsByBoard(id)
+	board.Lists, err = session.ListService().ListsByBoard(board.ID)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
 	}
 
 	// Get the board's cards
-	board.Cards, err = session.CardService().CardsByBoard(id)
+	board.Cards, err = session.CardService().CardsByBoard(board.ID)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -144,7 +126,7 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 	err := session.BoardService().DeleteBoard(id)
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
-			NotFound(w)
+			http.NotFound(w, r)
 			return
 		}
 
@@ -171,14 +153,14 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	var req pulpe.BoardUpdate
+	var req BoardUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
 		return
 	}
 
-	err = req.Validate()
+	bu, err := req.Validate()
 	if err != nil {
 		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
@@ -187,15 +169,56 @@ func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 	session := h.Client.Connect()
 	defer session.Close()
 
-	board, err := session.BoardService().UpdateBoard(id, &req)
+	board, err := session.BoardService().UpdateBoard(id, bu)
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusOK, h.Logger)
 	case pulpe.ErrBoardNotFound:
-		NotFound(w)
-	case pulpe.ErrBoardExists:
-		Error(w, err, http.StatusConflict, h.Logger)
+		http.NotFound(w, r)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
+}
+
+// BoardCreateRequest is used to create a board.
+type BoardCreateRequest struct {
+	Name string `json:"name" valid:"required,stringlength(1|64)"`
+}
+
+// Validate board creation payload.
+func (b *BoardCreateRequest) Validate() (*pulpe.BoardCreate, error) {
+	b.Name = strings.TrimSpace(b.Name)
+	err := validation.Validate(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pulpe.BoardCreate{
+		Name: b.Name,
+	}, nil
+}
+
+// BoardUpdateRequest is used to update a board.
+type BoardUpdateRequest struct {
+	Name *string `json:"name" valid:"stringlength(1|64)"`
+}
+
+// Validate board update payload.
+func (b *BoardUpdateRequest) Validate() (*pulpe.BoardUpdate, error) {
+	if b.Name != nil {
+		*b.Name = strings.TrimSpace(*b.Name)
+	}
+
+	err := validation.Validate(b)
+	if b.Name != nil && *b.Name == "" {
+		err = validation.AddError(err, "name", errors.New("name should not be empty"))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pulpe.BoardUpdate{
+		Name: b.Name,
+	}, nil
 }

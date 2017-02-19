@@ -10,19 +10,22 @@ import (
 
 	"github.com/blankrobot/pulpe"
 	"github.com/blankrobot/pulpe/validation"
+	"github.com/julienschmidt/httprouter"
 )
 
 // HTTP errors
 const (
-	ErrInvalidJSON = pulpe.Error("invalid json")
+	ErrInvalidJSON = pulpe.Error("invalid_json")
 )
 
 // NewHandler instantiates a new Handler.
 func NewHandler(c pulpe.Client) *Handler {
+	router := httprouter.New()
 	return &Handler{
-		CardHandler:  NewCardHandler(c),
-		ListHandler:  NewListHandler(c),
-		BoardHandler: NewBoardHandler(c),
+		CardHandler:  NewCardHandler(router, c),
+		ListHandler:  NewListHandler(router, c),
+		BoardHandler: NewBoardHandler(router, c),
+		router:       router,
 	}
 }
 
@@ -33,6 +36,7 @@ type Handler struct {
 	BoardHandler  *BoardHandler
 	StaticHandler http.Handler
 	assetsPath    string
+	router        *httprouter.Router
 }
 
 // ServeHTTP delegates a request to the appropriate subhandler.
@@ -40,13 +44,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	rw := NewResponseWriter(w)
+
 	switch {
-	case strings.HasPrefix(r.URL.Path, "/v1/cards"):
-		h.CardHandler.ServeHTTP(rw, r)
-	case strings.HasPrefix(r.URL.Path, "/v1/lists"):
-		h.ListHandler.ServeHTTP(rw, r)
-	case strings.HasPrefix(r.URL.Path, "/v1/boards"):
-		h.BoardHandler.ServeHTTP(rw, r)
+	case strings.HasPrefix(r.URL.Path, "/v1/"):
+		h.router.ServeHTTP(rw, r)
 	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
 		h.StaticHandler.ServeHTTP(rw, r)
 	default:
@@ -142,13 +143,6 @@ type errorResponse struct {
 type validationErrorResponse struct {
 	Err    string `json:"err,omitempty"`
 	Fields error  `json:"fields"`
-}
-
-// NotFound writes an API error message to the response.
-func NotFound(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte(`{}` + "\n"))
 }
 
 // encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.

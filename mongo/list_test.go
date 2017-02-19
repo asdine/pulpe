@@ -42,14 +42,6 @@ func TestListService_CreateList(t *testing.T) {
 		require.Equal(t, list.CreatedAt.UTC(), other.CreatedAt.UTC())
 		require.Equal(t, list.UpdatedAt, other.UpdatedAt)
 	})
-
-	t.Run("No BoardID", func(t *testing.T) {
-		// Trying to create a card with no ID.
-		var l pulpe.ListCreate
-
-		_, err := s.CreateList(&l)
-		require.Equal(t, pulpe.ErrListBoardIDRequired, err)
-	})
 }
 
 func TestListService_List(t *testing.T) {

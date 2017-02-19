@@ -17,9 +17,7 @@ func TestListHandler_CreateList(t *testing.T) {
 	t.Run("OK", testListHandler_CreateList_OK)
 	t.Run("ErrInvalidJSON", testListHandler_CreateList_ErrInvalidJSON)
 	t.Run("ErrValidation", testListHandler_CreateList_ErrValidation)
-	t.Run("ErrListIDRequired", testListHandler_CreateList_WithResponse(t, http.StatusBadRequest, pulpe.ErrListIDRequired))
-	t.Run("ErrListBoardIDRequired", testListHandler_CreateList_WithResponse(t, http.StatusBadRequest, pulpe.ErrListBoardIDRequired))
-	t.Run("ErrListExists", testListHandler_CreateList_WithResponse(t, http.StatusConflict, pulpe.ErrListExists))
+	t.Run("NotFound", testListHandler_CreateList_BoardNotFound)
 	t.Run("ErrInternal", testListHandler_CreateList_WithResponse(t, http.StatusInternalServerError, errors.New("unexpected error")))
 }
 
@@ -27,7 +25,13 @@ func testListHandler_CreateList_OK(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	// Mock service.
+	c.BoardService.BoardFn = func(selector string) (*pulpe.Board, error) {
+		require.Equal(t, "the-board", selector)
+		return &pulpe.Board{
+			ID: "456",
+		}, nil
+	}
+
 	c.ListService.CreateListFn = func(list *pulpe.ListCreate) (*pulpe.List, error) {
 		require.Equal(t, &pulpe.ListCreate{
 			BoardID: "456",
@@ -42,14 +46,8 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
-		require.Equal(t, "456", string(id))
-		return new(pulpe.Board), nil
-	}
-
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{
-    "boardID": "456",
+	r, _ := http.NewRequest("POST", "/v1/boards/the-board/lists", bytes.NewReader([]byte(`{
 		"name": "Name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -70,22 +68,39 @@ func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/v1/boards/the-board/lists", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
+	require.JSONEq(t, `{"err": "invalid_json"}`, w.Body.String())
 }
 
 func testListHandler_CreateList_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/v1/boards/the-board/lists", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"], "boardID": ["non zero value required"]}}`, w.Body.String())
+	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"]}}`, w.Body.String())
+}
+
+func testListHandler_CreateList_BoardNotFound(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	c.BoardService.BoardFn = func(selector string) (*pulpe.Board, error) {
+		return nil, pulpe.ErrBoardNotFound
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("POST", "/v1/boards/the-board/lists", bytes.NewReader([]byte(`{
+		"name": "Name"
+  }`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusNotFound, w.Code)
+	require.False(t, c.ListService.CreateListInvoked)
 }
 
 func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
@@ -98,13 +113,13 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 			return nil, err
 		}
 
-		c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
-			require.Equal(t, "boardID", string(id))
+		c.BoardService.BoardFn = func(selector string) (*pulpe.Board, error) {
+			require.Equal(t, "the-board", selector)
 			return new(pulpe.Board), nil
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/lists", bytes.NewReader([]byte(`{"name": "name", "boardID": "boardID"}`)))
+		r, _ := http.NewRequest("POST", "/v1/boards/the-board/lists", bytes.NewReader([]byte(`{"name": "name"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 	}
@@ -155,8 +170,6 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/v1/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.JSONEq(t, `{}`, w.Body.String())
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	require.True(t, c.ListService.DeleteListInvoked)
 	require.False(t, c.CardService.DeleteCardsByListIDInvoked)
 }
@@ -252,7 +265,7 @@ func testListHandler_UpdateList_ErrInvalidJSON(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
+	require.JSONEq(t, `{"err": "invalid_json"}`, w.Body.String())
 }
 
 func testListHandler_UpdateList_NotFound(t *testing.T) {
@@ -269,8 +282,6 @@ func testListHandler_UpdateList_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	require.JSONEq(t, `{}`, w.Body.String())
 }
 
 func testListHandler_UpdateList_InternalError(t *testing.T) {
@@ -304,4 +315,64 @@ func testListHandler_UpdateList_ValidationError(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.False(t, c.ListService.UpdateListInvoked)
+}
+
+func TestListCreateRequest_Validate(t *testing.T) {
+	t.Run("Empty", func(t *testing.T) {
+		var l pulpeHttp.ListCreateRequest
+		_, err := l.Validate()
+		require.Error(t, err)
+	})
+
+	t.Run("SpaceOnly", func(t *testing.T) {
+		l := pulpeHttp.ListCreateRequest{
+			Name: "      ",
+		}
+		_, err := l.Validate()
+		require.Error(t, err)
+	})
+
+	t.Run("Valid", func(t *testing.T) {
+		l := pulpeHttp.ListCreateRequest{
+			Name: "list name",
+		}
+		_, err := l.Validate()
+		require.NoError(t, err)
+	})
+}
+
+func TestListUpdate_Validate(t *testing.T) {
+	name := "list name"
+	emptyName := ""
+	spaces := "    "
+
+	t.Run("Empty", func(t *testing.T) {
+		var l pulpeHttp.ListUpdateRequest
+		_, err := l.Validate()
+		require.NoError(t, err)
+	})
+
+	t.Run("ValidName", func(t *testing.T) {
+		l := pulpeHttp.ListUpdateRequest{
+			Name: &name,
+		}
+		_, err := l.Validate()
+		require.NoError(t, err)
+	})
+
+	t.Run("SpaceOnly", func(t *testing.T) {
+		l := pulpeHttp.ListUpdateRequest{
+			Name: &spaces,
+		}
+		_, err := l.Validate()
+		require.Error(t, err)
+	})
+
+	t.Run("EmptyName", func(t *testing.T) {
+		l := pulpeHttp.ListUpdateRequest{
+			Name: &emptyName,
+		}
+		_, err := l.Validate()
+		require.Error(t, err)
+	})
 }

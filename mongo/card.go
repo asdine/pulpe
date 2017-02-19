@@ -6,10 +6,13 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/Machiel/slugify"
 	"github.com/blankrobot/pulpe"
 )
 
 const cardCol = "cards"
+
+const codeConflict = 11000
 
 // Ensure CardService implements pulpe.CardService.
 var _ pulpe.CardService = new(CardService)
@@ -21,21 +24,16 @@ type Card struct {
 	ListID      bson.ObjectId `bson:"listID"`
 	BoardID     bson.ObjectId `bson:"boardID"`
 	Name        string        `bson:"name"`
+	Slug        string        `bson:"slug"`
 	Description string        `bson:"description"`
 	Position    float64       `bson:"position"`
 }
 
 // ToMongoCard creates a mongo card from a pulpe card.
 func ToMongoCard(p *pulpe.Card) *Card {
-	var id bson.ObjectId
-
-	if p.ID == "" {
-		id = bson.NewObjectId()
-		p.ID = id.Hex()
-		p.CreatedAt = id.Time()
-	} else {
-		id = bson.ObjectIdHex(p.ID)
-	}
+	id := bson.NewObjectId()
+	p.ID = id.Hex()
+	p.CreatedAt = id.Time()
 
 	return &Card{
 		ID:          id,
@@ -43,6 +41,7 @@ func ToMongoCard(p *pulpe.Card) *Card {
 		ListID:      bson.ObjectIdHex(p.ListID),
 		BoardID:     bson.ObjectIdHex(p.BoardID),
 		Name:        p.Name,
+		Slug:        p.Slug,
 		Description: p.Description,
 		Position:    p.Position,
 	}
@@ -56,6 +55,7 @@ func FromMongoCard(c *Card) *pulpe.Card {
 		ListID:      c.ListID.Hex(),
 		BoardID:     c.BoardID.Hex(),
 		Name:        c.Name,
+		Slug:        c.Slug,
 		Description: c.Description,
 		Position:    c.Position,
 	}
@@ -76,20 +76,10 @@ type CardService struct {
 func (s *CardService) ensureIndexes() error {
 	col := s.session.db.C(cardCol)
 
-	// listID
-	index := mgo.Index{
-		Key:    []string{"listID"},
-		Sparse: true,
-	}
-
-	err := col.EnsureIndex(index)
-	if err != nil {
-		return err
-	}
-
 	// boardID
-	index = mgo.Index{
-		Key:    []string{"boardID"},
+	index := mgo.Index{
+		Key:    []string{"boardID", "slug"},
+		Unique: true,
 		Sparse: true,
 	}
 
@@ -97,34 +87,39 @@ func (s *CardService) ensureIndexes() error {
 }
 
 // CreateCard creates a new Card.
-func (s *CardService) CreateCard(c *pulpe.CardCreate) (*pulpe.Card, error) {
-	if c.ListID == "" {
-		return nil, pulpe.ErrCardListIDRequired
-	}
+func (s *CardService) CreateCard(cc *pulpe.CardCreate) (*pulpe.Card, error) {
+	var err error
 
-	if c.BoardID == "" {
-		return nil, pulpe.ErrCardBoardIDRequired
-	}
+	// generate slug
+	slug := slugify.Slugify(cc.Name)
 
+	// create mongo card and pulpe card
 	card := pulpe.Card{
-		BoardID:     c.BoardID,
-		ListID:      c.ListID,
-		Name:        c.Name,
-		Description: c.Description,
-		Position:    c.Position,
+		BoardID:     cc.BoardID,
+		ListID:      cc.ListID,
+		Name:        cc.Name,
+		Slug:        slug,
+		Description: cc.Description,
+		Position:    cc.Position,
 	}
 
-	return &card, s.session.db.C(cardCol).Insert(ToMongoCard(&card))
+	c := ToMongoCard(&card)
+	col := s.session.db.C(cardCol)
+
+	card.Slug, err = resolveSlugAndDo(col, newCardRecorder(c), func(rec recorder) error {
+		return col.Insert(rec.elem())
+	})
+
+	return &card, err
 }
 
 // Card returns a Card by ID.
 func (s *CardService) Card(id string) (*pulpe.Card, error) {
-	var c Card
-
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrCardNotFound
 	}
 
+	var c Card
 	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(id)).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -153,20 +148,12 @@ func (s *CardService) DeleteCard(id string) error {
 
 // DeleteCardsByListID deletes all the cards of a list.
 func (s *CardService) DeleteCardsByListID(listID string) error {
-	if !bson.IsObjectIdHex(listID) {
-		return pulpe.ErrListNotFound
-	}
-
 	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(listID)})
 	return err
 }
 
 // DeleteCardsByBoardID deletes all the cards of a board.
 func (s *CardService) DeleteCardsByBoardID(boardID string) error {
-	if !bson.IsObjectIdHex(boardID) {
-		return pulpe.ErrBoardNotFound
-	}
-
 	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
 	return err
 }
@@ -177,11 +164,15 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		return nil, pulpe.ErrCardNotFound
 	}
 
+	var err error
+	var c Card
+
 	col := s.session.db.C(cardCol)
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		patch["name"] = *u.Name
+		c.Slug = slugify.Slugify(*u.Name)
 	}
 
 	if u.Description != nil {
@@ -196,12 +187,16 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		return s.Card(id)
 	}
 
-	err := col.UpdateId(
-		bson.ObjectIdHex(id),
-		bson.M{
-			"$set":         patch,
-			"$currentDate": bson.M{"updatedAt": true},
-		})
+	c.Slug, err = resolveSlugAndDo(col, newCardRecorder(&c), func(rec recorder) error {
+		patch["slug"] = rec.getSlug()
+
+		return col.UpdateId(
+			bson.ObjectIdHex(id),
+			bson.M{
+				"$set":         patch,
+				"$currentDate": bson.M{"updatedAt": true},
+			})
+	})
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrCardNotFound
@@ -216,10 +211,6 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 // CardsByBoard returns Cards by board ID.
 func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
 	var cards []Card
-
-	if !bson.IsObjectIdHex(boardID) {
-		return nil, pulpe.ErrCardNotFound
-	}
 
 	// TODO set a limit
 	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&cards)

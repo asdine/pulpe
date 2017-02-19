@@ -34,29 +34,12 @@ func TestCardService_CreateCard(t *testing.T) {
 		card, err := s.CreateCard(&c)
 		require.NoError(t, err)
 		require.NotZero(t, card.ID)
+		require.Equal(t, "yyy", card.Slug)
 
 		// Retrieve card and compare.
 		other, err := s.Card(card.ID)
 		require.NoError(t, err)
 		require.Equal(t, card, other)
-	})
-
-	t.Run("No ListID", func(t *testing.T) {
-		// Trying to create a card with no List ID.
-		var c pulpe.CardCreate
-
-		_, err := s.CreateCard(&c)
-		require.Equal(t, pulpe.ErrCardListIDRequired, err)
-	})
-
-	t.Run("No BoardID", func(t *testing.T) {
-		// Trying to create a card with no ID.
-		c := pulpe.CardCreate{
-			ListID: newListID(),
-		}
-
-		_, err := s.CreateCard(&c)
-		require.Equal(t, pulpe.ErrCardBoardIDRequired, err)
 	})
 }
 
@@ -68,10 +51,11 @@ func TestCardService_Card(t *testing.T) {
 
 	s := session.CardService()
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		c := pulpe.CardCreate{
 			ListID:  newListID(),
 			BoardID: newBoardID(),
+			Name:    "name",
 		}
 
 		// Create new card.
@@ -86,7 +70,7 @@ func TestCardService_Card(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a card that doesn't exist.
-		_, err := s.Card(newCardID())
+		_, err := s.Card("something")
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
@@ -98,10 +82,11 @@ func TestCardService_DeleteCard(t *testing.T) {
 
 	s := session.CardService()
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		c := pulpe.CardCreate{
 			ListID:  newListID(),
 			BoardID: newBoardID(),
+			Name:    "name",
 		}
 
 		// Create new card.
@@ -119,7 +104,7 @@ func TestCardService_DeleteCard(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a card that doesn't exist.
-		err := s.DeleteCard(newCardID())
+		err := s.DeleteCard(bson.NewObjectId().Hex())
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 }
@@ -132,7 +117,7 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 
 	s := session.CardService()
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		list1 := newListID()
 		list2 := newListID()
 		boardID := newBoardID()
@@ -140,6 +125,7 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			c := pulpe.CardCreate{
 				BoardID: boardID,
+				Name:    "name",
 			}
 
 			if i%2 != 0 {
@@ -179,7 +165,7 @@ func TestCardService_UpdateCard(t *testing.T) {
 
 	s := session.CardService()
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		c := pulpe.CardCreate{
 			ListID:      newListID(),
 			BoardID:     newBoardID(),
@@ -228,11 +214,9 @@ func TestCardService_UpdateCard(t *testing.T) {
 		require.Equal(t, updatedCard, other)
 
 		// Set zero values.
-		newName = ""
 		newDesc = ""
 		newPosition = 0
 		updatedCard, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
-			Name:        &newName,
 			Description: &newDesc,
 			Position:    &newPosition,
 		})
@@ -242,7 +226,6 @@ func TestCardService_UpdateCard(t *testing.T) {
 		// Retrieve card and check.
 		other, err = s.Card(card.ID)
 		require.NoError(t, err)
-		require.Zero(t, other.Name)
 		require.Zero(t, other.Description)
 		require.Zero(t, other.Position)
 		require.Equal(t, updatedCard, other)

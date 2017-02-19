@@ -5,20 +5,22 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/blankrobot/pulpe"
+	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
 // NewListHandler returns a new instance of ListHandler.
-func NewListHandler(c pulpe.Client) *ListHandler {
+func NewListHandler(router *httprouter.Router, c pulpe.Client) *ListHandler {
 	h := ListHandler{
-		Router: httprouter.New(),
+		Router: router,
 		Client: c,
 		Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/v1/lists", h.handlePostList)
+	h.POST("/v1/boards/:board/lists", h.handlePostList)
 	h.DELETE("/v1/lists/:id", h.handleDeleteList)
 	h.PATCH("/v1/lists/:id", h.handlePatchList)
 	return &h
@@ -34,32 +36,46 @@ type ListHandler struct {
 }
 
 // handlePostList handles requests to create a new list.
-func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Decode request.
-	var req pulpe.ListCreate
+func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// decode request
+	var req ListCreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
 		return
 	}
 
-	session := h.Client.Connect()
-	defer session.Close()
-
-	err = req.Validate(session)
+	// validate payload
+	lc, err := req.Validate()
 	if err != nil {
 		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
 	}
 
-	list, err := session.ListService().CreateList(&req)
+	session := h.Client.Connect()
+	defer session.Close()
+
+	boardSelector := ps.ByName("board")
+
+	// fetch board
+	board, err := session.BoardService().Board(boardSelector)
+	if err != nil {
+		if err == pulpe.ErrBoardNotFound {
+			http.NotFound(w, r)
+		} else {
+			Error(w, err, http.StatusInternalServerError, h.Logger)
+		}
+		return
+	}
+
+	// set the boardID to the ListCreate
+	lc.BoardID = board.ID
+
+	// create the list
+	list, err := session.ListService().CreateList(lc)
 	switch err {
 	case nil:
 		encodeJSON(w, list, http.StatusCreated, h.Logger)
-	case pulpe.ErrListIDRequired, pulpe.ErrListBoardIDRequired:
-		Error(w, err, http.StatusBadRequest, h.Logger)
-	case pulpe.ErrListExists:
-		Error(w, err, http.StatusConflict, h.Logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
@@ -75,7 +91,7 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 	err := session.ListService().DeleteList(id)
 	if err != nil {
 		if err == pulpe.ErrListNotFound {
-			NotFound(w)
+			http.NotFound(w, r)
 			return
 		}
 
@@ -96,14 +112,14 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	var req pulpe.ListUpdate
+	var req ListUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
 		return
 	}
 
-	err = req.Validate()
+	lu, err := req.Validate()
 	if err != nil {
 		Error(w, err, http.StatusBadRequest, h.Logger)
 		return
@@ -112,13 +128,55 @@ func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 	session := h.Client.Connect()
 	defer session.Close()
 
-	card, err := session.ListService().UpdateList(id, &req)
+	card, err := session.ListService().UpdateList(id, lu)
 	switch err {
 	case nil:
 		encodeJSON(w, card, http.StatusOK, h.Logger)
 	case pulpe.ErrListNotFound:
-		NotFound(w)
+		http.NotFound(w, r)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 	}
+}
+
+// ListCreateRequest is used to create a List.
+type ListCreateRequest struct {
+	Name string `json:"name" valid:"required,stringlength(1|64)"`
+}
+
+// Validate list creation payload.
+func (l *ListCreateRequest) Validate() (*pulpe.ListCreate, error) {
+	l.Name = strings.TrimSpace(l.Name)
+
+	err := validation.Validate(l)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pulpe.ListCreate{
+		Name: l.Name,
+	}, nil
+}
+
+// ListUpdateRequest is used to update a List.
+type ListUpdateRequest struct {
+	Name *string `json:"name" valid:"required,stringlength(1|64)"`
+}
+
+// Validate list update payload.
+func (l *ListUpdateRequest) Validate() (*pulpe.ListUpdate, error) {
+	if l.Name == nil {
+		return nil, nil
+	}
+
+	*l.Name = strings.TrimSpace(*l.Name)
+
+	err := validation.Validate(l)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pulpe.ListUpdate{
+		Name: l.Name,
+	}, nil
 }

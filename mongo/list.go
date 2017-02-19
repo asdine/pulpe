@@ -78,10 +78,6 @@ func (s *ListService) ensureIndexes() error {
 
 // CreateList creates a new List
 func (s *ListService) CreateList(l *pulpe.ListCreate) (*pulpe.List, error) {
-	if l.BoardID == "" {
-		return nil, pulpe.ErrListBoardIDRequired
-	}
-
 	list := pulpe.List{
 		CreatedAt: s.session.now,
 		BoardID:   l.BoardID,

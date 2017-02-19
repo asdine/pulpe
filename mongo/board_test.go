@@ -1,7 +1,6 @@
 package mongo_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -10,8 +9,6 @@ import (
 	"github.com/blankrobot/pulpe"
 	"github.com/stretchr/testify/require"
 )
-
-var settings = json.RawMessage([]byte("{}"))
 
 func newBoardID() string {
 	return bson.NewObjectId().Hex()
@@ -28,24 +25,23 @@ func TestBoardService_CreateBoard(t *testing.T) {
 
 	t.Run("New", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "XXX YYY ",
-			Settings: &settings,
+			Name: "XXX YYY ",
 		}
+
 		// Create new board.
 		board, err := s.CreateBoard(&b)
 		require.NoError(t, err)
 		require.Equal(t, board.Slug, "xxx-yyy")
 
 		// Retrieve board and compare.
-		other, err := s.Board(board.ID)
+		other, err := s.Board("xxx-yyy")
 		require.NoError(t, err)
 		require.Equal(t, board, other)
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "ZZZ KK ",
-			Settings: &settings,
+			Name: "ZZZ KK ",
 		}
 
 		// Create new board.
@@ -55,12 +51,11 @@ func TestBoardService_CreateBoard(t *testing.T) {
 
 		// Create second board with slightly different name that generates the same slug.
 		b = pulpe.BoardCreate{
-			Name:     "  ZZZ   KK ",
-			Settings: &settings,
+			Name: "  ZZZ   KK ",
 		}
-		_, err = s.CreateBoard(&b)
-		require.Error(t, err)
-		require.Equal(t, pulpe.ErrBoardExists, err)
+		board, err = s.CreateBoard(&b)
+		require.NoError(t, err)
+		require.Equal(t, "zzz-kk-1", board.Slug)
 	})
 }
 
@@ -74,8 +69,7 @@ func TestBoardService_Board(t *testing.T) {
 
 	t.Run("Exists", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "ZZZ",
-			Settings: &settings,
+			Name: "ZZZ",
 		}
 
 		// Create new board.
@@ -83,15 +77,14 @@ func TestBoardService_Board(t *testing.T) {
 		require.NoError(t, err)
 
 		// Retrieve board and compare.
-		other, err := s.Board(board.ID)
+		other, err := s.Board(board.Slug)
 		require.NoError(t, err)
 		require.Equal(t, board, other)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to fetch a board that doesn't exist.
-		id := bson.NewObjectId().Hex()
-		_, err := s.Board(id)
+		_, err := s.Board("something")
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 }
@@ -107,28 +100,19 @@ func TestBoardService_Boards(t *testing.T) {
 
 		for i := 0; i < 5; i++ {
 			b := pulpe.BoardCreate{
-				Name:     fmt.Sprintf("board%d", i),
-				Settings: &settings,
+				Name: fmt.Sprintf("board%d", i),
 			}
 			// Create new board.
 			_, err := s.CreateBoard(&b)
 			require.NoError(t, err)
 		}
 
-		// Retrieve boards without filter.
-		boards, err := s.Boards(nil)
+		// Retrieve boards.
+		boards, err := s.Boards()
 		require.NoError(t, err)
 		require.Len(t, boards, 5)
 		require.Equal(t, boards[0].Name, "board0")
 		require.Equal(t, boards[4].Name, "board4")
-
-		// Retrieve boards with filter.
-		boards, err = s.Boards(map[string]string{
-			"slug": "board4",
-		})
-		require.NoError(t, err)
-		require.Len(t, boards, 1)
-		require.Equal(t, boards[0].Name, "board4")
 	})
 
 	t.Run("No boards", func(t *testing.T) {
@@ -137,7 +121,7 @@ func TestBoardService_Boards(t *testing.T) {
 
 		s := session.BoardService()
 
-		boards, err := s.Boards(nil)
+		boards, err := s.Boards()
 		require.NoError(t, err)
 		require.Len(t, boards, 0)
 	})
@@ -164,14 +148,13 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 		err = s.DeleteBoard(board.ID)
 		require.NoError(t, err)
 
-		_, err = s.Board(board.ID)
+		_, err = s.Board(board.Slug)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to delete a board that doesn't exist.
-		id := bson.NewObjectId().Hex()
-		err := s.DeleteBoard(id)
+		err := s.DeleteBoard("something")
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 }
@@ -184,10 +167,9 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 
 	s := session.BoardService()
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		b := pulpe.BoardCreate{
-			Name:     "name",
-			Settings: &settings,
+			Name: "name",
 		}
 
 		// Create new board.
@@ -196,10 +178,8 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 
 		// Update a single field.
 		newName := "new name"
-		newSettings := json.RawMessage([]byte(`{"a":"b"}`))
 		updatedBoard, err := s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
-			Name:     &newName,
-			Settings: &newSettings,
+			Name: &newName,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, updatedBoard)
@@ -212,39 +192,56 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.Equal(t, "new-name", other.Slug)
 		require.Equal(t, other, updatedBoard)
 
-		// Set zero values.
-		newSettings = []byte("")
-		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
-			Settings: &newSettings,
-		})
-		require.NoError(t, err)
-		require.Nil(t, updatedBoard.Settings)
-
 		// Update a single field with the same value.
 		updatedBoard, err = s.UpdateBoard(board.ID, &pulpe.BoardUpdate{
 			Name: &newName,
 		})
 		require.NoError(t, err)
+		require.Equal(t, "new-name", updatedBoard.Slug)
 		require.NotNil(t, updatedBoard)
 
 		// Retrieve board and check.
 		other, err = s.Board(board.ID)
 		require.NoError(t, err)
-		require.Zero(t, other.Settings)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		// Trying to update a board that doesn't exist with no patch.
-		id := bson.NewObjectId().Hex()
-		updatedBoard, err := s.UpdateBoard(id, &pulpe.BoardUpdate{})
+		updatedBoard, err := s.UpdateBoard(newBoardID(), &pulpe.BoardUpdate{})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)
 
 		// Trying to update a board that doesn't exist with a patch.
 		newName := "new name 2"
-		updatedBoard, err = s.UpdateBoard(id, &pulpe.BoardUpdate{Name: &newName})
+		updatedBoard, err = s.UpdateBoard(newBoardID(), &pulpe.BoardUpdate{Name: &newName})
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)
+	})
+
+	t.Run("Slug conflict", func(t *testing.T) {
+		b1 := pulpe.BoardCreate{
+			Name: "hello",
+		}
+
+		b2 := pulpe.BoardCreate{
+			Name: "goodbye",
+		}
+
+		// Create board 1.
+		_, err := s.CreateBoard(&b1)
+		require.NoError(t, err)
+
+		// Create board 2.
+		board2, err := s.CreateBoard(&b2)
+		require.NoError(t, err)
+
+		// Update b2.
+		newName := "hello"
+		updatedBoard, err := s.UpdateBoard(board2.ID, &pulpe.BoardUpdate{
+			Name: &newName,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "hello-1", updatedBoard.Slug)
 	})
 }
 

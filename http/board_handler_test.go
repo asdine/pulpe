@@ -2,7 +2,6 @@ package http_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +15,6 @@ import (
 
 func TestBoardHandler_Boards(t *testing.T) {
 	t.Run("OK", testBoardHandler_Boards_OK)
-	t.Run("With filters", testBoardHandler_Boards_WithFilter)
 	t.Run("Internal error", testBoardHandler_Boards_InternalError)
 }
 
@@ -25,10 +23,9 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
-		s := json.RawMessage([]byte(`{"a": "b"}`))
+	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		return []*pulpe.Board{
-			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Lists: []*pulpe.List{}, Cards: []*pulpe.Card{}, Settings: &s},
+			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now},
 		}, nil
 	}
 
@@ -45,12 +42,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 			"name": "name",
 			"slug": "slug",
       "createdAt": `+string(date)+`,
-      "updatedAt": `+string(date)+`,
-			"lists": [],
-			"cards": [],
-      "settings": {
-        "a": "b"
-      }
+      "updatedAt": `+string(date)+`
 	  }
   ]`, w.Body.String())
 }
@@ -60,7 +52,7 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
+	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		return nil, errors.New("unexpected error")
 	}
 
@@ -72,31 +64,11 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 	require.True(t, c.BoardService.BoardsInvoked)
 }
 
-func testBoardHandler_Boards_WithFilter(t *testing.T) {
-	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
-
-	// Mock service.
-	c.BoardService.BoardsFn = func(filters map[string]string) ([]*pulpe.Board, error) {
-		require.Equal(t, "name", filters["slug"])
-		return nil, nil
-	}
-
-	// Retrieve Board.
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/v1/boards?slug=name", nil)
-	h.ServeHTTP(w, r)
-	require.Equal(t, http.StatusOK, w.Code)
-	require.True(t, c.BoardService.BoardsInvoked)
-}
-
 func TestBoardHandler_CreateBoard(t *testing.T) {
 	t.Run("OK", testBoardHandler_CreateBoard_OK)
-	t.Run("OKNoSettings", testBoardHandler_CreateBoard_OK_NoSettings)
 	t.Run("ErrInvalidJSON", testBoardHandler_CreateBoard_ErrInvalidJSON)
 	t.Run("ValidationError", testBoardHandler_CreateBoard_ValidationError)
 	t.Run("ErrInternal", testBoardHandler_CreateBoard_WithResponse(t, http.StatusInternalServerError, errors.New("unexpected error")))
-	t.Run("Conflict", testBoardHandler_CreateBoard_WithResponse(t, http.StatusConflict, pulpe.ErrBoardExists))
 }
 
 func testBoardHandler_CreateBoard_OK(t *testing.T) {
@@ -106,48 +78,11 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	// Mock service.
 	c.BoardService.CreateBoardFn = func(c *pulpe.BoardCreate) (*pulpe.Board, error) {
 		require.Equal(t, "name", c.Name)
-		require.JSONEq(t, `{"a": "b"}`, string(*c.Settings))
 
 		return &pulpe.Board{
 			ID:        "123",
 			CreatedAt: mock.Now,
 			Name:      c.Name,
-			Lists:     []*pulpe.List{},
-			Cards:     []*pulpe.Card{},
-			Settings:  c.Settings,
-		}, nil
-	}
-
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/boards", bytes.NewReader([]byte(`{
-    "name": "name",
-    "settings": {
-      "a": "b"
-    }
-  }`)))
-	h.ServeHTTP(w, r)
-	require.Equal(t, http.StatusCreated, w.Code)
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	require.NotZero(t, w.Body.Len())
-	require.True(t, c.BoardService.CreateBoardInvoked)
-}
-
-func testBoardHandler_CreateBoard_OK_NoSettings(t *testing.T) {
-	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
-
-	// Mock service.
-	c.BoardService.CreateBoardFn = func(c *pulpe.BoardCreate) (*pulpe.Board, error) {
-		require.Equal(t, "name", c.Name)
-		require.JSONEq(t, `{}`, string(*c.Settings))
-
-		return &pulpe.Board{
-			ID:        "123",
-			CreatedAt: mock.Now,
-			Name:      c.Name,
-			Lists:     []*pulpe.List{},
-			Cards:     []*pulpe.Card{},
-			Settings:  c.Settings,
 		}, nil
 	}
 
@@ -171,7 +106,7 @@ func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
+	require.JSONEq(t, `{"err": "invalid_json"}`, w.Body.String())
 }
 
 func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
@@ -217,7 +152,9 @@ func testBoardHandler_Board_OK(t *testing.T) {
 	// Mock service.
 	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
-		return new(pulpe.Board), nil
+		return &pulpe.Board{
+			ID: "XXX",
+		}, nil
 	}
 
 	c.ListService.ListsByBoardFn = func(id string) ([]*pulpe.List, error) {
@@ -256,8 +193,6 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	require.JSONEq(t, `{}`, w.Body.String())
 	require.True(t, c.BoardService.BoardInvoked)
 }
 
@@ -308,7 +243,9 @@ func testBoardHandler_Board_CardInternalError(t *testing.T) {
 	// Mock service.
 	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
 		require.Equal(t, "XXX", string(id))
-		return new(pulpe.Board), nil
+		return &pulpe.Board{
+			ID: "XXX",
+		}, nil
 	}
 
 	c.ListService.ListsByBoardFn = func(id string) ([]*pulpe.List, error) {
@@ -344,10 +281,14 @@ func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 
 	// Mock service.
 	byBoardID := func(id string) error {
-		require.Equal(t, "XXX", string(id))
+		require.Equal(t, "XXX", id)
 		return nil
 	}
 
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", id)
+		return &pulpe.Board{ID: "XXX"}, nil
+	}
 	c.BoardService.DeleteBoardFn = byBoardID
 	c.ListService.DeleteListsByBoardIDFn = byBoardID
 	c.CardService.DeleteCardsByBoardIDFn = byBoardID
@@ -371,6 +312,11 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 		return pulpe.ErrBoardNotFound
 	}
 
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", id)
+		return &pulpe.Board{ID: "XXX"}, nil
+	}
+
 	byBoardID := func(id string) error {
 		require.Equal(t, "XXX", string(id))
 		return nil
@@ -383,8 +329,6 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 	r, _ := http.NewRequest("DELETE", "/v1/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	require.JSONEq(t, `{}`, w.Body.String())
 	require.True(t, c.BoardService.DeleteBoardInvoked)
 	require.False(t, c.ListService.DeleteListsByBoardIDInvoked)
 	require.False(t, c.CardService.DeleteCardsByBoardIDInvoked)
@@ -397,6 +341,11 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard(t *testing.T) {
 	// Mock service.
 	c.BoardService.DeleteBoardFn = func(id string) error {
 		return errors.New("unexpected error")
+	}
+
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", id)
+		return &pulpe.Board{ID: "XXX"}, nil
 	}
 
 	byBoardID := func(id string) error {
@@ -426,6 +375,11 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteListsByBoardID(t *testing
 		return nil
 	}
 
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", id)
+		return &pulpe.Board{ID: "XXX"}, nil
+	}
+
 	c.BoardService.DeleteBoardFn = byBoardID
 	c.ListService.DeleteListsByBoardIDFn = func(id string) error {
 		return errors.New("unexpected error")
@@ -452,6 +406,11 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteCardsByBoardID(t *testing
 		return nil
 	}
 
+	c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
+		require.Equal(t, "XXX", id)
+		return &pulpe.Board{ID: "XXX"}, nil
+	}
+
 	c.BoardService.DeleteBoardFn = byBoardID
 	c.ListService.DeleteListsByBoardIDFn = byBoardID
 	c.CardService.DeleteCardsByBoardIDFn = func(id string) error {
@@ -474,7 +433,6 @@ func TestBoardHandler_UpdateBoard(t *testing.T) {
 	t.Run("Not found", testBoardHandler_UpdateBoard_NotFound)
 	t.Run("Validation error", testBoardHandler_UpdateBoard_ValidationError)
 	t.Run("Internal error", testBoardHandler_UpdateBoard_InternalError)
-	t.Run("Board exists", testBoardHandler_UpdateBoard_BoardExists)
 }
 
 func testBoardHandler_UpdateBoard_OK(t *testing.T) {
@@ -486,17 +444,13 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 		require.Equal(t, "XXX", string(id))
 		require.NotNil(t, u.Name)
 		require.Equal(t, "new name", *u.Name)
-		require.JSONEq(t, `{"a": "b"}`, string(*u.Settings))
 
 		return new(pulpe.Board), nil
 	}
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/v1/boards/XXX", bytes.NewReader([]byte(`{
-    "name": "new name",
-    "settings": {
-      "a": "b"
-    }
+    "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
@@ -514,7 +468,7 @@ func testBoardHandler_UpdateBoard_ErrInvalidJSON(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
-	require.JSONEq(t, `{"err": "invalid json"}`, w.Body.String())
+	require.JSONEq(t, `{"err": "invalid_json"}`, w.Body.String())
 }
 
 func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
@@ -531,8 +485,6 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	require.JSONEq(t, `{}`, w.Body.String())
 	require.True(t, c.BoardService.UpdateBoardInvoked)
 }
 
@@ -553,23 +505,6 @@ func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 	require.False(t, c.BoardService.UpdateBoardInvoked)
 }
 
-func testBoardHandler_UpdateBoard_BoardExists(t *testing.T) {
-	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
-
-	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
-		return nil, pulpe.ErrBoardExists
-	}
-
-	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/boards/XXX", bytes.NewReader([]byte(`{
-    "name": "dwdwd"
-  }`)))
-	h.ServeHTTP(w, r)
-	require.Equal(t, http.StatusConflict, w.Code)
-	require.True(t, c.BoardService.UpdateBoardInvoked)
-}
-
 func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
@@ -585,4 +520,66 @@ func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.BoardService.UpdateBoardInvoked)
+}
+
+func TestBoardCreateRequest_Validate(t *testing.T) {
+	t.Run("Empty", func(t *testing.T) {
+		var b pulpeHttp.BoardCreateRequest
+		_, err := b.Validate()
+		require.Error(t, err)
+	})
+
+	t.Run("NameOnly", func(t *testing.T) {
+		b := pulpeHttp.BoardCreateRequest{
+			Name: "    board name   ",
+		}
+		_, err := b.Validate()
+		require.NoError(t, err)
+		require.Equal(t, "board name", b.Name)
+	})
+
+	t.Run("SpaceOnly", func(t *testing.T) {
+		b := pulpeHttp.BoardCreateRequest{
+			Name: "      ",
+		}
+		_, err := b.Validate()
+		require.Error(t, err)
+	})
+}
+
+func TestBoardUpdateRequest_Validate(t *testing.T) {
+	emptyName := ""
+	spaces := "    "
+
+	t.Run("Empty", func(t *testing.T) {
+		var b pulpeHttp.BoardUpdateRequest
+		_, err := b.Validate()
+		require.NoError(t, err)
+	})
+
+	t.Run("NameOnly", func(t *testing.T) {
+		name := "   board name   "
+		b := pulpeHttp.BoardUpdateRequest{
+			Name: &name,
+		}
+		_, err := b.Validate()
+		require.NoError(t, err)
+		require.Equal(t, "board name", *b.Name)
+	})
+
+	t.Run("SpaceOnly", func(t *testing.T) {
+		b := pulpeHttp.BoardUpdateRequest{
+			Name: &spaces,
+		}
+		_, err := b.Validate()
+		require.Error(t, err)
+	})
+
+	t.Run("EmptyName", func(t *testing.T) {
+		b := pulpeHttp.BoardUpdateRequest{
+			Name: &emptyName,
+		}
+		_, err := b.Validate()
+		require.Error(t, err)
+	})
 }
