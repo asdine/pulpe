@@ -42,6 +42,28 @@ func TestListService_CreateList(t *testing.T) {
 		require.Equal(t, list.CreatedAt.UTC(), other.CreatedAt.UTC())
 		require.Equal(t, list.UpdatedAt, other.UpdatedAt)
 	})
+
+	t.Run("Slug conflict", func(t *testing.T) {
+		boardID := newBoardID()
+		l := pulpe.ListCreate{
+			Name:    "ZZZ KK ",
+			BoardID: boardID,
+		}
+
+		// Create new list.
+		list, err := s.CreateList(&l)
+		require.NoError(t, err)
+		require.Equal(t, list.Slug, "zzz-kk")
+
+		// Create second list with slightly different name that generates the same slug.
+		l = pulpe.ListCreate{
+			Name:    "  ZZZ   KK ",
+			BoardID: boardID,
+		}
+		list, err = s.CreateList(&l)
+		require.NoError(t, err)
+		require.Equal(t, "zzz-kk-1", list.Slug)
+	})
 }
 
 func TestListService_List(t *testing.T) {

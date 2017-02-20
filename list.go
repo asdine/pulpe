@@ -9,6 +9,7 @@ type List struct {
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 	BoardID   string     `json:"boardID"`
 	Name      string     `json:"name"`
+	Slug      string     `json:"slug"`
 }
 
 // ListCreate is used to create a List.

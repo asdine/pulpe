@@ -41,6 +41,32 @@ func TestCardService_CreateCard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, card, other)
 	})
+
+	t.Run("Slug conflict", func(t *testing.T) {
+		boardID := newBoardID()
+		b := pulpe.CardCreate{
+			Name:        "ZZZ KK ",
+			ListID:      newListID(),
+			BoardID:     boardID,
+			Description: "MY CARD",
+			Position:    1,
+		}
+
+		// Create new card.
+		card, err := s.CreateCard(&b)
+		require.NoError(t, err)
+		require.Equal(t, card.Slug, "zzz-kk")
+
+		// Create second card with slightly different name that generates the same slug.
+		b = pulpe.CardCreate{
+			Name:    "  ZZZ   KK ",
+			ListID:  newListID(),
+			BoardID: boardID,
+		}
+		card, err = s.CreateCard(&b)
+		require.NoError(t, err)
+		require.Equal(t, "zzz-kk-1", card.Slug)
+	})
 }
 
 // Ensure cards can be retrieved.

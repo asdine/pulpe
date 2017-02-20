@@ -34,6 +34,26 @@ func (b *boardRecorder) elem() interface{} {
 	return b.Board
 }
 
+func newListRecorder(l *List) *listRecorder {
+	return &listRecorder{l}
+}
+
+type listRecorder struct {
+	*List
+}
+
+func (l *listRecorder) getSlug() string {
+	return l.Slug
+}
+
+func (l *listRecorder) setSlug(slug string) {
+	l.Slug = slug
+}
+
+func (l *listRecorder) elem() interface{} {
+	return l.List
+}
+
 func newCardRecorder(c *Card) *cardRecorder {
 	return &cardRecorder{c}
 }

@@ -6,6 +6,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/Machiel/slugify"
 	"github.com/blankrobot/pulpe"
 )
 
@@ -20,25 +21,21 @@ type List struct {
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
 	BoardID   bson.ObjectId `bson:"boardID"`
 	Name      string        `bson:"name"`
+	Slug      string        `bson:"slug"`
 }
 
 // ToMongoList creates a mongo list from a pulpe list.
 func ToMongoList(p *pulpe.List) *List {
-	var id bson.ObjectId
-
-	if p.ID == "" {
-		id = bson.NewObjectId()
-		p.ID = id.Hex()
-		p.CreatedAt = id.Time()
-	} else {
-		id = bson.ObjectIdHex(p.ID)
-	}
+	id := bson.NewObjectId()
+	p.ID = id.Hex()
+	p.CreatedAt = id.Time()
 
 	return &List{
 		ID:        id,
 		UpdatedAt: p.UpdatedAt,
 		BoardID:   bson.ObjectIdHex(p.BoardID),
 		Name:      p.Name,
+		Slug:      p.Slug,
 	}
 }
 
@@ -49,6 +46,7 @@ func FromMongoList(l *List) *pulpe.List {
 		CreatedAt: l.ID.Time(),
 		BoardID:   l.BoardID.Hex(),
 		Name:      l.Name,
+		Slug:      l.Slug,
 	}
 
 	if l.UpdatedAt != nil {
@@ -69,7 +67,8 @@ func (s *ListService) ensureIndexes() error {
 
 	// boardID
 	index := mgo.Index{
-		Key:    []string{"boardID"},
+		Key:    []string{"boardID", "slug"},
+		Unique: true,
 		Sparse: true,
 	}
 
@@ -77,23 +76,35 @@ func (s *ListService) ensureIndexes() error {
 }
 
 // CreateList creates a new List
-func (s *ListService) CreateList(l *pulpe.ListCreate) (*pulpe.List, error) {
+func (s *ListService) CreateList(lc *pulpe.ListCreate) (*pulpe.List, error) {
+	var err error
+
+	// generate slug
+	slug := slugify.Slugify(lc.Name)
+
 	list := pulpe.List{
-		CreatedAt: s.session.now,
-		BoardID:   l.BoardID,
-		Name:      l.Name,
+		BoardID: lc.BoardID,
+		Name:    lc.Name,
+		Slug:    slug,
 	}
 
-	return &list, s.session.db.C(listCol).Insert(ToMongoList(&list))
+	l := ToMongoList(&list)
+	col := s.session.db.C(listCol)
+
+	list.Slug, err = resolveSlugAndDo(col, newListRecorder(l), func(rec recorder) error {
+		return col.Insert(rec.elem())
+	})
+
+	return &list, err
 }
 
 // List returns a List by ID.
 func (s *ListService) List(id string) (*pulpe.List, error) {
-	var l List
-
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrListNotFound
 	}
+
+	var l List
 
 	err := s.session.db.C(listCol).FindId(bson.ObjectIdHex(id)).One(&l)
 	if err != nil {
@@ -137,23 +148,31 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 		return nil, pulpe.ErrListNotFound
 	}
 
+	var err error
+	var l List
+
 	col := s.session.db.C(listCol)
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		patch["name"] = *u.Name
+		l.Slug = slugify.Slugify(*u.Name)
 	}
 
 	if len(patch) == 0 {
 		return s.List(id)
 	}
 
-	err := col.UpdateId(
-		bson.ObjectIdHex(id),
-		bson.M{
-			"$set":         patch,
-			"$currentDate": bson.M{"updatedAt": true},
-		})
+	l.Slug, err = resolveSlugAndDo(col, newListRecorder(&l), func(rec recorder) error {
+		patch["slug"] = rec.getSlug()
+
+		return col.UpdateId(
+			bson.ObjectIdHex(id),
+			bson.M{
+				"$set":         patch,
+				"$currentDate": bson.M{"updatedAt": true},
+			})
+	})
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrListNotFound
@@ -167,11 +186,11 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 
 // ListsByBoard returns all the lists of a given board.
 func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
-	var lists []List
-
 	if !bson.IsObjectIdHex(boardID) {
 		return nil, pulpe.ErrBoardNotFound
 	}
+
+	var lists []List
 
 	// TODO set a limit
 	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&lists)
