@@ -1,0 +1,7 @@
+@media (max-width: map-get($grid-breakpoints, 'md')) {
+  body {
+    .wrapper {
+      display: block;
+    }
+  }
+}
