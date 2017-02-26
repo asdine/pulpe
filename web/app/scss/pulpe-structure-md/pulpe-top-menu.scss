@@ -1,13 +1,17 @@
 @media (max-width: map-get($grid-breakpoints, 'md')) {
   .plp-top-menu {
     display: block;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 10;
     background   : white;
     border-bottom: 1px solid lightgrey;
 
     h1 {
       position      : absolute;
       top           : 15px;
-      left          : 60px;
+      left          : 70px;
       text-transform: uppercase;
       font-weight   : 800;
       font-size     : 0.875rem;
@@ -17,10 +21,16 @@
 
     .navbar {
       background: white;
+      padding-left: 40px;
     }
 
     .navbar-toggler {
       border: none;
+      padding: 0.25rem 0;
+
+      &:focus {
+        outline: none;
+      }
     }
 
     .navbar-toggler-icon {

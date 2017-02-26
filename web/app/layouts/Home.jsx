@@ -49,6 +49,9 @@ class MobileMenu extends React.Component {
               <NavItem>
                 <NavLink href="/paris/">Paris</NavLink>
               </NavItem>
+              <NavItem>
+                <NavLink href="/paris/">+ Create a board</NavLink>
+              </NavItem>
             </Nav>
           </Collapse>
         </Navbar>
