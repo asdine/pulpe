@@ -1,5 +1,6 @@
 @media (max-width: map-get($grid-breakpoints, 'md')) {
   .plp-top-menu {
+    display: block;
     background   : white;
     border-bottom: 1px solid lightgrey;
 

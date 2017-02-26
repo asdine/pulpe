@@ -36,7 +36,7 @@ class MobileMenu extends React.Component {
   }
   render() {
     return (
-      <div className="plp-top-menu hidden-md-up">
+      <div className="plp-top-menu">
         {/* <h1>pulpe</h1>*/}
         <Navbar light>
           <NavbarToggler onClick={this.toggleNavbar} />
@@ -44,10 +44,10 @@ class MobileMenu extends React.Component {
           <Collapse className="navbar-toggleable-md" isOpen={!this.state.collapsed}>
             <Nav navbar>
               <NavItem>
-                <NavLink href="/test/">Components</NavLink>
+                <NavLink href="/test/">Tests</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink href="https://github.com/reactstrap/reactstrap">Github</NavLink>
+                <NavLink href="/paris/">Paris</NavLink>
               </NavItem>
             </Nav>
           </Collapse>

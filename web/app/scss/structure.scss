@@ -4,10 +4,12 @@
 @import 'pulpe-structure/pulpe-list';
 @import 'pulpe-structure/pulpe-board';
 @import 'pulpe-structure/pulpe-left-menu';
+@import 'pulpe-structure/pulpe-top-menu';
 @import 'pulpe-structure/pulpe-modal';
 @import 'pulpe-structure/pulpe-global-structure';
 
-// md : Under 768px
+// Breakpoints 'md' : If <= 768px
 @import 'pulpe-structure-md/pulpe-board';
 @import 'pulpe-structure-md/pulpe-top-menu';
+@import 'pulpe-structure-md/pulpe-left-menu';
 @import 'pulpe-structure-md/pulpe-global-structure';
