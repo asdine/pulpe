@@ -14,7 +14,7 @@ const Home = ({ children }) =>
   </div>;
 
 const Menu = () =>
-  <div className="plp-left-menu hidden-sm-down">
+  <div className="plp-left-menu">
     <h1>pulpe</h1>
     <BoardList />
   </div>;
