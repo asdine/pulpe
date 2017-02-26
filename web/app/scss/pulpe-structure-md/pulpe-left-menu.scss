@@ -1,0 +1,5 @@
+@media (max-width: map-get($grid-breakpoints, 'md')) {
+  .plp-left-menu {
+    display: none;
+  }
+}
