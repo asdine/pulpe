@@ -161,7 +161,10 @@ func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Boar
 	}
 
 	b.Slug, err = resolveSlugAndDo(col, newBoardRecorder(&b), func(rec recorder) error {
-		patch["slug"] = rec.getSlug()
+		slug := rec.getSlug()
+		if slug != "" {
+			patch["slug"] = slug
+		}
 
 		return col.UpdateId(
 			bson.ObjectIdHex(id),

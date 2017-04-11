@@ -164,7 +164,10 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 	}
 
 	l.Slug, err = resolveSlugAndDo(col, newListRecorder(&l), func(rec recorder) error {
-		patch["slug"] = rec.getSlug()
+		slug := rec.getSlug()
+		if slug != "" {
+			patch["slug"] = slug
+		}
 
 		return col.UpdateId(
 			bson.ObjectIdHex(id),
@@ -193,7 +196,7 @@ func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
 	var lists []List
 
 	// TODO set a limit
-	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&lists)
+	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).Sort("_id").All(&lists)
 	if err != nil {
 		return nil, err
 	}

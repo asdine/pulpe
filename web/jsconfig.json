@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "jsx": "react",
+        "target": "ES6",
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": "./",
+        "paths": {
+            "@/*": ["./app/*"]
+        }
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}

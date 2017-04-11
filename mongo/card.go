@@ -188,7 +188,10 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 	}
 
 	c.Slug, err = resolveSlugAndDo(col, newCardRecorder(&c), func(rec recorder) error {
-		patch["slug"] = rec.getSlug()
+		slug := rec.getSlug()
+		if slug != "" {
+			patch["slug"] = slug
+		}
 
 		return col.UpdateId(
 			bson.ObjectIdHex(id),
@@ -213,7 +216,7 @@ func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
 	var cards []Card
 
 	// TODO set a limit
-	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).All(&cards)
+	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).Sort("_id").All(&cards)
 	if err != nil {
 		return nil, err
 	}

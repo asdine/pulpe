@@ -3,7 +3,7 @@ import merge from 'webpack-merge';
 import baseConfig from './base';
 
 export default merge(baseConfig, {
-  devtool: 'cheap-module-source-map',
+  devtool: 'cheap-module-eval-source-map',
 
   output: {
     filename: '[name].js',
@@ -54,7 +54,6 @@ export default merge(baseConfig, {
 
   devServer: {
     hot: true,
-    contentBase: './app/',
     publicPath: '/',
     historyApiFallback: true,
     proxy: {

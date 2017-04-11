@@ -1,6 +1,6 @@
 {
   "parser": "babel-eslint",
-  "extends": "airbnb",
+  "extends": ["airbnb", "plugin:import/recommended"],
   "env": {
     "browser": true,
     "node": true,
@@ -11,6 +11,7 @@
     "consistent-return": "off",
     "comma-dangle": "off",
     "generator-star-spacing": "off",
+    "max-len": "off",
     "no-confusing-arrow": 0,
     "no-bitwise": "off",
     "import/no-unresolved": ["error", { "ignore": ["electron"] }],
@@ -37,7 +38,7 @@
   "settings": {
     "import/resolver": {
       "webpack": {
-        "config": "webpack.config.js"
+        "config": "./config/eslint.js"
       }
     }
   }

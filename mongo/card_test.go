@@ -204,24 +204,31 @@ func TestCardService_UpdateCard(t *testing.T) {
 		card, err := s.CreateCard(&c)
 		require.NoError(t, err)
 
-		// Update a single field.
+		// Update the name.
 		newName := "new name"
 		updatedCard, err := s.UpdateCard(card.ID, &pulpe.CardUpdate{
 			Name: &newName,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, updatedCard)
+		require.Equal(t, newName, updatedCard.Name)
+		require.NotNil(t, updatedCard.UpdatedAt)
+		require.NotEmpty(t, updatedCard.Slug)
 
-		// Retrieve card and check.
-		other, err := s.Card(card.ID)
+		// Update the name.
+		newDesc := "new description"
+		updatedCard, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			Description: &newDesc,
+		})
 		require.NoError(t, err)
-		require.Equal(t, newName, other.Name)
-		require.NotNil(t, other.UpdatedAt)
-		require.Equal(t, updatedCard, other)
+		require.NotNil(t, updatedCard)
+		require.Equal(t, newDesc, updatedCard.Description)
+		require.NotNil(t, updatedCard.UpdatedAt)
+		require.NotEmpty(t, updatedCard.Slug)
 
 		// Update multiple fields.
 		newName = "new name2"
-		newDesc := "new description"
+		newDesc = "new description 2"
 		newPosition := float64(2)
 		updatedCard, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
 			Name:        &newName,
@@ -230,14 +237,9 @@ func TestCardService_UpdateCard(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, updatedCard)
-
-		// Retrieve card and check.
-		other, err = s.Card(card.ID)
-		require.NoError(t, err)
-		require.Equal(t, newName, other.Name)
-		require.Equal(t, newDesc, other.Description)
-		require.Equal(t, newPosition, other.Position)
-		require.Equal(t, updatedCard, other)
+		require.Equal(t, newName, updatedCard.Name)
+		require.Equal(t, newDesc, updatedCard.Description)
+		require.Equal(t, newPosition, updatedCard.Position)
 
 		// Set zero values.
 		newDesc = ""
@@ -248,13 +250,8 @@ func TestCardService_UpdateCard(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, updatedCard)
-
-		// Retrieve card and check.
-		other, err = s.Card(card.ID)
-		require.NoError(t, err)
-		require.Zero(t, other.Description)
-		require.Zero(t, other.Position)
-		require.Equal(t, updatedCard, other)
+		require.Zero(t, updatedCard.Description)
+		require.Zero(t, updatedCard.Position)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
