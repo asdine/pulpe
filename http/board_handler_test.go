@@ -76,7 +76,7 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	// Mock service.
-	c.BoardService.CreateBoardFn = func(c *pulpe.BoardCreate) (*pulpe.Board, error) {
+	c.BoardService.CreateBoardFn = func(c *pulpe.BoardCreation) (*pulpe.Board, error) {
 		require.Equal(t, "name", c.Name)
 
 		return &pulpe.Board{
@@ -125,7 +125,7 @@ func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err err
 		h := pulpeHttp.NewHandler(c)
 
 		// Mock service.
-		c.BoardService.CreateBoardFn = func(Board *pulpe.BoardCreate) (*pulpe.Board, error) {
+		c.BoardService.CreateBoardFn = func(Board *pulpe.BoardCreation) (*pulpe.Board, error) {
 			return nil, err
 		}
 

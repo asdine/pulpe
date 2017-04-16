@@ -12,8 +12,8 @@ type List struct {
 	Slug      string     `json:"slug"`
 }
 
-// ListCreate is used to create a List.
-type ListCreate struct {
+// ListCreation is used to create a List.
+type ListCreation struct {
 	BoardID string
 	Name    string
 }
@@ -25,7 +25,7 @@ type ListUpdate struct {
 
 // ListService represents a service for managing lists.
 type ListService interface {
-	CreateList(list *ListCreate) (*List, error)
+	CreateList(list *ListCreation) (*List, error)
 	List(id string) (*List, error)
 	DeleteList(id string) error
 	DeleteListsByBoardID(boardID string) error

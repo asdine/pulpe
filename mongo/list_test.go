@@ -22,7 +22,7 @@ func TestListService_CreateList(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("New", func(t *testing.T) {
-		l := pulpe.ListCreate{
+		l := pulpe.ListCreation{
 			BoardID: newBoardID(),
 			Name:    "Name",
 		}
@@ -45,7 +45,7 @@ func TestListService_CreateList(t *testing.T) {
 
 	t.Run("Slug conflict", func(t *testing.T) {
 		boardID := newBoardID()
-		l := pulpe.ListCreate{
+		l := pulpe.ListCreation{
 			Name:    "ZZZ KK ",
 			BoardID: boardID,
 		}
@@ -56,7 +56,7 @@ func TestListService_CreateList(t *testing.T) {
 		require.Equal(t, list.Slug, "zzz-kk")
 
 		// Create second list with slightly different name that generates the same slug.
-		l = pulpe.ListCreate{
+		l = pulpe.ListCreation{
 			Name:    "  ZZZ   KK ",
 			BoardID: boardID,
 		}
@@ -75,7 +75,7 @@ func TestListService_List(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("Exists", func(t *testing.T) {
-		l := pulpe.ListCreate{
+		l := pulpe.ListCreation{
 			BoardID: newBoardID(),
 		}
 
@@ -109,7 +109,7 @@ func TestListService_DeleteList(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("Exists", func(t *testing.T) {
-		l := pulpe.ListCreate{
+		l := pulpe.ListCreation{
 			BoardID: newBoardID(),
 		}
 
@@ -145,7 +145,7 @@ func TestListService_DeleteListsByBoardID(t *testing.T) {
 		board2 := newBoardID()
 
 		for i := 0; i < 10; i++ {
-			var c pulpe.ListCreate
+			var c pulpe.ListCreation
 
 			if i%2 != 0 {
 				c.BoardID = board1
@@ -183,7 +183,7 @@ func TestListService_UpdateList(t *testing.T) {
 	s := session.ListService()
 
 	t.Run("Exists", func(t *testing.T) {
-		c := pulpe.ListCreate{
+		c := pulpe.ListCreation{
 			BoardID: newBoardID(),
 			Name:    "name",
 		}
@@ -248,7 +248,7 @@ func TestListService_ListsByBoard(t *testing.T) {
 		boardID1 := newBoardID()
 		boardID2 := newBoardID()
 		for i := 0; i < 6; i++ {
-			var l pulpe.ListCreate
+			var l pulpe.ListCreation
 
 			if i%2 == 0 {
 				l.BoardID = boardID1

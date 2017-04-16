@@ -13,8 +13,8 @@ type Board struct {
 	Cards     []*Card    `json:"cards,omitempty"`
 }
 
-// BoardCreate is used to create a board.
-type BoardCreate struct {
+// BoardCreation is used to create a board.
+type BoardCreation struct {
 	Name string
 }
 
@@ -25,7 +25,7 @@ type BoardUpdate struct {
 
 // BoardService represents a service for managing boards.
 type BoardService interface {
-	CreateBoard(board *BoardCreate) (*Board, error)
+	CreateBoard(board *BoardCreation) (*Board, error)
 	Board(id string) (*Board, error)
 	Boards() ([]*Board, error)
 	DeleteBoard(id string) error

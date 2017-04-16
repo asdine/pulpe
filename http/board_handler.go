@@ -186,14 +186,14 @@ type BoardCreateRequest struct {
 }
 
 // Validate board creation payload.
-func (b *BoardCreateRequest) Validate() (*pulpe.BoardCreate, error) {
+func (b *BoardCreateRequest) Validate() (*pulpe.BoardCreation, error) {
 	b.Name = strings.TrimSpace(b.Name)
 	err := validation.Validate(b)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pulpe.BoardCreate{
+	return &pulpe.BoardCreation{
 		Name: b.Name,
 	}, nil
 }

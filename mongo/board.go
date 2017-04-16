@@ -74,7 +74,7 @@ func (s *BoardService) ensureIndexes() error {
 }
 
 // CreateBoard creates a new Board.
-func (s *BoardService) CreateBoard(bc *pulpe.BoardCreate) (*pulpe.Board, error) {
+func (s *BoardService) CreateBoard(bc *pulpe.BoardCreation) (*pulpe.Board, error) {
 	var err error
 	col := s.session.db.C(boardCol)
 

@@ -32,8 +32,8 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.CardService.CreateCardFn = func(c *pulpe.CardCreate) (*pulpe.Card, error) {
-		require.Equal(t, &pulpe.CardCreate{
+	c.CardService.CreateCardFn = func(c *pulpe.CardCreation) (*pulpe.Card, error) {
+		require.Equal(t, &pulpe.CardCreation{
 			ListID:      "456",
 			BoardID:     "789",
 			Name:        "name",
@@ -112,7 +112,7 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 		c := mock.NewClient()
 		h := pulpeHttp.NewHandler(c)
 
-		c.CardService.CreateCardFn = func(card *pulpe.CardCreate) (*pulpe.Card, error) {
+		c.CardService.CreateCardFn = func(card *pulpe.CardCreation) (*pulpe.Card, error) {
 			return nil, err
 		}
 

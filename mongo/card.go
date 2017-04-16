@@ -87,7 +87,7 @@ func (s *CardService) ensureIndexes() error {
 }
 
 // CreateCard creates a new Card.
-func (s *CardService) CreateCard(cc *pulpe.CardCreate) (*pulpe.Card, error) {
+func (s *CardService) CreateCard(cc *pulpe.CardCreation) (*pulpe.Card, error) {
 	var err error
 
 	// generate slug

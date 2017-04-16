@@ -7,7 +7,7 @@ var _ pulpe.CardService = new(CardService)
 
 // CardService is a mock service that runs provided functions. Useful for testing.
 type CardService struct {
-	CreateCardFn      func(card *pulpe.CardCreate) (*pulpe.Card, error)
+	CreateCardFn      func(card *pulpe.CardCreation) (*pulpe.Card, error)
 	CreateCardInvoked bool
 
 	CardFn      func(id string) (*pulpe.Card, error)
@@ -30,7 +30,7 @@ type CardService struct {
 }
 
 // CreateCard runs CreateCardFn and sets CreateCardInvoked to true when invoked.
-func (s *CardService) CreateCard(card *pulpe.CardCreate) (*pulpe.Card, error) {
+func (s *CardService) CreateCard(card *pulpe.CardCreation) (*pulpe.Card, error) {
 	s.CreateCardInvoked = true
 	return s.CreateCardFn(card)
 }

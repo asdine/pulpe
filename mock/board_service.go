@@ -7,7 +7,7 @@ var _ pulpe.BoardService = new(BoardService)
 
 // BoardService is a mock service that runs provided functions. Useful for testing.
 type BoardService struct {
-	CreateBoardFn      func(board *pulpe.BoardCreate) (*pulpe.Board, error)
+	CreateBoardFn      func(board *pulpe.BoardCreation) (*pulpe.Board, error)
 	CreateBoardInvoked bool
 
 	BoardFn      func(id string) (*pulpe.Board, error)
@@ -24,7 +24,7 @@ type BoardService struct {
 }
 
 // CreateBoard runs CreateBoardFn and sets CreateBoardInvoked to true when invoked.
-func (s *BoardService) CreateBoard(Board *pulpe.BoardCreate) (*pulpe.Board, error) {
+func (s *BoardService) CreateBoard(Board *pulpe.BoardCreation) (*pulpe.Board, error) {
 	s.CreateBoardInvoked = true
 	return s.CreateBoardFn(Board)
 }

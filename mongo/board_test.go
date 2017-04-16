@@ -24,7 +24,7 @@ func TestBoardService_CreateBoard(t *testing.T) {
 	s := session.BoardService()
 
 	t.Run("New", func(t *testing.T) {
-		b := pulpe.BoardCreate{
+		b := pulpe.BoardCreation{
 			Name: "XXX YYY ",
 		}
 
@@ -40,7 +40,7 @@ func TestBoardService_CreateBoard(t *testing.T) {
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
-		b := pulpe.BoardCreate{
+		b := pulpe.BoardCreation{
 			Name: "ZZZ KK ",
 		}
 
@@ -50,7 +50,7 @@ func TestBoardService_CreateBoard(t *testing.T) {
 		require.Equal(t, board.Slug, "zzz-kk")
 
 		// Create second board with slightly different name that generates the same slug.
-		b = pulpe.BoardCreate{
+		b = pulpe.BoardCreation{
 			Name: "  ZZZ   KK ",
 		}
 		board, err = s.CreateBoard(&b)
@@ -68,7 +68,7 @@ func TestBoardService_Board(t *testing.T) {
 	s := session.BoardService()
 
 	t.Run("Exists", func(t *testing.T) {
-		b := pulpe.BoardCreate{
+		b := pulpe.BoardCreation{
 			Name: "ZZZ",
 		}
 
@@ -99,7 +99,7 @@ func TestBoardService_Boards(t *testing.T) {
 		s := session.BoardService()
 
 		for i := 0; i < 5; i++ {
-			b := pulpe.BoardCreate{
+			b := pulpe.BoardCreation{
 				Name: fmt.Sprintf("board%d", i),
 			}
 			// Create new board.
@@ -136,7 +136,7 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 	s := session.BoardService()
 
 	t.Run("Exists", func(t *testing.T) {
-		b := pulpe.BoardCreate{
+		b := pulpe.BoardCreation{
 			Name: "Board1",
 		}
 
@@ -168,7 +168,7 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 	s := session.BoardService()
 
 	t.Run("OK", func(t *testing.T) {
-		b := pulpe.BoardCreate{
+		b := pulpe.BoardCreation{
 			Name: "name",
 		}
 
@@ -219,11 +219,11 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
-		b1 := pulpe.BoardCreate{
+		b1 := pulpe.BoardCreation{
 			Name: "hello",
 		}
 
-		b2 := pulpe.BoardCreate{
+		b2 := pulpe.BoardCreation{
 			Name: "goodbye",
 		}
 
@@ -253,7 +253,7 @@ func BenchmarkCreateBoard(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		bc := pulpe.BoardCreate{
+		bc := pulpe.BoardCreation{
 			Name: fmt.Sprintf("name%d", i),
 		}
 		_, err := s.CreateBoard(&bc)
@@ -269,7 +269,7 @@ func BenchmarkGetBoard(b *testing.B) {
 
 	var id string
 	for i := 0; i < 1000; i++ {
-		bc := pulpe.BoardCreate{
+		bc := pulpe.BoardCreation{
 			Name: fmt.Sprintf("name%d", i),
 		}
 		board, err := s.CreateBoard(&bc)

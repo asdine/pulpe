@@ -160,7 +160,7 @@ type CardCreateRequest struct {
 }
 
 // Validate list creation payload.
-func (c *CardCreateRequest) Validate() (*pulpe.CardCreate, error) {
+func (c *CardCreateRequest) Validate() (*pulpe.CardCreation, error) {
 	c.Name = strings.TrimSpace(c.Name)
 	c.Description = strings.TrimSpace(c.Description)
 
@@ -175,7 +175,7 @@ func (c *CardCreateRequest) Validate() (*pulpe.CardCreate, error) {
 		return nil, verr
 	}
 
-	return &pulpe.CardCreate{
+	return &pulpe.CardCreation{
 		Name:        c.Name,
 		Description: c.Description,
 		Position:    c.Position,

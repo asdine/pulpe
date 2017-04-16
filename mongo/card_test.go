@@ -23,7 +23,7 @@ func TestCardService_CreateCard(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("New", func(t *testing.T) {
-		c := pulpe.CardCreate{
+		c := pulpe.CardCreation{
 			Name:        "YYY",
 			ListID:      newListID(),
 			BoardID:     newBoardID(),
@@ -44,7 +44,7 @@ func TestCardService_CreateCard(t *testing.T) {
 
 	t.Run("Slug conflict", func(t *testing.T) {
 		boardID := newBoardID()
-		b := pulpe.CardCreate{
+		b := pulpe.CardCreation{
 			Name:        "ZZZ KK ",
 			ListID:      newListID(),
 			BoardID:     boardID,
@@ -58,7 +58,7 @@ func TestCardService_CreateCard(t *testing.T) {
 		require.Equal(t, card.Slug, "zzz-kk")
 
 		// Create second card with slightly different name that generates the same slug.
-		b = pulpe.CardCreate{
+		b = pulpe.CardCreation{
 			Name:    "  ZZZ   KK ",
 			ListID:  newListID(),
 			BoardID: boardID,
@@ -78,7 +78,7 @@ func TestCardService_Card(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("OK", func(t *testing.T) {
-		c := pulpe.CardCreate{
+		c := pulpe.CardCreation{
 			ListID:  newListID(),
 			BoardID: newBoardID(),
 			Name:    "name",
@@ -109,7 +109,7 @@ func TestCardService_DeleteCard(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("OK", func(t *testing.T) {
-		c := pulpe.CardCreate{
+		c := pulpe.CardCreation{
 			ListID:  newListID(),
 			BoardID: newBoardID(),
 			Name:    "name",
@@ -149,7 +149,7 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 		boardID := newBoardID()
 
 		for i := 0; i < 10; i++ {
-			c := pulpe.CardCreate{
+			c := pulpe.CardCreation{
 				BoardID: boardID,
 				Name:    "name",
 			}
@@ -192,7 +192,7 @@ func TestCardService_UpdateCard(t *testing.T) {
 	s := session.CardService()
 
 	t.Run("OK", func(t *testing.T) {
-		c := pulpe.CardCreate{
+		c := pulpe.CardCreation{
 			ListID:      newListID(),
 			BoardID:     newBoardID(),
 			Name:        "name",
@@ -280,7 +280,7 @@ func TestCardService_CardsByBoard(t *testing.T) {
 		boardID1 := newBoardID()
 		boardID2 := newBoardID()
 		for i := 0; i < 6; i++ {
-			c := pulpe.CardCreate{
+			c := pulpe.CardCreation{
 				ListID:      newListID(),
 				Name:        "name",
 				Description: "description",

@@ -76,7 +76,7 @@ func (s *ListService) ensureIndexes() error {
 }
 
 // CreateList creates a new List
-func (s *ListService) CreateList(lc *pulpe.ListCreate) (*pulpe.List, error) {
+func (s *ListService) CreateList(lc *pulpe.ListCreation) (*pulpe.List, error) {
 	var err error
 
 	// generate slug

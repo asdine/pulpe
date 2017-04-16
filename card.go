@@ -15,8 +15,8 @@ type Card struct {
 	Position    float64    `json:"position"`
 }
 
-// CardCreate is used to create a Card.
-type CardCreate struct {
+// CardCreation is used to create a Card.
+type CardCreation struct {
 	ListID      string
 	BoardID     string
 	Name        string
@@ -33,7 +33,7 @@ type CardUpdate struct {
 
 // CardService represents a service for managing cards.
 type CardService interface {
-	CreateCard(card *CardCreate) (*Card, error)
+	CreateCard(card *CardCreation) (*Card, error)
 	Card(id string) (*Card, error)
 	DeleteCard(id string) error
 	DeleteCardsByListID(listID string) error

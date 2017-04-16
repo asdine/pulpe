@@ -32,8 +32,8 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.ListService.CreateListFn = func(list *pulpe.ListCreate) (*pulpe.List, error) {
-		require.Equal(t, &pulpe.ListCreate{
+	c.ListService.CreateListFn = func(list *pulpe.ListCreation) (*pulpe.List, error) {
+		require.Equal(t, &pulpe.ListCreation{
 			BoardID: "456",
 			Name:    "Name",
 		}, list)
@@ -111,7 +111,7 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 		h := pulpeHttp.NewHandler(c)
 
 		// Mock service.
-		c.ListService.CreateListFn = func(list *pulpe.ListCreate) (*pulpe.List, error) {
+		c.ListService.CreateListFn = func(list *pulpe.ListCreation) (*pulpe.List, error) {
 			return nil, err
 		}
 

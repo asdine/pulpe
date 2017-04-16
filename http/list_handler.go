@@ -145,7 +145,7 @@ type ListCreateRequest struct {
 }
 
 // Validate list creation payload.
-func (l *ListCreateRequest) Validate() (*pulpe.ListCreate, error) {
+func (l *ListCreateRequest) Validate() (*pulpe.ListCreation, error) {
 	l.Name = strings.TrimSpace(l.Name)
 
 	err := validation.Validate(l)
@@ -153,7 +153,7 @@ func (l *ListCreateRequest) Validate() (*pulpe.ListCreate, error) {
 		return nil, err
 	}
 
-	return &pulpe.ListCreate{
+	return &pulpe.ListCreation{
 		Name: l.Name,
 	}, nil
 }
