@@ -14,7 +14,7 @@ before_install:
 install: make install
 
 go:
-  - 1.7
+  - 1.8
   - tip
 
 script:
