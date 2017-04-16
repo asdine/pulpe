@@ -42,6 +42,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 			ID:        "123",
 			BoardID:   "456",
 			Name:      "Name",
+			Slug:      "slug",
 			CreatedAt: mock.Now,
 		}, nil
 	}
@@ -58,6 +59,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 		"id": "123",
     "boardID": "456",
 		"name": "Name",
+		"slug": "slug",
 		"createdAt": `+string(date)+`
   }`, w.Body.String())
 	require.True(t, c.ListService.CreateListInvoked)
@@ -234,6 +236,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 		return &pulpe.List{
 			ID:        "XXX",
 			Name:      *u.Name,
+			Slug:      "new-name",
 			CreatedAt: mock.Now,
 			UpdatedAt: &mock.Now,
 		}, nil
@@ -250,6 +253,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 	require.JSONEq(t, `{
 		"id": "XXX",
     "name": "new name",
+		"slug": "new-name",
     "boardID": "",
 		"createdAt": `+string(date)+`,
 		"updatedAt": `+string(date)+`
