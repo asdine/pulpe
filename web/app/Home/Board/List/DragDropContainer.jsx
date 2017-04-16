@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import update from 'react/lib/update';
-import Draggable from './Draggable';
+import Draggable, { DraggablePreview } from './Draggable';
 
 class DragDropContainer extends Component {
   constructor(props) {
@@ -28,8 +28,14 @@ class DragDropContainer extends Component {
     };
   }
 
-  moveItem(id, atIndex) {
+  moveItem(id, listID, atIndex) {
     const { item, index } = this.findItem(id);
+
+    if (index === -1) {
+      this.props.moveToList({ id, listID });
+      return;
+    }
+
     this.setState(update(this.state, {
       items: {
         $splice: [
@@ -48,6 +54,7 @@ class DragDropContainer extends Component {
       <div className={className}>
         {items.map((child, i) => (
           <Draggable
+            {...items[i].props}
             className={itemClassName}
             key={items[i].props.id}
             id={items[i].props.id}
@@ -58,6 +65,7 @@ class DragDropContainer extends Component {
             {child}
           </Draggable>
         ))}
+        <DraggablePreview items={items} />
       </div>
     );
   }

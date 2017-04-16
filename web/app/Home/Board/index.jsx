@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Button } from 'reactstrap';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import { getActiveBoardID } from '@/Home/duck';
 import { showModal } from '@/components/Modal/duck';
 import BoardHeader from './Header';
@@ -9,6 +11,7 @@ import List from './List';
 import { getBoardSelector, fetchBoard } from './duck';
 import { getListIDsSelector, MODAL_CREATE_LIST } from './List/duck';
 
+@DragDropContext(HTML5Backend)
 class Board extends Component {
   componentDidMount() {
     const { fetch, id } = this.props;

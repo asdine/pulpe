@@ -1,11 +1,16 @@
 import React from 'react';
 import { browserHistory } from 'react-router';
 
-const Card = ({ card = {}, list = {}, board = {} }) =>
-  <div className="card" onClick={() => browserHistory.push(`/${board.slug}/${list.slug}/${card.slug}`)}>
-    <div className="card-block">
-      <h3 className="card-title">{ card.name }</h3>
+const Card = (props) => {
+  const { card = {}, list = {}, board = {}, isDragging, isDragged, style } = props;
+
+  return (
+    <div style={style} className={`card ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`} onClick={() => browserHistory.push(`/${board.slug}/${list.slug}/${card.slug}`)}>
+      <div className="card-block">
+        <h3 className="card-title">{ card.name }</h3>
+      </div>
     </div>
-  </div>;
+  );
+};
 
 export default Card;

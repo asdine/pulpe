@@ -22,28 +22,31 @@ Pulpe is an open source web application for managing content.
 Go dependencies:
 
 ```sh
-$ make install
+make install
 ```
 
 Front dependencies:
 
 ```sh
-$ cd web && yarn install
+cd web && yarn install
 ```
 
 ## Dev
 
 Compile the Go server
+
 ```sh
-$ make
+make
 ```
 
 Run the database
+
 ```sh
-$ docker-compose up -d
+docker-compose up -d
 ```
 
 Run the dev server
+
 ```sh
-$ cd web && yarn run dev
+cd web && yarn run dev
 ```

@@ -29,10 +29,10 @@ const itemTarget = {
 };
 
 
-@DropTarget('Item', itemTarget, conn => ({
+@DropTarget('List', itemTarget, conn => ({
   connectDropTarget: conn.dropTarget(),
 }))
-@DragSource('Item', itemSource, (conn, monitor) => ({
+@DragSource('List', itemSource, (conn, monitor) => ({
   connectDragSource: conn.dragSource(),
   connectDragPreview: conn.dragPreview(),
   isDragging: monitor.isDragging()

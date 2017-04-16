@@ -5,7 +5,8 @@ import { showModal } from '@/components/Modal/duck';
 import Editable from '@/components/Editable';
 import { getBoardSelector } from '@/Home/Board/duck';
 import { patchList, updateList, deleteList, getListSelector, MODAL_DELETE_LIST } from './duck';
-import { getCardsByListIDSelector, MODAL_CREATE_CARD } from './Card/duck';
+import { getCardsByListIDSelector, patchCard, MODAL_CREATE_CARD } from './Card/duck';
+import DragDropContainer from './DragDropContainer';
 import Card from './Card';
 
 const List = (props) =>
@@ -30,12 +31,12 @@ const Header = ({ connectDragSource, list = {}, onChangeName, index }) =>
     </div>
   );
 
-const Body = ({ board = {}, list = {}, cards = [] }) =>
-  <div>
+const Body = ({ board = {}, list = {}, cards = [], moveToList }) =>
+  <DragDropContainer moveToList={moveToList}>
     {cards.map((card) => (
-      <Card key={card.id} card={card} board={board} list={list} />
+      <Card key={card.id} id={card.id} card={card} board={board} list={list} />
     ))}
-  </div>;
+  </DragDropContainer>;
 
 const Footer = ({ list = {}, cards = [], onCreateCard, onDelete }) =>
   <div className="plp-list-bottom">
@@ -72,6 +73,9 @@ export default connect(
     onDelete: (id, cards) =>
       cards.length > 0 ?
         dispatch(showModal(MODAL_DELETE_LIST, id)) :
-        dispatch(deleteList(id))
+        dispatch(deleteList(id)),
+    moveToList: (patch) => {
+      dispatch(patchCard(patch));
+    },
   })
 )(List);

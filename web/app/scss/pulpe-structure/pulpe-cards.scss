@@ -11,37 +11,24 @@
 			word-wrap  : break-word;
 		}
 
-		&:active {
+		&.shadow {
 			background: rgba(0,0,0, .1);
-			box-shadow: 1px 1px 0 0 rgba(0,0,0, .2);
-		}
-	}
+			box-shadow: 0;
 
-	.card-hover:hover {
-		background: rgba(255,255,255, .5);
-		cursor    : pointer;
-	}
-}
-
-.plp-board-content.gridBoard-vertical {
-	.card {
-		margin        : 0 1px;
-		box-shadow    : 1px 1px 0 0 rgba(0,0,0, .05);
-		transition    : background 0.15s;
-		display       : inline-block;
-		width         : 260px;
-		vertical-align: top;
-
-		h3 {
-			font-size  : 0.875rem;
-			font-weight: 400;
-			white-space: normal;
-			word-wrap  : break-word;
+			h3 {
+				visibility: hidden;
+			}
 		}
 
-		&:active {
-			background: rgba(0,0,0, .1);
-			box-shadow: 1px 1px 0 0 rgba(0,0,0, .2);
+		&.dragged {
+			transform : rotate(6deg);
+			box-shadow: 1px 1px 0 0 rgba(0,0,0, .1);
+			position: fixed;
+			pointer-events: none;
+			z-index: 100;
+			left: 0;
+			top: 0;
+			width: 264px;
 		}
 	}
 
