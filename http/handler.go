@@ -50,6 +50,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.URL.Path == "/signup":
 		fallthrough
+	case r.URL.Path == "/login":
+		fallthrough
 	case strings.HasPrefix(r.URL.Path, "/v1/"):
 		h.router.ServeHTTP(rw, r)
 	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):

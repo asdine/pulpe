@@ -21,6 +21,7 @@ func NewUserHandler(router *httprouter.Router, c pulpe.Client) *UserHandler {
 	}
 
 	h.POST("/signup", h.handleUserRegistration)
+	h.POST("/login", h.handleUserLogin)
 	return &h
 }
 
@@ -33,7 +34,7 @@ type UserHandler struct {
 	Logger *log.Logger
 }
 
-// handlePostUser handles requests to create a new user.
+// handleUserRegistration handles requests to create a new user.
 func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var payload UserRegistrationRequest
 
@@ -78,6 +79,51 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+// handleUserLogin handles requests to login a user.
+func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var payload UserLoginRequest
+
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		return
+	}
+
+	err = payload.Validate()
+	if err != nil {
+		Error(w, err, http.StatusBadRequest, h.Logger)
+		return
+	}
+
+	session := h.Client.Connect()
+	defer session.Close()
+
+	user, err := session.UserService().Authenticate(payload.EmailOrLogin, payload.Password)
+	if err != nil {
+		switch err {
+		case pulpe.ErrUserAuthenticationFailed:
+			Error(w, err, http.StatusUnauthorized, h.Logger)
+		default:
+			Error(w, err, http.StatusInternalServerError, h.Logger)
+		}
+		return
+	}
+
+	us, err := session.UserService().CreateSession(user)
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.Logger)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "pulpesid",
+		Value:   us.ID,
+		Expires: us.ExpiresAt,
+	})
+
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 // UserRegistrationRequest is used to create a user.
 type UserRegistrationRequest struct {
 	FullName string `json:"fullName" valid:"required,stringlength(1|64)"`
@@ -98,4 +144,15 @@ func (u *UserRegistrationRequest) Validate() (*pulpe.UserRegistration, error) {
 		Email:    u.Email,
 		Password: u.Password,
 	}, nil
+}
+
+// UserLoginRequest is used to login a user.
+type UserLoginRequest struct {
+	EmailOrLogin string `json:"login" valid:"required,stringlength(1|64)"`
+	Password     string `json:"password" valid:"required,stringlength(1|64)"`
+}
+
+// Validate user login payload.
+func (u *UserLoginRequest) Validate() error {
+	return validation.Validate(u)
 }
