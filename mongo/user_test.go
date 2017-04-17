@@ -24,6 +24,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		u := pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
 		}
 
 		// Create new user.
@@ -46,6 +47,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		u := pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
 		}
 
 		// Create new user.
@@ -57,6 +59,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		u = pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon-snow@wall.com",
+			Password: "ygritte",
 		}
 
 		user, err = s.CreateUser(&u)
@@ -72,6 +75,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		u := pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
 		}
 
 		// Create new user.
@@ -82,11 +86,12 @@ func TestUserService_CreateUser(t *testing.T) {
 		u = pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
 		}
 
 		_, err = s.CreateUser(&u)
 		require.Error(t, err)
-		require.Equal(t, pulpe.ErrEmailConflict, err)
+		require.Equal(t, pulpe.ErrUserEmailConflict, err)
 	})
 }
 
@@ -102,6 +107,7 @@ func TestUserService_User(t *testing.T) {
 		u := pulpe.UserCreation{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
 		}
 
 		// Create new user.
@@ -118,5 +124,91 @@ func TestUserService_User(t *testing.T) {
 		// Trying to fetch a user that doesn't exist.
 		_, err := s.User("something")
 		require.Equal(t, pulpe.ErrUserNotFound, err)
+	})
+}
+
+// Ensure users can be retrieved.
+func TestUserService_Authenticate(t *testing.T) {
+	t.Parallel()
+
+	t.Run("WithEmailOK", func(t *testing.T) {
+		session, cleanup := MustGetSession(t)
+		defer cleanup()
+		s := session.UserService()
+
+		u := pulpe.UserCreation{
+			FullName: "Jon Snow",
+			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
+		}
+
+		// Create new user.
+		user, err := s.CreateUser(&u)
+		require.NoError(t, err)
+
+		// Authenticate user.
+		authUser, err := s.Authenticate(u.Email, u.Password)
+		require.NoError(t, err)
+		require.Equal(t, authUser, user)
+	})
+
+	t.Run("WithLoginOK", func(t *testing.T) {
+		session, cleanup := MustGetSession(t)
+		defer cleanup()
+		s := session.UserService()
+
+		u := pulpe.UserCreation{
+			FullName: "Jon Snow",
+			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
+		}
+
+		// Create new user.
+		user, err := s.CreateUser(&u)
+		require.NoError(t, err)
+
+		// Authenticate user.
+		authUser, err := s.Authenticate(user.Login, u.Password)
+		require.NoError(t, err)
+		require.Equal(t, authUser, user)
+	})
+
+	t.Run("WithBadEmail", func(t *testing.T) {
+		session, cleanup := MustGetSession(t)
+		defer cleanup()
+		s := session.UserService()
+
+		_, err := s.Authenticate("someone@email.com", "passwd")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
+	})
+
+	t.Run("WithBadLogin", func(t *testing.T) {
+		session, cleanup := MustGetSession(t)
+		defer cleanup()
+		s := session.UserService()
+
+		_, err := s.Authenticate("someone", "passwd")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
+	})
+
+	t.Run("WithBadPassword", func(t *testing.T) {
+		session, cleanup := MustGetSession(t)
+		defer cleanup()
+		s := session.UserService()
+
+		u := pulpe.UserCreation{
+			FullName: "Jon Snow",
+			Email:    "jon.snow@wall.com",
+			Password: "ygritte",
+		}
+
+		user, err := s.CreateUser(&u)
+		require.NoError(t, err)
+
+		_, err = s.Authenticate(user.Login, "passwd")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
 	})
 }

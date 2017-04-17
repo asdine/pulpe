@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/Machiel/slugify"
+	"github.com/asaskevich/govalidator"
 	"github.com/blankrobot/pulpe"
+	"golang.org/x/crypto/bcrypt"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -19,6 +21,7 @@ type User struct {
 	FullName  string        `bson:"fullName"`
 	Login     string        `bson:"login"`
 	Email     string        `bson:"email"`
+	Password  string        `bson:"password"`
 }
 
 // ToMongoUser creates a mongo user from a pulpe user.
@@ -97,13 +100,20 @@ func (s *UserService) CreateUser(uc *pulpe.UserCreation) (*pulpe.User, error) {
 
 	u := ToMongoUser(&user)
 
+	passwd, err := bcrypt.GenerateFromPassword([]byte(uc.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Password = string(passwd)
+
 	user.Login, err = resolveSlugAndDo(col, "login", u.Login, "", func(login string) error {
 		u.Login = login
 		return col.Insert(u)
 	})
 
 	if err != nil && mgo.IsDup(err) && strings.Contains(err.Error(), "email") {
-		return nil, pulpe.ErrEmailConflict
+		return nil, pulpe.ErrUserEmailConflict
 	}
 
 	return &user, err
@@ -120,6 +130,34 @@ func (s *UserService) User(selector string) (*pulpe.User, error) {
 		}
 
 		return nil, err
+	}
+
+	return FromMongoUser(&u), nil
+}
+
+// Authenticate user with login or email and password.
+func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, error) {
+	var u User
+	var field string
+
+	if govalidator.IsEmail(loginOrEmail) {
+		field = "email"
+	} else {
+		field = "login"
+	}
+
+	err := s.session.db.C(userCol).Find(bson.M{field: loginOrEmail}).One(&u)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrAuthenticationFailed
+		}
+
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(passwd))
+	if err != nil {
+		return nil, pulpe.ErrAuthenticationFailed
 	}
 
 	return FromMongoUser(&u), nil

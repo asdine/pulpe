@@ -12,6 +12,9 @@ type UserService struct {
 
 	UserFn      func(id string) (*pulpe.User, error)
 	UserInvoked bool
+
+	AuthenticateFn      func(login, passwd string) (*pulpe.User, error)
+	AuthenticateInvoked bool
 }
 
 // CreateUser runs CreateUserFn and sets CreateUserInvoked to true when invoked.
@@ -24,4 +27,10 @@ func (s *UserService) CreateUser(user *pulpe.UserCreation) (*pulpe.User, error) 
 func (s *UserService) User(id string) (*pulpe.User, error) {
 	s.UserInvoked = true
 	return s.UserFn(id)
+}
+
+// Authenticate runs AuthenticateFn and sets AuthenticateInvoked to true when invoked.
+func (s *UserService) Authenticate(login, passwd string) (*pulpe.User, error) {
+	s.AuthenticateInvoked = true
+	return s.AuthenticateFn(login, passwd)
 }
