@@ -3,92 +3,24 @@ package mongo
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-type recorder interface {
-	getSlug() string
-	setSlug(string)
-	elem() interface{}
-}
-
-func newBoardRecorder(b *Board) *boardRecorder {
-	return &boardRecorder{b}
-}
-
-type boardRecorder struct {
-	*Board
-}
-
-func (b *boardRecorder) getSlug() string {
-	return b.Slug
-}
-
-func (b *boardRecorder) setSlug(slug string) {
-	b.Slug = slug
-}
-
-func (b *boardRecorder) elem() interface{} {
-	return b.Board
-}
-
-func newListRecorder(l *List) *listRecorder {
-	return &listRecorder{l}
-}
-
-type listRecorder struct {
-	*List
-}
-
-func (l *listRecorder) getSlug() string {
-	return l.Slug
-}
-
-func (l *listRecorder) setSlug(slug string) {
-	l.Slug = slug
-}
-
-func (l *listRecorder) elem() interface{} {
-	return l.List
-}
-
-func newCardRecorder(c *Card) *cardRecorder {
-	return &cardRecorder{c}
-}
-
-type cardRecorder struct {
-	*Card
-}
-
-func (c *cardRecorder) getSlug() string {
-	return c.Slug
-}
-
-func (c *cardRecorder) setSlug(slug string) {
-	c.Slug = slug
-}
-
-func (c *cardRecorder) elem() interface{} {
-	return c.Card
-}
-
-func resolveSlugAndDo(col *mgo.Collection, rec recorder, action func(rec recorder) error) (string, error) {
+func resolveSlugAndDo(col *mgo.Collection, slugField, slug, sep string, action func(string) error) (string, error) {
 	// try to execute the given action with the generated slug
-	err := action(rec)
+	err := action(slug)
 	if err == nil {
 		// success, leaving
-		return rec.getSlug(), nil
+		return slug, nil
 	}
 
-	e, ok := err.(*mgo.LastError)
-	if !ok || e.Code != codeConflict {
+	if !mgo.IsDup(err) || !strings.Contains(err.Error(), slugField) {
 		// the action failed because of an unknown error, aborting
 		return "", err
 	}
-
-	slug := rec.getSlug()
 
 	// the slug already exists, fetch the last record that has the same slug
 	// and increment the counter
@@ -96,14 +28,14 @@ func resolveSlugAndDo(col *mgo.Collection, rec recorder, action func(rec recorde
 
 	err = col.Find(
 		bson.M{
-			"slug": bson.M{
+			slugField: bson.M{
 				"$regex": bson.RegEx{
-					Pattern: fmt.Sprintf(`^%s(-\d+)?$`, slug),
+					Pattern: fmt.Sprintf(`^%s(%s\d+)?$`, slug, sep),
 					Options: "",
 				},
 			},
 		},
-	).Sort("-_id").Select(bson.M{"slug": 1}).Limit(1).Distinct("slug", &distinctSlugs)
+	).Sort("-_id").Select(bson.M{slugField: 1}).Limit(1).Distinct(slugField, &distinctSlugs)
 	if err != nil {
 		return "", err
 	}
@@ -123,23 +55,22 @@ func resolveSlugAndDo(col *mgo.Collection, rec recorder, action func(rec recorde
 	// loop until the action succeeds
 	for {
 		counter++
-		rec.setSlug(fmt.Sprintf("%s-%d", slug, counter))
-		err := action(rec)
+		currentSlug := fmt.Sprintf("%s%s%d", slug, sep, counter)
+		err := action(currentSlug)
 		if err == nil {
-			return rec.getSlug(), nil
+			return currentSlug, nil
 		}
 
-		e, ok := err.(*mgo.LastError)
-		if !ok || e.Code != codeConflict {
+		if !mgo.IsDup(err) || !strings.Contains(err.Error(), slugField) {
 			return "", err
 		}
 	}
 }
 
-func getSelector(slugOrID string) bson.M {
+func getSelector(slugField, slugOrID string) bson.M {
 	if bson.IsObjectIdHex(slugOrID) {
 		return bson.M{"_id": bson.ObjectIdHex(slugOrID)}
 	}
 
-	return bson.M{"slug": slugOrID}
+	return bson.M{slugField: slugOrID}
 }

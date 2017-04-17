@@ -2,6 +2,11 @@ package pulpe
 
 import "time"
 
+// Card errors
+const (
+	ErrCardNotFound = Error("card not found")
+)
+
 // A Card is a unit of information that is stored in a list.
 type Card struct {
 	ID          string     `json:"id"`

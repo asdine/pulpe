@@ -76,7 +76,7 @@ type CardService struct {
 func (s *CardService) ensureIndexes() error {
 	col := s.session.db.C(cardCol)
 
-	// boardID
+	// boardID and slug
 	index := mgo.Index{
 		Key:    []string{"boardID", "slug"},
 		Unique: true,
@@ -106,8 +106,9 @@ func (s *CardService) CreateCard(cc *pulpe.CardCreation) (*pulpe.Card, error) {
 	c := ToMongoCard(&card)
 	col := s.session.db.C(cardCol)
 
-	card.Slug, err = resolveSlugAndDo(col, newCardRecorder(c), func(rec recorder) error {
-		return col.Insert(rec.elem())
+	card.Slug, err = resolveSlugAndDo(col, "slug", c.Slug, "-", func(slug string) error {
+		c.Slug = slug
+		return col.Insert(c)
 	})
 
 	return &card, err
@@ -187,8 +188,7 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		return s.Card(id)
 	}
 
-	c.Slug, err = resolveSlugAndDo(col, newCardRecorder(&c), func(rec recorder) error {
-		slug := rec.getSlug()
+	c.Slug, err = resolveSlugAndDo(col, "slug", c.Slug, "-", func(slug string) error {
 		if slug != "" {
 			patch["slug"] = slug
 		}

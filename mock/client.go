@@ -20,6 +20,7 @@ type Client struct {
 	CardService  CardService
 	ListService  ListService
 	BoardService BoardService
+	UserService  UserService
 }
 
 // Connect creates mock Session.
@@ -29,6 +30,7 @@ func (c *Client) Connect() pulpe.Session {
 		cardService:  &c.CardService,
 		listService:  &c.ListService,
 		boardService: &c.BoardService,
+		userService:  &c.UserService,
 	}
 }
 
@@ -40,6 +42,7 @@ type Session struct {
 	cardService  *CardService
 	listService  *ListService
 	boardService *BoardService
+	userService  *UserService
 }
 
 // CardService returns the session CardService
@@ -55,6 +58,11 @@ func (s *Session) ListService() pulpe.ListService {
 // BoardService returns the session BoardService
 func (s *Session) BoardService() pulpe.BoardService {
 	return s.boardService
+}
+
+// UserService returns the session UserService
+func (s *Session) UserService() pulpe.UserService {
+	return s.userService
 }
 
 // Close session.

@@ -65,7 +65,7 @@ type ListService struct {
 func (s *ListService) ensureIndexes() error {
 	col := s.session.db.C(listCol)
 
-	// boardID
+	// boardID and slug
 	index := mgo.Index{
 		Key:    []string{"boardID", "slug"},
 		Unique: true,
@@ -91,8 +91,9 @@ func (s *ListService) CreateList(lc *pulpe.ListCreation) (*pulpe.List, error) {
 	l := ToMongoList(&list)
 	col := s.session.db.C(listCol)
 
-	list.Slug, err = resolveSlugAndDo(col, newListRecorder(l), func(rec recorder) error {
-		return col.Insert(rec.elem())
+	list.Slug, err = resolveSlugAndDo(col, "slug", l.Slug, "-", func(slug string) error {
+		l.Slug = slug
+		return col.Insert(l)
 	})
 
 	return &list, err
@@ -163,8 +164,7 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 		return s.List(id)
 	}
 
-	l.Slug, err = resolveSlugAndDo(col, newListRecorder(&l), func(rec recorder) error {
-		slug := rec.getSlug()
+	l.Slug, err = resolveSlugAndDo(col, "slug", l.Slug, "-", func(slug string) error {
 		if slug != "" {
 			patch["slug"] = slug
 		}

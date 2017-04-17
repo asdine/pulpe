@@ -20,6 +20,7 @@ func newSession(session *mgo.Session) *Session {
 	s.boardService.session = &s
 	s.listService.session = &s
 	s.cardService.session = &s
+	s.userService.session = &s
 
 	return &s
 }
@@ -35,6 +36,7 @@ type Session struct {
 	cardService  CardService
 	listService  ListService
 	boardService BoardService
+	userService  UserService
 }
 
 // CardService returns the session CardService
@@ -50,6 +52,11 @@ func (s *Session) ListService() pulpe.ListService {
 // BoardService returns the session BoardService
 func (s *Session) BoardService() pulpe.BoardService {
 	return &s.boardService
+}
+
+// UserService returns the session UserService
+func (s *Session) UserService() pulpe.UserService {
+	return &s.userService
 }
 
 // Close closes the mongodb session copy.

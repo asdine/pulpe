@@ -49,7 +49,12 @@ func (c *Client) Open() error {
 		return err
 	}
 
-	return session.BoardService().(*BoardService).ensureIndexes()
+	err = session.BoardService().(*BoardService).ensureIndexes()
+	if err != nil {
+		return err
+	}
+
+	return session.UserService().(*UserService).ensureIndexes()
 }
 
 // Close closes then underlying MongoDB database.

@@ -2,6 +2,11 @@ package pulpe
 
 import "time"
 
+// List errors
+const (
+	ErrListNotFound = Error("list not found")
+)
+
 // A List is a container of cards.
 type List struct {
 	ID        string     `json:"id"`

@@ -63,7 +63,7 @@ type BoardService struct {
 func (s *BoardService) ensureIndexes() error {
 	col := s.session.db.C(boardCol)
 
-	// Unique publicID
+	// Unique slug
 	index := mgo.Index{
 		Key:    []string{"slug"},
 		Unique: true,
@@ -85,8 +85,9 @@ func (s *BoardService) CreateBoard(bc *pulpe.BoardCreation) (*pulpe.Board, error
 
 	b := ToMongoBoard(&board)
 
-	board.Slug, err = resolveSlugAndDo(col, newBoardRecorder(b), func(rec recorder) error {
-		return col.Insert(rec.elem())
+	board.Slug, err = resolveSlugAndDo(col, "slug", b.Slug, "-", func(slug string) error {
+		b.Slug = slug
+		return col.Insert(b)
 	})
 
 	return &board, err
@@ -96,7 +97,7 @@ func (s *BoardService) CreateBoard(bc *pulpe.BoardCreation) (*pulpe.Board, error
 func (s *BoardService) Board(selector string) (*pulpe.Board, error) {
 	var b Board
 
-	err := s.session.db.C(boardCol).Find(getSelector(selector)).One(&b)
+	err := s.session.db.C(boardCol).Find(getSelector("slug", selector)).One(&b)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrBoardNotFound
@@ -160,8 +161,7 @@ func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Boar
 		return s.Board(id)
 	}
 
-	b.Slug, err = resolveSlugAndDo(col, newBoardRecorder(&b), func(rec recorder) error {
-		slug := rec.getSlug()
+	b.Slug, err = resolveSlugAndDo(col, "slug", b.Slug, "-", func(slug string) error {
 		if slug != "" {
 			patch["slug"] = slug
 		}

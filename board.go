@@ -2,6 +2,11 @@ package pulpe
 
 import "time"
 
+// Board errors
+const (
+	ErrBoardNotFound = Error("board not found")
+)
+
 // A Board is a container of lists.
 type Board struct {
 	ID        string     `json:"id"`
