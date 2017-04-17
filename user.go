@@ -26,9 +26,18 @@ type UserRegistration struct {
 	Password string
 }
 
+// UserSession is stored and represents a logged in user.
+type UserSession struct {
+	ID        string
+	UserID    string
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+}
+
 // UserService represents a service for managing users.
 type UserService interface {
 	CreateUser(*UserRegistration) (*User, error)
 	User(id string) (*User, error)
 	Authenticate(loginOrEmail, passwd string) (*User, error)
+	CreateSession(*User) (*UserSession, error)
 }

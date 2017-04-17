@@ -7,7 +7,7 @@ var _ pulpe.UserService = new(UserService)
 
 // UserService is a mock service that runs provided functions. Useful for testing.
 type UserService struct {
-	CreateUserFn      func(user *pulpe.UserCreation) (*pulpe.User, error)
+	CreateUserFn      func(user *pulpe.UserRegistration) (*pulpe.User, error)
 	CreateUserInvoked bool
 
 	UserFn      func(id string) (*pulpe.User, error)
@@ -15,10 +15,13 @@ type UserService struct {
 
 	AuthenticateFn      func(login, passwd string) (*pulpe.User, error)
 	AuthenticateInvoked bool
+
+	CreateSessionFn      func(user *pulpe.User) (*pulpe.UserSession, error)
+	CreateSessionInvoked bool
 }
 
 // CreateUser runs CreateUserFn and sets CreateUserInvoked to true when invoked.
-func (s *UserService) CreateUser(user *pulpe.UserCreation) (*pulpe.User, error) {
+func (s *UserService) CreateUser(user *pulpe.UserRegistration) (*pulpe.User, error) {
 	s.CreateUserInvoked = true
 	return s.CreateUserFn(user)
 }
@@ -33,4 +36,10 @@ func (s *UserService) User(id string) (*pulpe.User, error) {
 func (s *UserService) Authenticate(login, passwd string) (*pulpe.User, error) {
 	s.AuthenticateInvoked = true
 	return s.AuthenticateFn(login, passwd)
+}
+
+// CreateSession runs CreateSessionFn and sets CreateSessionInvoked to true when invoked.
+func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
+	s.CreateSessionInvoked = true
+	return s.CreateSessionFn(user)
 }

@@ -21,7 +21,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -44,7 +44,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -56,7 +56,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		require.Equal(t, user.Login, "jonsnow")
 
 		// Create second user with the same login.
-		u = pulpe.UserCreation{
+		u = pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon-snow@wall.com",
 			Password: "ygritte",
@@ -72,7 +72,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -83,7 +83,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create second user with the same email.
-		u = pulpe.UserCreation{
+		u = pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -104,7 +104,7 @@ func TestUserService_User(t *testing.T) {
 	s := session.UserService()
 
 	t.Run("OK", func(t *testing.T) {
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -127,7 +127,6 @@ func TestUserService_User(t *testing.T) {
 	})
 }
 
-// Ensure users can be retrieved.
 func TestUserService_Authenticate(t *testing.T) {
 	t.Parallel()
 
@@ -136,7 +135,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -157,7 +156,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -198,7 +197,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		u := pulpe.UserCreation{
+		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
@@ -210,5 +209,25 @@ func TestUserService_Authenticate(t *testing.T) {
 		_, err = s.Authenticate(user.Login, "passwd")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
+	})
+}
+
+func TestUserService_CreateSession(t *testing.T) {
+	t.Parallel()
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.UserService()
+
+	t.Run("OK", func(t *testing.T) {
+		u := pulpe.User{
+			ID: "id",
+		}
+
+		us, err := s.CreateSession(&u)
+		require.NoError(t, err)
+		require.Equal(t, u.ID, us.UserID)
+		require.True(t, us.UpdatedAt.Before(us.ExpiresAt))
+		require.NotNil(t, us.ID)
 	})
 }

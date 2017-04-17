@@ -12,7 +12,11 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-const userCol = "users"
+const (
+	userCol        = "users"
+	userSessionCol = "userSessions"
+	sessionTTL     = 365 * 24 * time.Hour
+)
 
 // User representation stored in MongoDB.
 type User struct {
@@ -55,6 +59,13 @@ func FromMongoUser(u *User) *pulpe.User {
 	}
 
 	return &p
+}
+
+// UserSession is stored and represents a logged in user.
+type UserSession struct {
+	ID        string    `bson:"_id"`
+	UpdatedAt time.Time `bson:"updatedAt"`
+	UserID    string    `bson:"userID"`
 }
 
 // UserService represents a service for managing users.
@@ -161,4 +172,30 @@ func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, er
 	}
 
 	return FromMongoUser(&u), nil
+}
+
+// CreateSession store a user session in the database.
+func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
+	sid, err := generateRandomString(32)
+	if err != nil {
+		return nil, err
+	}
+
+	session := UserSession{
+		ID:        sid,
+		UserID:    user.ID,
+		UpdatedAt: s.session.now,
+	}
+
+	err = s.session.db.C(userSessionCol).Insert(&session)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pulpe.UserSession{
+		ID:        sid,
+		UserID:    user.ID,
+		UpdatedAt: s.session.now,
+		ExpiresAt: s.session.now.Add(sessionTTL),
+	}, nil
 }
