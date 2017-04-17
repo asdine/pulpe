@@ -4,9 +4,9 @@ import "time"
 
 // User errors
 const (
-	ErrUserNotFound         = Error("user not found")
-	ErrUserEmailConflict    = Error("email already exists")
-	ErrAuthenticationFailed = Error("authentication failed")
+	ErrUserNotFound             = Error("user not found")
+	ErrUserEmailConflict        = Error("email already exists")
+	ErrUserAuthenticationFailed = Error("authentication failed")
 )
 
 // User informations.
@@ -19,8 +19,8 @@ type User struct {
 	Email     string     `json:"email"`
 }
 
-// UserCreation is used to create a User.
-type UserCreation struct {
+// UserRegistration is used to register a User.
+type UserRegistration struct {
 	FullName string
 	Email    string
 	Password string
@@ -28,7 +28,7 @@ type UserCreation struct {
 
 // UserService represents a service for managing users.
 type UserService interface {
-	CreateUser(*UserCreation) (*User, error)
+	CreateUser(*UserRegistration) (*User, error)
 	User(id string) (*User, error)
 	Authenticate(loginOrEmail, passwd string) (*User, error)
 }

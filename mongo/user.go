@@ -88,7 +88,7 @@ func (s *UserService) ensureIndexes() error {
 }
 
 // CreateUser creates a new User.
-func (s *UserService) CreateUser(uc *pulpe.UserCreation) (*pulpe.User, error) {
+func (s *UserService) CreateUser(uc *pulpe.UserRegistration) (*pulpe.User, error) {
 	var err error
 	col := s.session.db.C(userCol)
 
@@ -149,7 +149,7 @@ func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, er
 	err := s.session.db.C(userCol).Find(bson.M{field: loginOrEmail}).One(&u)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, pulpe.ErrAuthenticationFailed
+			return nil, pulpe.ErrUserAuthenticationFailed
 		}
 
 		return nil, err
@@ -157,7 +157,7 @@ func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, er
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(passwd))
 	if err != nil {
-		return nil, pulpe.ErrAuthenticationFailed
+		return nil, pulpe.ErrUserAuthenticationFailed
 	}
 
 	return FromMongoUser(&u), nil

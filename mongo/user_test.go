@@ -180,7 +180,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 		_, err := s.Authenticate("someone@email.com", "passwd")
 		require.Error(t, err)
-		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("WithBadLogin", func(t *testing.T) {
@@ -190,7 +190,7 @@ func TestUserService_Authenticate(t *testing.T) {
 
 		_, err := s.Authenticate("someone", "passwd")
 		require.Error(t, err)
-		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("WithBadPassword", func(t *testing.T) {
@@ -209,6 +209,6 @@ func TestUserService_Authenticate(t *testing.T) {
 
 		_, err = s.Authenticate(user.Login, "passwd")
 		require.Error(t, err)
-		require.Equal(t, pulpe.ErrAuthenticationFailed, err)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 }
