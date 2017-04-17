@@ -20,8 +20,8 @@ func NewUserHandler(router *httprouter.Router, c pulpe.Client) *UserHandler {
 		Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/signup", h.handleUserRegistration)
-	h.POST("/login", h.handleUserLogin)
+	h.POST("/v1/signup", h.handleUserRegistration)
+	h.POST("/v1/login", h.handleUserLogin)
 	return &h
 }
 
@@ -76,7 +76,7 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		Expires: us.ExpiresAt,
 	})
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	encodeJSON(w, user, http.StatusCreated, h.Logger)
 }
 
 // handleUserLogin handles requests to login a user.
@@ -121,7 +121,7 @@ func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 		Expires: us.ExpiresAt,
 	})
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	encodeJSON(w, user, http.StatusCreated, h.Logger)
 }
 
 // UserRegistrationRequest is used to create a user.
