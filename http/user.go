@@ -20,7 +20,7 @@ func NewUserHandler(router *httprouter.Router, c pulpe.Client) *UserHandler {
 		Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/register", h.handleUserRegistration)
+	h.POST("/signup", h.handleUserRegistration)
 	return &h
 }
 
@@ -63,25 +63,37 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	encodeJSON(w, user, http.StatusCreated, h.Logger)
+	us, err := session.UserService().CreateSession(user)
+	if err != nil {
+		Error(w, err, http.StatusInternalServerError, h.Logger)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "pulpesid",
+		Value:   us.ID,
+		Expires: us.ExpiresAt,
+	})
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // UserRegistrationRequest is used to create a user.
 type UserRegistrationRequest struct {
-	FullName string `json:"name" valid:"required,stringlength(1|64)"`
+	FullName string `json:"fullName" valid:"required,stringlength(1|64)"`
 	Email    string `json:"email" valid:"required,email"`
 	Password string `json:"password" valid:"required,stringlength(6|64)"`
 }
 
 // Validate user registration payload.
-func (u *UserRegistrationRequest) Validate() (*pulpe.UserCreation, error) {
+func (u *UserRegistrationRequest) Validate() (*pulpe.UserRegistration, error) {
 	u.FullName = strings.TrimSpace(u.FullName)
 	err := validation.Validate(u)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pulpe.UserCreation{
+	return &pulpe.UserRegistration{
 		FullName: u.FullName,
 		Email:    u.Email,
 		Password: u.Password,

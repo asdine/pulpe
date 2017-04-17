@@ -25,6 +25,7 @@ func NewHandler(c pulpe.Client) *Handler {
 		CardHandler:  NewCardHandler(router, c),
 		ListHandler:  NewListHandler(router, c),
 		BoardHandler: NewBoardHandler(router, c),
+		UserHandler:  NewUserHandler(router, c),
 		router:       router,
 	}
 }
@@ -34,6 +35,7 @@ type Handler struct {
 	CardHandler   *CardHandler
 	ListHandler   *ListHandler
 	BoardHandler  *BoardHandler
+	UserHandler   *UserHandler
 	StaticHandler http.Handler
 	assetsPath    string
 	router        *httprouter.Router
@@ -46,6 +48,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rw := NewResponseWriter(w)
 
 	switch {
+	case r.URL.Path == "/signup":
+		fallthrough
 	case strings.HasPrefix(r.URL.Path, "/v1/"):
 		h.router.ServeHTTP(rw, r)
 	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
