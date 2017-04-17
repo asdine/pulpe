@@ -231,3 +231,30 @@ func TestUserService_CreateSession(t *testing.T) {
 		require.NotNil(t, us.ID)
 	})
 }
+
+func TestUserService_GetSession(t *testing.T) {
+	t.Parallel()
+	session, cleanup := MustGetSession(t)
+	defer cleanup()
+
+	s := session.UserService()
+
+	t.Run("OK", func(t *testing.T) {
+		u := pulpe.User{
+			ID: "id",
+		}
+
+		us, err := s.CreateSession(&u)
+		require.NoError(t, err)
+
+		sess, err := s.GetSession(us.ID)
+		require.NoError(t, err)
+		require.Equal(t, us, sess)
+	})
+
+	t.Run("UnknownSession", func(t *testing.T) {
+		_, err := s.GetSession("somesid")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrUserSessionUnknownSid, err)
+	})
+}

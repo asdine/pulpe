@@ -7,6 +7,7 @@ const (
 	ErrUserNotFound             = Error("user not found")
 	ErrUserEmailConflict        = Error("email already exists")
 	ErrUserAuthenticationFailed = Error("authentication failed")
+	ErrUserSessionUnknownSid    = Error("unknown sid")
 )
 
 // User informations.
@@ -40,4 +41,5 @@ type UserService interface {
 	User(id string) (*User, error)
 	Authenticate(loginOrEmail, passwd string) (*User, error)
 	CreateSession(*User) (*UserSession, error)
+	GetSession(sid string) (*UserSession, error)
 }

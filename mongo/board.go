@@ -42,7 +42,7 @@ func ToMongoBoard(p *pulpe.Board) *Board {
 func FromMongoBoard(b *Board) *pulpe.Board {
 	p := pulpe.Board{
 		ID:        b.ID.Hex(),
-		CreatedAt: b.ID.Time(),
+		CreatedAt: b.ID.Time().UTC(),
 		Name:      b.Name,
 		Slug:      b.Slug,
 	}

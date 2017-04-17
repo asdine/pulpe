@@ -43,7 +43,7 @@ func ToMongoList(p *pulpe.List) *List {
 func FromMongoList(l *List) *pulpe.List {
 	p := pulpe.List{
 		ID:        l.ID.Hex(),
-		CreatedAt: l.ID.Time(),
+		CreatedAt: l.ID.Time().UTC(),
 		BoardID:   l.BoardID.Hex(),
 		Name:      l.Name,
 		Slug:      l.Slug,

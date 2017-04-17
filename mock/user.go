@@ -18,6 +18,9 @@ type UserService struct {
 
 	CreateSessionFn      func(user *pulpe.User) (*pulpe.UserSession, error)
 	CreateSessionInvoked bool
+
+	GetSessionFn      func(sid string) (*pulpe.UserSession, error)
+	GetSessionInvoked bool
 }
 
 // CreateUser runs CreateUserFn and sets CreateUserInvoked to true when invoked.
@@ -42,4 +45,10 @@ func (s *UserService) Authenticate(login, passwd string) (*pulpe.User, error) {
 func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
 	s.CreateSessionInvoked = true
 	return s.CreateSessionFn(user)
+}
+
+// GetSession runs GetSessionFn and sets GetSessionInvoked to true when invoked.
+func (s *UserService) GetSession(sid string) (*pulpe.UserSession, error) {
+	s.GetSessionInvoked = true
+	return s.GetSessionFn(sid)
 }

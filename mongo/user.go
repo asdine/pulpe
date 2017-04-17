@@ -15,7 +15,7 @@ import (
 const (
 	userCol        = "users"
 	userSessionCol = "userSessions"
-	sessionTTL     = 365 * 24 * time.Hour
+	userSessionTTL = 24 * time.Hour
 )
 
 // User representation stored in MongoDB.
@@ -47,7 +47,7 @@ func ToMongoUser(p *pulpe.User) *User {
 func FromMongoUser(u *User) *pulpe.User {
 	p := pulpe.User{
 		ID:        u.ID.Hex(),
-		CreatedAt: u.ID.Time(),
+		CreatedAt: u.ID.Time().UTC(),
 		FullName:  u.FullName,
 		Login:     u.Login,
 		Email:     u.Email,
@@ -93,6 +93,21 @@ func (s *UserService) ensureIndexes() error {
 		Key:    []string{"email"},
 		Unique: true,
 		Sparse: true,
+	}
+
+	err = col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	// Sessions
+	col = s.session.db.C(userSessionCol)
+
+	// Sessions expiration
+	index = mgo.Index{
+		Key:         []string{"updatedAt"},
+		Sparse:      true,
+		ExpireAfter: userSessionTTL,
 	}
 
 	return col.EnsureIndex(index)
@@ -196,6 +211,33 @@ func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error
 		ID:        sid,
 		UserID:    user.ID,
 		UpdatedAt: s.session.now,
-		ExpiresAt: s.session.now.Add(sessionTTL),
+		ExpiresAt: s.session.now.Add(userSessionTTL),
+	}, nil
+}
+
+// GetSession gets a session and resets the session expiration date.
+func (s *UserService) GetSession(sid string) (*pulpe.UserSession, error) {
+	var us UserSession
+
+	change := mgo.Change{
+		Update: bson.M{"$set": bson.M{
+			"updatedAt": s.session.now,
+		}},
+		ReturnNew: true,
+	}
+
+	_, err := s.session.db.C(userSessionCol).FindId(sid).Apply(change, &us)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrUserSessionUnknownSid
+		}
+		return nil, err
+	}
+
+	return &pulpe.UserSession{
+		ID:        us.ID,
+		UserID:    us.UserID,
+		UpdatedAt: us.UpdatedAt.UTC(),
+		ExpiresAt: us.UpdatedAt.Add(userSessionTTL).UTC(),
 	}, nil
 }

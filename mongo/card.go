@@ -51,7 +51,7 @@ func ToMongoCard(p *pulpe.Card) *Card {
 func FromMongoCard(c *Card) *pulpe.Card {
 	p := pulpe.Card{
 		ID:          c.ID.Hex(),
-		CreatedAt:   c.ID.Time(),
+		CreatedAt:   c.ID.Time().UTC(),
 		ListID:      c.ListID.Hex(),
 		BoardID:     c.BoardID.Hex(),
 		Name:        c.Name,
