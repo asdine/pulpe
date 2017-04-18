@@ -26,7 +26,7 @@ type Board struct {
 func ToMongoBoard(p *pulpe.Board) *Board {
 	id := bson.NewObjectId()
 	p.ID = id.Hex()
-	p.CreatedAt = id.Time()
+	p.CreatedAt = id.Time().UTC()
 
 	b := Board{
 		ID:        id,

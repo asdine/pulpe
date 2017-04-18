@@ -28,7 +28,7 @@ type List struct {
 func ToMongoList(p *pulpe.List) *List {
 	id := bson.NewObjectId()
 	p.ID = id.Hex()
-	p.CreatedAt = id.Time()
+	p.CreatedAt = id.Time().UTC()
 
 	return &List{
 		ID:        id,

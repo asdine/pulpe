@@ -35,7 +35,7 @@ type User struct {
 func ToMongoUser(p *pulpe.User) *User {
 	id := bson.NewObjectId()
 	p.ID = id.Hex()
-	p.CreatedAt = id.Time()
+	p.CreatedAt = id.Time().UTC()
 
 	return &User{
 		ID:        id,

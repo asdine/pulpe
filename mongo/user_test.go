@@ -13,9 +13,7 @@ func newUserID() string {
 }
 
 // Ensure users can be created and retrieved.
-func TestUserService_CreateUser(t *testing.T) {
-	t.Parallel()
-
+func TestUserService_Register(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		session, cleanup := MustGetSession(t)
 		defer cleanup()
@@ -28,7 +26,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		}
 
 		// Create new user.
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 		require.NotZero(t, user.ID)
 		require.Equal(t, "jonsnow", user.Login)
@@ -51,7 +49,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		}
 
 		// Create new user.
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 		require.Equal(t, user.Login, "jonsnow")
 
@@ -62,7 +60,7 @@ func TestUserService_CreateUser(t *testing.T) {
 			Password: "ygritte",
 		}
 
-		user, err = s.CreateUser(&u)
+		user, err = s.Register(&u)
 		require.NoError(t, err)
 		require.Equal(t, "jonsnow1", user.Login)
 	})
@@ -79,7 +77,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		}
 
 		// Create new user.
-		_, err := s.CreateUser(&u)
+		_, err := s.Register(&u)
 		require.NoError(t, err)
 
 		// Create second user with the same email.
@@ -89,7 +87,7 @@ func TestUserService_CreateUser(t *testing.T) {
 			Password: "ygritte",
 		}
 
-		_, err = s.CreateUser(&u)
+		_, err = s.Register(&u)
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserEmailConflict, err)
 	})
@@ -97,7 +95,6 @@ func TestUserService_CreateUser(t *testing.T) {
 
 // Ensure users can be retrieved.
 func TestUserService_User(t *testing.T) {
-	t.Parallel()
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -111,7 +108,7 @@ func TestUserService_User(t *testing.T) {
 		}
 
 		// Create new user.
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 
 		// Retrieve user and compare.
@@ -127,9 +124,7 @@ func TestUserService_User(t *testing.T) {
 	})
 }
 
-func TestUserService_Authenticate(t *testing.T) {
-	t.Parallel()
-
+func TestUserService_Login(t *testing.T) {
 	t.Run("WithEmailOK", func(t *testing.T) {
 		session, cleanup := MustGetSession(t)
 		defer cleanup()
@@ -142,11 +137,11 @@ func TestUserService_Authenticate(t *testing.T) {
 		}
 
 		// Create new user.
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 
-		// Authenticate user.
-		authUser, err := s.Authenticate(u.Email, u.Password)
+		// Login user.
+		authUser, err := s.Login(u.Email, u.Password)
 		require.NoError(t, err)
 		require.Equal(t, authUser, user)
 	})
@@ -163,11 +158,11 @@ func TestUserService_Authenticate(t *testing.T) {
 		}
 
 		// Create new user.
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 
-		// Authenticate user.
-		authUser, err := s.Authenticate(user.Login, u.Password)
+		// Login user.
+		authUser, err := s.Login(user.Login, u.Password)
 		require.NoError(t, err)
 		require.Equal(t, authUser, user)
 	})
@@ -177,7 +172,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		_, err := s.Authenticate("someone@email.com", "passwd")
+		_, err := s.Login("someone@email.com", "passwd")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
@@ -187,7 +182,7 @@ func TestUserService_Authenticate(t *testing.T) {
 		defer cleanup()
 		s := session.UserService()
 
-		_, err := s.Authenticate("someone", "passwd")
+		_, err := s.Login("someone", "passwd")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
@@ -203,21 +198,20 @@ func TestUserService_Authenticate(t *testing.T) {
 			Password: "ygritte",
 		}
 
-		user, err := s.CreateUser(&u)
+		user, err := s.Register(&u)
 		require.NoError(t, err)
 
-		_, err = s.Authenticate(user.Login, "passwd")
+		_, err = s.Login(user.Login, "passwd")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 }
 
-func TestUserService_CreateSession(t *testing.T) {
-	t.Parallel()
+func TestUserSessionService_CreateSession(t *testing.T) {
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
-	s := session.UserService()
+	s := session.UserSessionService()
 
 	t.Run("OK", func(t *testing.T) {
 		u := pulpe.User{
@@ -232,12 +226,11 @@ func TestUserService_CreateSession(t *testing.T) {
 	})
 }
 
-func TestUserService_GetSession(t *testing.T) {
-	t.Parallel()
+func TestUserSessionService_GetSession(t *testing.T) {
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
-	s := session.UserService()
+	s := session.UserSessionService()
 
 	t.Run("OK", func(t *testing.T) {
 		u := pulpe.User{
@@ -255,6 +248,6 @@ func TestUserService_GetSession(t *testing.T) {
 	t.Run("UnknownSession", func(t *testing.T) {
 		_, err := s.GetSession("somesid")
 		require.Error(t, err)
-		require.Equal(t, pulpe.ErrUserSessionUnknownSid, err)
+		require.Equal(t, pulpe.ErrUserSessionUnknownID, err)
 	})
 }

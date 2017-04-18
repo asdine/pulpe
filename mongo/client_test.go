@@ -17,7 +17,7 @@ type Client struct {
 // NewClient returns a new instance of Client.
 func NewClient(uri string) *Client {
 	c := Client{
-		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests-%d", uri, time.Now().UnixNano())),
+		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests", uri)),
 	}
 	c.Now = func() time.Time { return mock.Now }
 
@@ -28,7 +28,7 @@ func NewClient(uri string) *Client {
 func MustOpenClient(t tester) *Client {
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
-		t.Skip("Missing MONGO_URI environment variable.")
+		uri = "mongodb://localhost:27017"
 	}
 
 	c := NewClient(uri)

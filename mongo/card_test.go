@@ -15,8 +15,6 @@ func newCardID() string {
 
 // Ensure cards can be created and retrieved.
 func TestCardService_CreateCard(t *testing.T) {
-	t.Parallel()
-
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -71,7 +69,6 @@ func TestCardService_CreateCard(t *testing.T) {
 
 // Ensure cards can be retrieved.
 func TestCardService_Card(t *testing.T) {
-	t.Parallel()
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -102,7 +99,6 @@ func TestCardService_Card(t *testing.T) {
 }
 
 func TestCardService_DeleteCard(t *testing.T) {
-	t.Parallel()
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -136,8 +132,6 @@ func TestCardService_DeleteCard(t *testing.T) {
 }
 
 func TestCardService_DeleteCardsByListID(t *testing.T) {
-	t.Parallel()
-
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -185,7 +179,6 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 }
 
 func TestCardService_UpdateCard(t *testing.T) {
-	t.Parallel()
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 
@@ -269,8 +262,6 @@ func TestCardService_UpdateCard(t *testing.T) {
 }
 
 func TestCardService_CardsByBoard(t *testing.T) {
-	t.Parallel()
-
 	session, cleanup := MustGetSession(t)
 	defer cleanup()
 

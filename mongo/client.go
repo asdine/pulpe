@@ -36,10 +36,15 @@ func (c *Client) Open() error {
 		return err
 	}
 
+	return c.EnsureIndexes()
+}
+
+// EnsureIndexes creates indexes if they don't exist.
+func (c *Client) EnsureIndexes() error {
 	session := c.Connect()
 	defer session.Close()
 
-	err = session.CardService().(*CardService).ensureIndexes()
+	err := session.CardService().(*CardService).ensureIndexes()
 	if err != nil {
 		return err
 	}
