@@ -33,7 +33,6 @@ type CardHandler struct {
 	*httprouter.Router
 
 	Client pulpe.Client
-
 	Logger *log.Logger
 }
 

@@ -11,5 +11,8 @@ type Session interface {
 	ListService() ListService
 	BoardService() BoardService
 	UserService() UserService
+	UserSessionService() UserSessionService
+	Authenticate() (*User, error)
+	SetAuthToken(string)
 	Close() error
 }

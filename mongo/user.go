@@ -18,6 +18,9 @@ const (
 	userSessionTTL = 24 * time.Hour
 )
 
+// Ensure UserService implements pulpe.UserService.
+var _ pulpe.UserService = new(UserService)
+
 // User representation stored in MongoDB.
 type User struct {
 	ID        bson.ObjectId `bson:"_id"`
@@ -59,13 +62,6 @@ func FromMongoUser(u *User) *pulpe.User {
 	}
 
 	return &p
-}
-
-// UserSession is stored and represents a logged in user.
-type UserSession struct {
-	ID        string    `bson:"_id"`
-	UpdatedAt time.Time `bson:"updatedAt"`
-	UserID    string    `bson:"userID"`
 }
 
 // UserService represents a service for managing users.
@@ -113,8 +109,8 @@ func (s *UserService) ensureIndexes() error {
 	return col.EnsureIndex(index)
 }
 
-// CreateUser creates a new User.
-func (s *UserService) CreateUser(uc *pulpe.UserRegistration) (*pulpe.User, error) {
+// Register creates a new User.
+func (s *UserService) Register(uc *pulpe.UserRegistration) (*pulpe.User, error) {
 	var err error
 	col := s.session.db.C(userCol)
 
@@ -161,8 +157,8 @@ func (s *UserService) User(selector string) (*pulpe.User, error) {
 	return FromMongoUser(&u), nil
 }
 
-// Authenticate user with login or email and password.
-func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, error) {
+// Login user with login or email and password.
+func (s *UserService) Login(loginOrEmail, passwd string) (*pulpe.User, error) {
 	var u User
 	var field string
 
@@ -189,8 +185,23 @@ func (s *UserService) Authenticate(loginOrEmail, passwd string) (*pulpe.User, er
 	return FromMongoUser(&u), nil
 }
 
+// UserSession is stored and represents a logged in user.
+type UserSession struct {
+	ID        string    `bson:"_id"`
+	UpdatedAt time.Time `bson:"updatedAt"`
+	UserID    string    `bson:"userID"`
+}
+
+// UserSessionService represents a service for managing user sessions.
+type UserSessionService struct {
+	session *Session
+}
+
+// Ensure UserSessionService implements pulpe.UserSessionService.
+var _ pulpe.UserSessionService = new(UserSessionService)
+
 // CreateSession store a user session in the database.
-func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
+func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
 	sid, err := generateRandomString(32)
 	if err != nil {
 		return nil, err
@@ -216,7 +227,7 @@ func (s *UserService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error
 }
 
 // GetSession gets a session and resets the session expiration date.
-func (s *UserService) GetSession(sid string) (*pulpe.UserSession, error) {
+func (s *UserSessionService) GetSession(id string) (*pulpe.UserSession, error) {
 	var us UserSession
 
 	change := mgo.Change{
@@ -226,10 +237,10 @@ func (s *UserService) GetSession(sid string) (*pulpe.UserSession, error) {
 		ReturnNew: true,
 	}
 
-	_, err := s.session.db.C(userSessionCol).FindId(sid).Apply(change, &us)
+	_, err := s.session.db.C(userSessionCol).FindId(id).Apply(change, &us)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, pulpe.ErrUserSessionUnknownSid
+			return nil, pulpe.ErrUserSessionUnknownID
 		}
 		return nil, err
 	}
@@ -240,4 +251,22 @@ func (s *UserService) GetSession(sid string) (*pulpe.UserSession, error) {
 		UpdatedAt: us.UpdatedAt.UTC(),
 		ExpiresAt: us.UpdatedAt.Add(userSessionTTL).UTC(),
 	}, nil
+}
+
+// Ensure Authenticator implements pulpe.Authenticator.
+var _ pulpe.Authenticator = new(Authenticator)
+
+// Authenticator represents a service for authenticating users.
+type Authenticator struct {
+	session *Session
+}
+
+// Authenticate returns the current authenticate user.
+func (a *Authenticator) Authenticate(token string) (*pulpe.User, error) {
+	us, err := a.session.userSessionService.GetSession(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.session.userService.User(us.ID)
 }

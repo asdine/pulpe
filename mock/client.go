@@ -17,20 +17,22 @@ func NewClient() *Client {
 // Client represents a mock client.
 type Client struct {
 	// Services
-	CardService  CardService
-	ListService  ListService
-	BoardService BoardService
-	UserService  UserService
+	CardService        CardService
+	ListService        ListService
+	BoardService       BoardService
+	UserService        UserService
+	UserSessionService UserSessionService
 }
 
 // Connect creates mock Session.
 func (c *Client) Connect() pulpe.Session {
 	return &Session{
-		now:          Now,
-		cardService:  &c.CardService,
-		listService:  &c.ListService,
-		boardService: &c.BoardService,
-		userService:  &c.UserService,
+		now:                Now,
+		cardService:        &c.CardService,
+		listService:        &c.ListService,
+		boardService:       &c.BoardService,
+		userService:        &c.UserService,
+		userSessionService: &c.UserSessionService,
 	}
 }
 
@@ -39,10 +41,17 @@ type Session struct {
 	now time.Time
 
 	// Services
-	cardService  *CardService
-	listService  *ListService
-	boardService *BoardService
-	userService  *UserService
+	cardService        *CardService
+	listService        *ListService
+	boardService       *BoardService
+	userService        *UserService
+	userSessionService *UserSessionService
+
+	AuthenticateFn      func() (*pulpe.User, error)
+	AuthenticateInvoked bool
+
+	SetAuthTokenFn      func(string)
+	SetAuthTokenInvoked bool
 }
 
 // CardService returns the session CardService
@@ -63,6 +72,23 @@ func (s *Session) BoardService() pulpe.BoardService {
 // UserService returns the session UserService
 func (s *Session) UserService() pulpe.UserService {
 	return s.userService
+}
+
+// UserSessionService returns the session UserSessionService
+func (s *Session) UserSessionService() pulpe.UserSessionService {
+	return s.userSessionService
+}
+
+// Authenticate runs AuthenticateFn and sets AuthenticateInvoked to true when invoked.
+func (s *Session) Authenticate() (*pulpe.User, error) {
+	s.AuthenticateInvoked = true
+	return s.AuthenticateFn()
+}
+
+// SetAuthToken runs SetAuthTokenFn and sets SetAuthTokenInvoked to true when invoked.
+func (s *Session) SetAuthToken(token string) {
+	s.SetAuthTokenInvoked = true
+	s.SetAuthTokenFn(token)
 }
 
 // Close session.

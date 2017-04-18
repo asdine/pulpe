@@ -25,7 +25,7 @@ func TestUserHandler_Registration(t *testing.T) {
 func testUserHandler_Registration_OK(t *testing.T) {
 	c := mock.NewClient()
 
-	c.UserService.CreateUserFn = func(u *pulpe.UserRegistration) (*pulpe.User, error) {
+	c.UserService.RegisterFn = func(u *pulpe.UserRegistration) (*pulpe.User, error) {
 		require.Equal(t, &pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
@@ -41,7 +41,7 @@ func testUserHandler_Registration_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.UserService.CreateSessionFn = func(u *pulpe.User) (*pulpe.UserSession, error) {
+	c.UserSessionService.CreateSessionFn = func(u *pulpe.User) (*pulpe.UserSession, error) {
 		require.Equal(t, &pulpe.User{
 			ID:        "123",
 			CreatedAt: mock.Now,
@@ -95,7 +95,7 @@ func testUserHandler_Registration_EmailConflict(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.UserService.CreateUserFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
+	c.UserService.RegisterFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
 		return nil, pulpe.ErrUserEmailConflict
 	}
 
@@ -114,7 +114,7 @@ func testUserHandler_Registration_WithResponse(t *testing.T, status int, err err
 		c := mock.NewClient()
 		h := pulpeHttp.NewHandler(c)
 
-		c.UserService.CreateUserFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
+		c.UserService.RegisterFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
 			return nil, err
 		}
 
@@ -150,7 +150,7 @@ func TestUserHandler_Login(t *testing.T) {
 func testUserHandler_Login_OK(t *testing.T) {
 	c := mock.NewClient()
 
-	c.UserService.AuthenticateFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+	c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
 		require.Equal(t, "jonsnow", loginOrEmail)
 		require.Equal(t, "password", password)
 
@@ -163,7 +163,7 @@ func testUserHandler_Login_OK(t *testing.T) {
 		}, nil
 	}
 
-	c.UserService.CreateSessionFn = func(u *pulpe.User) (*pulpe.UserSession, error) {
+	c.UserSessionService.CreateSessionFn = func(u *pulpe.User) (*pulpe.UserSession, error) {
 		require.Equal(t, &pulpe.User{
 			ID:        "123",
 			CreatedAt: mock.Now,
@@ -215,7 +215,7 @@ func testUserHandler_Login_UserAuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.UserService.AuthenticateFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+	c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
 		return nil, pulpe.ErrUserAuthenticationFailed
 	}
 
@@ -233,7 +233,7 @@ func testUserHandler_Login_WithResponse(t *testing.T, status int, err error) fun
 		c := mock.NewClient()
 		h := pulpeHttp.NewHandler(c)
 
-		c.UserService.AuthenticateFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+		c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
 			return nil, err
 		}
 

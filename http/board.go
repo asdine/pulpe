@@ -32,9 +32,7 @@ func NewBoardHandler(router *httprouter.Router, c pulpe.Client) *BoardHandler {
 // BoardHandler represents an HTTP API handler for boards.
 type BoardHandler struct {
 	*httprouter.Router
-
 	Client pulpe.Client
-
 	Logger *log.Logger
 }
 

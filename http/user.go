@@ -53,7 +53,7 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 	session := h.Client.Connect()
 	defer session.Close()
 
-	user, err := session.UserService().CreateUser(ur)
+	user, err := session.UserService().Register(ur)
 	if err != nil {
 		switch err {
 		case pulpe.ErrUserEmailConflict:
@@ -64,7 +64,7 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	us, err := session.UserService().CreateSession(user)
+	us, err := session.UserSessionService().CreateSession(user)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return
@@ -98,7 +98,7 @@ func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 	session := h.Client.Connect()
 	defer session.Close()
 
-	user, err := session.UserService().Authenticate(payload.EmailOrLogin, payload.Password)
+	user, err := session.UserService().Login(payload.EmailOrLogin, payload.Password)
 	if err != nil {
 		switch err {
 		case pulpe.ErrUserAuthenticationFailed:
@@ -109,7 +109,7 @@ func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	us, err := session.UserService().CreateSession(user)
+	us, err := session.UserSessionService().CreateSession(user)
 	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.Logger)
 		return

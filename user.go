@@ -7,7 +7,7 @@ const (
 	ErrUserNotFound             = Error("user not found")
 	ErrUserEmailConflict        = Error("email already exists")
 	ErrUserAuthenticationFailed = Error("authentication failed")
-	ErrUserSessionUnknownSid    = Error("unknown sid")
+	ErrUserSessionUnknownID     = Error("unknown sid")
 )
 
 // User informations.
@@ -27,6 +27,13 @@ type UserRegistration struct {
 	Password string
 }
 
+// UserService represents a service for managing users.
+type UserService interface {
+	Register(*UserRegistration) (*User, error)
+	User(id string) (*User, error)
+	Login(loginOrEmail, password string) (*User, error)
+}
+
 // UserSession is stored and represents a logged in user.
 type UserSession struct {
 	ID        string
@@ -35,11 +42,13 @@ type UserSession struct {
 	ExpiresAt time.Time
 }
 
-// UserService represents a service for managing users.
-type UserService interface {
-	CreateUser(*UserRegistration) (*User, error)
-	User(id string) (*User, error)
-	Authenticate(loginOrEmail, passwd string) (*User, error)
+// UserSessionService manages user sessions.
+type UserSessionService interface {
 	CreateSession(*User) (*UserSession, error)
-	GetSession(sid string) (*UserSession, error)
+	GetSession(id string) (*UserSession, error)
+}
+
+// Authenticator represents a service for authenticating users.
+type Authenticator interface {
+	Authenticate(token string) (*User, error)
 }

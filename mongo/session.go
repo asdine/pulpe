@@ -21,6 +21,7 @@ func newSession(session *mgo.Session) *Session {
 	s.listService.session = &s
 	s.cardService.session = &s
 	s.userService.session = &s
+	s.userSessionService.session = &s
 
 	return &s
 }
@@ -33,10 +34,15 @@ type Session struct {
 	now time.Time
 
 	// Services
-	cardService  CardService
-	listService  ListService
-	boardService BoardService
-	userService  UserService
+	cardService        CardService
+	listService        ListService
+	boardService       BoardService
+	userService        UserService
+	userSessionService UserSessionService
+
+	authenticator Authenticator
+	authToken     string
+	user          *pulpe.User
 }
 
 // CardService returns the session CardService
@@ -57,6 +63,32 @@ func (s *Session) BoardService() pulpe.BoardService {
 // UserService returns the session UserService
 func (s *Session) UserService() pulpe.UserService {
 	return &s.userService
+}
+
+// UserSessionService returns the session UserSessionService
+func (s *Session) UserSessionService() pulpe.UserSessionService {
+	return &s.userSessionService
+}
+
+// Authenticate returns the current authenticate user.
+func (s *Session) Authenticate() (*pulpe.User, error) {
+	if s.user != nil {
+		return s.user, nil
+	}
+
+	u, err := s.authenticator.Authenticate(s.authToken)
+	if err != nil {
+		return nil, err
+	}
+
+	s.user = u
+
+	return u, nil
+}
+
+// SetAuthToken sets token as the authentication token for the session.
+func (s *Session) SetAuthToken(token string) {
+	s.authToken = token
 }
 
 // Close closes the mongodb session copy.
