@@ -12,47 +12,45 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// NewListHandler returns a new instance of ListHandler.
-func NewListHandler(router *httprouter.Router, c pulpe.Client) *ListHandler {
-	h := ListHandler{
-		Router: router,
-		Client: c,
-		Logger: log.New(os.Stderr, "", log.LstdFlags),
+// registerListHandler register the listHandler routes.
+func registerListHandler(router *httprouter.Router, c *client) {
+	h := listHandler{
+		client: c,
+		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/v1/boards/:board/lists", h.handlePostList)
-	h.DELETE("/v1/lists/:id", h.handleDeleteList)
-	h.PATCH("/v1/lists/:id", h.handlePatchList)
-	return &h
+	router.POST("/v1/boards/:board/lists", h.handlePostList)
+	router.DELETE("/v1/lists/:id", h.handleDeleteList)
+	router.PATCH("/v1/lists/:id", h.handlePatchList)
 }
 
-// ListHandler represents an HTTP API handler for lists.
-type ListHandler struct {
+// listHandler represents an HTTP API handler for lists.
+type listHandler struct {
 	*httprouter.Router
 
-	Client pulpe.Client
+	client *client
 
-	Logger *log.Logger
+	logger *log.Logger
 }
 
 // handlePostList handles requests to create a new list.
-func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// decode request
 	var req ListCreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	// validate payload
 	lc, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	boardSelector := ps.ByName("board")
@@ -63,7 +61,7 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 		if err == pulpe.ErrBoardNotFound {
 			http.NotFound(w, r)
 		} else {
-			Error(w, err, http.StatusInternalServerError, h.Logger)
+			Error(w, err, http.StatusInternalServerError, h.logger)
 		}
 		return
 	}
@@ -75,17 +73,17 @@ func (h *ListHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 	list, err := session.ListService().CreateList(lc)
 	switch err {
 	case nil:
-		encodeJSON(w, list, http.StatusCreated, h.Logger)
+		encodeJSON(w, list, http.StatusCreated, h.logger)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
 // handleDeleteList handles requests to delete a single list and all of its cards.
-func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *listHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	err := session.ListService().DeleteList(id)
@@ -95,13 +93,13 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	err = session.CardService().DeleteCardsByListID(id)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -109,33 +107,33 @@ func (h *ListHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 }
 
 // handlePatchList handles requests to update a list.
-func (h *ListHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *listHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
 	var req ListUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	lu, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	card, err := session.ListService().UpdateList(id, lu)
 	switch err {
 	case nil:
-		encodeJSON(w, card, http.StatusOK, h.Logger)
+		encodeJSON(w, card, http.StatusOK, h.logger)
 	case pulpe.ErrListNotFound:
 		http.NotFound(w, r)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 

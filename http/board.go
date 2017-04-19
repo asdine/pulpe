@@ -13,76 +13,73 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// NewBoardHandler returns a new instance of BoardHandler.
-func NewBoardHandler(router *httprouter.Router, c pulpe.Client) *BoardHandler {
-	h := BoardHandler{
-		Router: router,
-		Client: c,
-		Logger: log.New(os.Stderr, "", log.LstdFlags),
+// registerBoardHandler register the BoardHandler routes.
+func registerBoardHandler(router *httprouter.Router, c *client) {
+	h := boardHandler{
+		client: c,
+		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.GET("/v1/boards", h.handleGetBoards)
-	h.POST("/v1/boards", h.handlePostBoard)
-	h.GET("/v1/boards/:board", h.handleGetBoard)
-	h.DELETE("/v1/boards/:id", h.handleDeleteBoard)
-	h.PATCH("/v1/boards/:id", h.handlePatchBoard)
-	return &h
+	router.GET("/v1/boards", h.handleGetBoards)
+	router.POST("/v1/boards", h.handlePostBoard)
+	router.GET("/v1/boards/:board", h.handleGetBoard)
+	router.DELETE("/v1/boards/:id", h.handleDeleteBoard)
+	router.PATCH("/v1/boards/:id", h.handlePatchBoard)
 }
 
-// BoardHandler represents an HTTP API handler for boards.
-type BoardHandler struct {
-	*httprouter.Router
-	Client pulpe.Client
-	Logger *log.Logger
+// boardHandler represents an HTTP API handler for boards.
+type boardHandler struct {
+	client *client
+	logger *log.Logger
 }
 
 // handlePostBoard handles requests to create a new board.
-func (h *BoardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	session := h.Client.Connect()
+func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	boards, err := session.BoardService().Boards()
 	switch err {
 	case nil:
-		encodeJSON(w, boards, http.StatusOK, h.Logger)
+		encodeJSON(w, boards, http.StatusOK, h.logger)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
 // handlePostBoard handles requests to create a new board.
-func (h *BoardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var req BoardCreateRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	cr, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	board, err := session.BoardService().CreateBoard(cr)
 	switch err {
 	case nil:
-		encodeJSON(w, board, http.StatusCreated, h.Logger)
+		encodeJSON(w, board, http.StatusCreated, h.logger)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
 // handleGetBoard handles requests to fetch a single board.
-func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	selector := ps.ByName("board")
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	// Get the board
@@ -93,32 +90,32 @@ func (h *BoardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	// Get the board's lists
 	board.Lists, err = session.ListService().ListsByBoard(board.ID)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	// Get the board's cards
 	board.Cards, err = session.CardService().CardsByBoard(board.ID)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
-	encodeJSON(w, board, http.StatusOK, h.Logger)
+	encodeJSON(w, board, http.StatusOK, h.logger)
 }
 
 // handleDeleteBoard handles requests to delete a single board and all of its content.
-func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *boardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	err := session.BoardService().DeleteBoard(id)
@@ -128,19 +125,19 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	err = session.ListService().DeleteListsByBoardID(id)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
 	err = session.CardService().DeleteCardsByBoardID(id)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -148,33 +145,33 @@ func (h *BoardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 }
 
 // handlePatchBoard handles requests to update a board.
-func (h *BoardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *boardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
 	var req BoardUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	bu, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	board, err := session.BoardService().UpdateBoard(id, bu)
 	switch err {
 	case nil:
-		encodeJSON(w, board, http.StatusOK, h.Logger)
+		encodeJSON(w, board, http.StatusOK, h.logger)
 	case pulpe.ErrBoardNotFound:
 		http.NotFound(w, r)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 

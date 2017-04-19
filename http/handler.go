@@ -21,22 +21,21 @@ const (
 // NewHandler instantiates a new Handler.
 func NewHandler(c pulpe.Client) *Handler {
 	router := httprouter.New()
+	client := client{c}
+
+	registerCardHandler(router, &client)
+	registerListHandler(router, &client)
+	registerBoardHandler(router, &client)
+	registerUserHandler(router, &client)
+
 	return &Handler{
-		CardHandler:  NewCardHandler(router, c),
-		ListHandler:  NewListHandler(router, c),
-		BoardHandler: NewBoardHandler(router, c),
-		UserHandler:  NewUserHandler(router, c),
-		router:       router,
+		router: router,
 	}
 }
 
 // Handler is a collection of all the service handlers.
 type Handler struct {
-	CardHandler   *CardHandler
-	ListHandler   *ListHandler
-	BoardHandler  *BoardHandler
-	UserHandler   *UserHandler
-	StaticHandler http.Handler
+	staticHandler http.Handler
 	assetsPath    string
 	router        *httprouter.Router
 }
@@ -51,7 +50,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(r.URL.Path, "/v1/"):
 		h.router.ServeHTTP(rw, r)
 	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
-		h.StaticHandler.ServeHTTP(rw, r)
+		h.staticHandler.ServeHTTP(rw, r)
 	default:
 		if h.assetsPath != "" {
 			http.ServeFile(rw, r, path.Join(h.assetsPath, "index.html"))
@@ -74,7 +73,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // SetStatic sets the assets directory to be served.
 // By default, no assets are served.
 func (h *Handler) SetStatic(assetsPath string) {
-	h.StaticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
+	h.staticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
 	h.assetsPath = assetsPath
 }
 
@@ -154,4 +153,19 @@ func encodeJSON(w http.ResponseWriter, v interface{}, status int, logger *log.Lo
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		Error(w, err, http.StatusInternalServerError, logger)
 	}
+}
+
+type client struct {
+	client pulpe.Client
+}
+
+func (c *client) session(w http.ResponseWriter, r *http.Request) pulpe.Session {
+	session := c.client.Connect()
+
+	cookie, err := r.Cookie("pulpesid")
+	if err == nil {
+		session.SetAuthToken(cookie.Value)
+	}
+
+	return session
 }

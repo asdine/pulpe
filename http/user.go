@@ -12,61 +12,56 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// NewUserHandler returns a new instance of UserHandler.
-func NewUserHandler(router *httprouter.Router, c pulpe.Client) *UserHandler {
-	h := UserHandler{
-		Router: router,
-		Client: c,
-		Logger: log.New(os.Stderr, "", log.LstdFlags),
+// registerUserHandler register the userHandler routes.
+func registerUserHandler(router *httprouter.Router, c *client) {
+	h := userHandler{
+		client: c,
+		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/v1/signup", h.handleUserRegistration)
-	h.POST("/v1/login", h.handleUserLogin)
-	return &h
+	router.POST("/v1/signup", h.handleUserRegistration)
+	router.POST("/v1/login", h.handleUserLogin)
 }
 
-// UserHandler represents an HTTP API handler for users.
-type UserHandler struct {
-	*httprouter.Router
-
-	Client pulpe.Client
-
-	Logger *log.Logger
+// userHandler represents an HTTP API handler for users.
+type userHandler struct {
+	client *client
+	logger *log.Logger
 }
 
 // handleUserRegistration handles requests to create a new user.
-func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var payload UserRegistrationRequest
 
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	ur, err := payload.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	user, err := session.UserService().Register(ur)
 	if err != nil {
 		switch err {
 		case pulpe.ErrUserEmailConflict:
-			Error(w, validation.AddError(nil, "email", err), http.StatusBadRequest, h.Logger)
+			Error(w, validation.AddError(nil, "email", err), http.StatusBadRequest, h.logger)
 		default:
-			Error(w, err, http.StatusInternalServerError, h.Logger)
+			Error(w, err, http.StatusInternalServerError, h.logger)
 		}
 		return
 	}
 
 	us, err := session.UserSessionService().CreateSession(user)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -76,42 +71,42 @@ func (h *UserHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		Expires: us.ExpiresAt,
 	})
 
-	encodeJSON(w, user, http.StatusCreated, h.Logger)
+	encodeJSON(w, user, http.StatusCreated, h.logger)
 }
 
 // handleUserLogin handles requests to login a user.
-func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var payload UserLoginRequest
 
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	err = payload.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	user, err := session.UserService().Login(payload.EmailOrLogin, payload.Password)
 	if err != nil {
 		switch err {
 		case pulpe.ErrUserAuthenticationFailed:
-			Error(w, err, http.StatusUnauthorized, h.Logger)
+			Error(w, err, http.StatusUnauthorized, h.logger)
 		default:
-			Error(w, err, http.StatusInternalServerError, h.Logger)
+			Error(w, err, http.StatusInternalServerError, h.logger)
 		}
 		return
 	}
 
 	us, err := session.UserSessionService().CreateSession(user)
 	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -121,7 +116,7 @@ func (h *UserHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 		Expires: us.ExpiresAt,
 	})
 
-	encodeJSON(w, user, http.StatusCreated, h.Logger)
+	encodeJSON(w, user, http.StatusCreated, h.logger)
 }
 
 // UserRegistrationRequest is used to create a user.

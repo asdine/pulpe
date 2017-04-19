@@ -13,45 +13,41 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// NewCardHandler returns a new instance of CardHandler.
-func NewCardHandler(router *httprouter.Router, c pulpe.Client) *CardHandler {
-	h := CardHandler{
-		Router: router,
-		Client: c,
-		Logger: log.New(os.Stderr, "", log.LstdFlags),
+// registerCardHandler register the cardHandler routes.
+func registerCardHandler(router *httprouter.Router, c *client) {
+	h := cardHandler{
+		client: c,
+		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	h.POST("/v1/lists/:listID/cards", h.handlePostCard)
-	h.GET("/v1/cards/:id", h.handleGetCard)
-	h.DELETE("/v1/cards/:id", h.handleDeleteCard)
-	h.PATCH("/v1/cards/:id", h.handlePatchCard)
-	return &h
+	router.POST("/v1/lists/:listID/cards", h.handlePostCard)
+	router.GET("/v1/cards/:id", h.handleGetCard)
+	router.DELETE("/v1/cards/:id", h.handleDeleteCard)
+	router.PATCH("/v1/cards/:id", h.handlePatchCard)
 }
 
-// CardHandler represents an HTTP API handler for cards.
-type CardHandler struct {
-	*httprouter.Router
-
-	Client pulpe.Client
-	Logger *log.Logger
+// cardHandler represents an HTTP API handler for cards.
+type cardHandler struct {
+	client *client
+	logger *log.Logger
 }
 
 // handlePostCard handles requests to create a new card.
-func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var req CardCreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	cc, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	// fetch list
@@ -61,7 +57,7 @@ func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 		if err == pulpe.ErrListNotFound {
 			http.NotFound(w, r)
 		} else {
-			Error(w, err, http.StatusInternalServerError, h.Logger)
+			Error(w, err, http.StatusInternalServerError, h.logger)
 		}
 		return
 	}
@@ -72,17 +68,17 @@ func (h *CardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 	card, err := session.CardService().CreateCard(cc)
 	switch err {
 	case nil:
-		encodeJSON(w, card, http.StatusCreated, h.Logger)
+		encodeJSON(w, card, http.StatusCreated, h.logger)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
 // handleGetCard handles requests to fetch a single card.
-func (h *CardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	card, err := session.CardService().Card(id)
@@ -92,18 +88,18 @@ func (h *CardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
-	encodeJSON(w, card, http.StatusOK, h.Logger)
+	encodeJSON(w, card, http.StatusOK, h.logger)
 }
 
 // handleDeleteCard handles requests to delete a single card.
-func (h *CardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *cardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	err := session.CardService().DeleteCard(id)
@@ -113,7 +109,7 @@ func (h *CardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, p
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
 
@@ -121,33 +117,33 @@ func (h *CardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, p
 }
 
 // handlePatchCard handles requests to update a card.
-func (h *CardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
 	var req CardUpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.Logger)
+		Error(w, ErrInvalidJSON, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	cu, err := req.Validate()
 	if err != nil {
-		Error(w, err, http.StatusBadRequest, h.Logger)
+		Error(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
-	session := h.Client.Connect()
+	session := h.client.session(w, r)
 	defer session.Close()
 
 	card, err := session.CardService().UpdateCard(id, cu)
 	switch err {
 	case nil:
-		encodeJSON(w, card, http.StatusOK, h.Logger)
+		encodeJSON(w, card, http.StatusOK, h.logger)
 	case pulpe.ErrCardNotFound:
 		http.NotFound(w, r)
 	default:
-		Error(w, err, http.StatusInternalServerError, h.Logger)
+		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
 }
 
