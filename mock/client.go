@@ -95,3 +95,19 @@ func (s *Session) SetAuthToken(token string) {
 func (s *Session) Close() error {
 	return nil
 }
+
+// Authenticator represents a mock Authenticator.
+type Authenticator struct {
+	AuthenticateFn      func(string) (*pulpe.User, error)
+	AuthenticateInvoked bool
+}
+
+// Authenticate runs AuthenticateFn and sets AuthenticateInvoked to true when invoked.
+func (a *Authenticator) Authenticate(token string) (*pulpe.User, error) {
+	a.AuthenticateInvoked = true
+	if a.AuthenticateFn == nil {
+		return nil, pulpe.ErrUserAuthenticationFailed
+	}
+
+	return a.AuthenticateFn(token)
+}

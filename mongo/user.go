@@ -129,7 +129,7 @@ func (s *UserService) Register(uc *pulpe.UserRegistration) (*pulpe.User, error) 
 
 	u.Password = string(passwd)
 
-	user.Login, err = resolveSlugAndDo(col, "login", u.Login, "", func(login string) error {
+	user.Login, err = resolveSlugAndDo(col, "", "login", u.Login, "", func(login string) error {
 		u.Login = login
 		return col.Insert(u)
 	})

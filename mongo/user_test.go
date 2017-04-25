@@ -15,9 +15,10 @@ func newUserID() string {
 // Ensure users can be created and retrieved.
 func TestUserService_Register(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -38,9 +39,10 @@ func TestUserService_Register(t *testing.T) {
 	})
 
 	t.Run("Login conflict", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -66,9 +68,10 @@ func TestUserService_Register(t *testing.T) {
 	})
 
 	t.Run("Email conflict", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -95,30 +98,32 @@ func TestUserService_Register(t *testing.T) {
 
 // Ensure users can be retrieved.
 func TestUserService_User(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.UserService()
-
 	t.Run("OK", func(t *testing.T) {
+		s := sessions.Red.UserService()
+
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
 			Email:    "jon.snow@wall.com",
 			Password: "ygritte",
 		}
 
-		// Create new user.
+		// Create new user
 		user, err := s.Register(&u)
 		require.NoError(t, err)
 
-		// Retrieve user and compare.
+		// Retrieve user and compare
 		other, err := s.User(user.ID)
 		require.NoError(t, err)
 		require.Equal(t, user, other)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
-		// Trying to fetch a user that doesn't exist.
+		s := sessions.Green.UserService()
+
+		// Trying to fetch a user that doesn't exist
 		_, err := s.User("something")
 		require.Equal(t, pulpe.ErrUserNotFound, err)
 	})
@@ -126,9 +131,10 @@ func TestUserService_User(t *testing.T) {
 
 func TestUserService_Login(t *testing.T) {
 	t.Run("WithEmailOK", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -147,9 +153,10 @@ func TestUserService_Login(t *testing.T) {
 	})
 
 	t.Run("WithLoginOK", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -168,9 +175,10 @@ func TestUserService_Login(t *testing.T) {
 	})
 
 	t.Run("WithBadEmail", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		_, err := s.Login("someone@email.com", "passwd")
 		require.Error(t, err)
@@ -178,9 +186,10 @@ func TestUserService_Login(t *testing.T) {
 	})
 
 	t.Run("WithBadLogin", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		_, err := s.Login("someone", "passwd")
 		require.Error(t, err)
@@ -188,9 +197,10 @@ func TestUserService_Login(t *testing.T) {
 	})
 
 	t.Run("WithBadPassword", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
+		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
-		s := session.UserService()
+
+		s := sessions.NoAuth.UserService()
 
 		u := pulpe.UserRegistration{
 			FullName: "Jon Snow",
@@ -208,12 +218,12 @@ func TestUserService_Login(t *testing.T) {
 }
 
 func TestUserSessionService_CreateSession(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.UserSessionService()
-
 	t.Run("OK", func(t *testing.T) {
+		s := sessions.NoAuth.UserSessionService()
+
 		u := pulpe.User{
 			ID: "id",
 		}
@@ -227,12 +237,12 @@ func TestUserSessionService_CreateSession(t *testing.T) {
 }
 
 func TestUserSessionService_GetSession(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.UserSessionService()
-
 	t.Run("OK", func(t *testing.T) {
+		s := sessions.NoAuth.UserSessionService()
+
 		u := pulpe.User{
 			ID: "id",
 		}
@@ -246,6 +256,8 @@ func TestUserSessionService_GetSession(t *testing.T) {
 	})
 
 	t.Run("UnknownSession", func(t *testing.T) {
+		s := sessions.NoAuth.UserSessionService()
+
 		_, err := s.GetSession("somesid")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserSessionUnknownID, err)

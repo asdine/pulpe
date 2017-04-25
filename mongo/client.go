@@ -24,6 +24,9 @@ type Client struct {
 	// Returns the current time.
 	Now func() time.Time
 
+	// Authenticator
+	Authenticator pulpe.Authenticator
+
 	Session *mgo.Session
 }
 
@@ -73,5 +76,6 @@ func (c *Client) Close() error {
 func (c *Client) Connect() pulpe.Session {
 	s := newSession(c.Session.Copy())
 	s.now = c.Now().UTC()
+	s.Authenticator = c.Authenticator
 	return s
 }

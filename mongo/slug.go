@@ -9,7 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func resolveSlugAndDo(col *mgo.Collection, slugField, slug, sep string, action func(string) error) (string, error) {
+func resolveSlugAndDo(col *mgo.Collection, ownerID, slugField, slug, sep string, action func(string) error) (string, error) {
 	// try to execute the given action with the generated slug
 	err := action(slug)
 	if err == nil {
@@ -26,16 +26,18 @@ func resolveSlugAndDo(col *mgo.Collection, slugField, slug, sep string, action f
 	// and increment the counter
 	var distinctSlugs []string
 
-	err = col.Find(
-		bson.M{
-			slugField: bson.M{
-				"$regex": bson.RegEx{
-					Pattern: fmt.Sprintf(`^%s(%s\d+)?$`, slug, sep),
-					Options: "",
-				},
+	query := bson.M{
+		slugField: bson.M{
+			"$regex": bson.RegEx{
+				Pattern: fmt.Sprintf(`^%s(%s\d+)?$`, slug, sep),
 			},
 		},
-	).Sort("-_id").Select(bson.M{slugField: 1}).Limit(1).Distinct(slugField, &distinctSlugs)
+	}
+	if ownerID != "" {
+		query["ownerID"] = ownerID
+	}
+
+	err = col.Find(query).Sort("-_id").Select(bson.M{slugField: 1}).Limit(1).Distinct(slugField, &distinctSlugs)
 	if err != nil {
 		return "", err
 	}

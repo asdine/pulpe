@@ -1,23 +1,44 @@
 package mongo_test
 
 import (
-	"os"
-	"testing"
-
 	"github.com/blankrobot/pulpe"
+	"github.com/blankrobot/pulpe/mock"
+	"github.com/blankrobot/pulpe/mongo"
 )
 
-var client *Client
+type Session struct {
+	*mongo.Session
+}
 
-func MustGetSession(t tester) (pulpe.Session, func()) {
-	if client == nil {
-		client = MustOpenClient(t)
+func (s *Session) GetAuthenticator() *mock.Authenticator {
+	return s.Session.Authenticator.(*mock.Authenticator)
+}
+
+type Sessions struct {
+	NoAuth *Session
+	Red    *Session
+	Blue   *Session
+	Green  *Session
+}
+
+func (s *Sessions) Close() {
+	s.NoAuth.Close()
+	s.Red.Close()
+	s.Blue.Close()
+	s.Green.Close()
+}
+
+func MustGetSessions(t tester) (*Sessions, func()) {
+	s := Sessions{
+		NoAuth: &Session{client.Connect()},
+		Red:    getSessionAs("Red"),
+		Blue:   getSessionAs("Blue"),
+		Green:  getSessionAs("Green"),
 	}
 
-	s := client.Connect()
-	return s, func() {
+	return &s, func() {
 		// close session
-		defer s.Close()
+		s.Close()
 
 		_, err := client.Session.DB("").C("users").RemoveAll(nil)
 		if err != nil {
@@ -46,13 +67,11 @@ func MustGetSession(t tester) (pulpe.Session, func()) {
 	}
 }
 
-func TestMain(m *testing.M) {
-	code := m.Run()
-
-	if client != nil {
-		// close and remove database
-		client.Close()
+func getSessionAs(userID string) *Session {
+	session := client.Connect()
+	session.Authenticator.(*mock.Authenticator).AuthenticateFn = func(_ string) (*pulpe.User, error) {
+		return &pulpe.User{ID: userID}, nil
 	}
 
-	os.Exit(code)
+	return &Session{session}
 }

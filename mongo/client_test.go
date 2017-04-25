@@ -2,12 +2,30 @@ package mongo_test
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"testing"
 	"time"
 
 	"github.com/blankrobot/pulpe/mock"
 	"github.com/blankrobot/pulpe/mongo"
 )
+
+var client *Client
+
+func TestMain(m *testing.M) {
+	var err error
+
+	client, err = OpenClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	code := m.Run()
+
+	os.Exit(code)
+}
 
 // Client is a test wrapper for mongo.Client.
 type Client struct {
@@ -20,12 +38,13 @@ func NewClient(uri string) *Client {
 		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests", uri)),
 	}
 	c.Now = func() time.Time { return mock.Now }
+	c.Client.Authenticator = new(mock.Authenticator)
 
 	return &c
 }
 
-// MustOpenClient returns an new, open instance of Client.
-func MustOpenClient(t tester) *Client {
+// OpenClient returns an new, open instance of Client.
+func OpenClient() (*Client, error) {
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
 		uri = "mongodb://localhost:27017"
@@ -33,10 +52,16 @@ func MustOpenClient(t tester) *Client {
 
 	c := NewClient(uri)
 	if err := c.Open(); err != nil {
-		t.Error(err)
+		return nil, err
 	}
 
-	return c
+	return c, nil
+}
+
+// Connect creates a new session.
+func (c *Client) Connect() *mongo.Session {
+	c.Client.Authenticator = new(mock.Authenticator)
+	return c.Client.Connect().(*mongo.Session)
 }
 
 // Close closes the client and removes the underlying database.
@@ -50,6 +75,5 @@ func (c *Client) Close() error {
 }
 
 type tester interface {
-	Skip(...interface{})
 	Error(...interface{})
 }

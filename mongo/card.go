@@ -12,48 +12,30 @@ import (
 
 const cardCol = "cards"
 
-const codeConflict = 11000
-
 // Ensure CardService implements pulpe.CardService.
 var _ pulpe.CardService = new(CardService)
 
-// Card representation stored in MongoDB.
-type Card struct {
+// card representation stored in MongoDB.
+type card struct {
 	ID          bson.ObjectId `bson:"_id"`
 	UpdatedAt   *time.Time    `bson:"updatedAt,omitempty"`
-	ListID      bson.ObjectId `bson:"listID"`
-	BoardID     bson.ObjectId `bson:"boardID"`
+	OwnerID     string        `bson:"ownerID"`
+	ListID      string        `bson:"listID"`
+	BoardID     string        `bson:"boardID"`
 	Name        string        `bson:"name"`
 	Slug        string        `bson:"slug"`
 	Description string        `bson:"description"`
 	Position    float64       `bson:"position"`
 }
 
-// ToMongoCard creates a mongo card from a pulpe card.
-func ToMongoCard(p *pulpe.Card) *Card {
-	id := bson.NewObjectId()
-	p.ID = id.Hex()
-	p.CreatedAt = id.Time().UTC()
-
-	return &Card{
-		ID:          id,
-		UpdatedAt:   p.UpdatedAt,
-		ListID:      bson.ObjectIdHex(p.ListID),
-		BoardID:     bson.ObjectIdHex(p.BoardID),
-		Name:        p.Name,
-		Slug:        p.Slug,
-		Description: p.Description,
-		Position:    p.Position,
-	}
-}
-
-// FromMongoCard creates a pulpe card from a mongo card.
-func FromMongoCard(c *Card) *pulpe.Card {
+// toPulpeCard creates a pulpe card from a mongo card.
+func (c *card) toPulpeCard() *pulpe.Card {
 	p := pulpe.Card{
 		ID:          c.ID.Hex(),
 		CreatedAt:   c.ID.Time().UTC(),
-		ListID:      c.ListID.Hex(),
-		BoardID:     c.BoardID.Hex(),
+		OwnerID:     c.OwnerID,
+		ListID:      c.ListID,
+		BoardID:     c.BoardID,
 		Name:        c.Name,
 		Slug:        c.Slug,
 		Description: c.Description,
@@ -71,6 +53,7 @@ func FromMongoCard(c *Card) *pulpe.Card {
 // CardService represents a service for managing cards.
 type CardService struct {
 	session *Session
+	store   cardStore
 }
 
 func (s *CardService) ensureIndexes() error {
@@ -83,45 +66,67 @@ func (s *CardService) ensureIndexes() error {
 		Sparse: true,
 	}
 
+	err := col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	index = mgo.Index{
+		Key:    []string{"_id", "ownerID"},
+		Sparse: true,
+	}
+
 	return col.EnsureIndex(index)
 }
 
 // CreateCard creates a new Card.
-func (s *CardService) CreateCard(cc *pulpe.CardCreation) (*pulpe.Card, error) {
-	var err error
+func (s *CardService) CreateCard(listID string, cc *pulpe.CardCreation) (*pulpe.Card, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
 
-	// generate slug
-	slug := slugify.Slugify(cc.Name)
+	list, err := s.session.ListService().List(listID)
+	if err != nil {
+		return nil, err
+	}
+
+	if list.OwnerID != user.ID {
+		return nil, pulpe.ErrListNotFound
+	}
 
 	// create mongo card and pulpe card
-	card := pulpe.Card{
-		BoardID:     cc.BoardID,
-		ListID:      cc.ListID,
+	c := card{
+		ID:          bson.NewObjectId(),
+		OwnerID:     user.ID,
+		BoardID:     list.BoardID,
+		ListID:      listID,
 		Name:        cc.Name,
-		Slug:        slug,
+		Slug:        slugify.Slugify(cc.Name),
 		Description: cc.Description,
 		Position:    cc.Position,
 	}
 
-	c := ToMongoCard(&card)
-	col := s.session.db.C(cardCol)
+	err = s.store.createCard(&c)
+	if err != nil {
+		return nil, err
+	}
 
-	card.Slug, err = resolveSlugAndDo(col, "slug", c.Slug, "-", func(slug string) error {
-		c.Slug = slug
-		return col.Insert(c)
-	})
-
-	return &card, err
+	return c.toPulpeCard(), err
 }
 
-// Card returns a Card by ID.
+// Card returns a Card.
 func (s *CardService) Card(id string) (*pulpe.Card, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrCardNotFound
 	}
 
-	var c Card
-	err := s.session.db.C(cardCol).FindId(bson.ObjectIdHex(id)).One(&c)
+	c, err := s.store.cardByOwnerIDAndID(user.ID, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrCardNotFound
@@ -130,16 +135,21 @@ func (s *CardService) Card(id string) (*pulpe.Card, error) {
 		return nil, err
 	}
 
-	return FromMongoCard(&c), nil
+	return c.toPulpeCard(), nil
 }
 
 // DeleteCard deletes a Card by ID.
 func (s *CardService) DeleteCard(id string) error {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return err
+	}
+
 	if !bson.IsObjectIdHex(id) {
 		return pulpe.ErrCardNotFound
 	}
 
-	err := s.session.db.C(cardCol).RemoveId(bson.ObjectIdHex(id))
+	err = s.store.deleteCardByID(user.ID, bson.ObjectIdHex(id))
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrCardNotFound
 	}
@@ -147,33 +157,23 @@ func (s *CardService) DeleteCard(id string) error {
 	return err
 }
 
-// DeleteCardsByListID deletes all the cards of a list.
-func (s *CardService) DeleteCardsByListID(listID string) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"listID": bson.ObjectIdHex(listID)})
-	return err
-}
-
-// DeleteCardsByBoardID deletes all the cards of a board.
-func (s *CardService) DeleteCardsByBoardID(boardID string) error {
-	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
-	return err
-}
-
 // UpdateCard updates a Card by ID.
 func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrCardNotFound
 	}
 
-	var err error
-	var c Card
-
-	col := s.session.db.C(cardCol)
+	var newSlug string
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		patch["name"] = *u.Name
-		c.Slug = slugify.Slugify(*u.Name)
+		newSlug = slugify.Slugify(*u.Name)
 	}
 
 	if u.Description != nil {
@@ -184,22 +184,18 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		patch["position"] = *u.Position
 	}
 
-	if len(patch) == 0 {
-		return s.Card(id)
+	if len(patch) > 0 {
+		newSlug, err = s.store.updateCardByID(bson.ObjectIdHex(id), user.ID, newSlug, patch)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, pulpe.ErrCardNotFound
+			}
+
+			return nil, err
+		}
 	}
 
-	c.Slug, err = resolveSlugAndDo(col, "slug", c.Slug, "-", func(slug string) error {
-		if slug != "" {
-			patch["slug"] = slug
-		}
-
-		return col.UpdateId(
-			bson.ObjectIdHex(id),
-			bson.M{
-				"$set":         patch,
-				"$currentDate": bson.M{"updatedAt": true},
-			})
-	})
+	c, err := s.store.cardByOwnerIDAndID(user.ID, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrCardNotFound
@@ -208,23 +204,133 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		return nil, err
 	}
 
-	return s.Card(id)
+	return c.toPulpeCard(), nil
 }
 
 // CardsByBoard returns Cards by board ID.
 func (s *CardService) CardsByBoard(boardID string) ([]*pulpe.Card, error) {
-	var cards []Card
-
-	// TODO set a limit
-	err := s.session.db.C(cardCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).Sort("_id").All(&cards)
+	_, err := s.session.Authenticate()
 	if err != nil {
 		return nil, err
 	}
 
-	list := make([]*pulpe.Card, len(cards))
-	for i := range cards {
-		list[i] = FromMongoCard(&cards[i])
+	cs, err := s.store.cardsByBoardID(boardID)
+	if err != nil {
+		return nil, err
 	}
 
-	return list, nil
+	cards := make([]*pulpe.Card, len(cs))
+	for i := range cs {
+		cards[i] = cs[i].toPulpeCard()
+	}
+
+	return cards, nil
+}
+
+// DeleteCardsByListID deletes all the cards of a list.
+func (s *CardService) DeleteCardsByListID(listID string) error {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return err
+	}
+
+	return s.store.deleteCardsByListID(user.ID, listID)
+}
+
+// DeleteCardsByBoardID deletes all the cards of a board.
+func (s *CardService) DeleteCardsByBoardID(boardID string) error {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return err
+	}
+
+	return s.store.deleteCardsByBoardID(user.ID, boardID)
+}
+
+type cardStore struct {
+	session *Session
+}
+
+func (s *cardStore) createCard(c *card) error {
+	var err error
+	col := s.session.db.C(cardCol)
+
+	c.Slug, err = resolveSlugAndDo(col, c.OwnerID, "slug", c.Slug, "-", func(slug string) error {
+		c.Slug = slug
+		return col.Insert(c)
+	})
+
+	return err
+}
+
+func (s *cardStore) cardByOwnerIDAndID(ownerID, id string) (*card, error) {
+	var c card
+
+	if !bson.IsObjectIdHex(id) {
+		return nil, mgo.ErrNotFound
+	}
+
+	query := bson.M{
+		"ownerID": ownerID,
+		"_id":     bson.ObjectIdHex(id),
+	}
+
+	return &c, s.session.db.C(cardCol).Find(query).One(&c)
+}
+
+func (s *cardStore) deleteCardByID(ownerID string, id bson.ObjectId) error {
+	return s.session.db.C(cardCol).Remove(bson.M{
+		"_id":     id,
+		"ownerID": ownerID,
+	})
+}
+
+func (s *cardStore) deleteCardsByBoardID(ownerID, boardID string) error {
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{
+		"ownerID": ownerID,
+		"boardID": boardID,
+	})
+
+	return err
+}
+
+func (s *cardStore) deleteCardsByListID(ownerID, listID string) error {
+	_, err := s.session.db.C(cardCol).RemoveAll(bson.M{
+		"ownerID": ownerID,
+		"listID":  listID,
+	})
+
+	return err
+}
+
+func (s *cardStore) updateCardByID(id bson.ObjectId, ownerID, slug string, patch bson.M) (string, error) {
+	col := s.session.db.C(cardCol)
+
+	newSlug, err := resolveSlugAndDo(col, ownerID, "slug", slug, "-", func(slug string) error {
+		if slug != "" {
+			patch["slug"] = slug
+		}
+
+		return col.Update(
+			bson.M{
+				"_id":     id,
+				"ownerID": ownerID,
+			},
+			bson.M{
+				"$set":         patch,
+				"$currentDate": bson.M{"updatedAt": true},
+			})
+	})
+
+	return newSlug, err
+}
+
+func (s *cardStore) cardsByBoardID(boardID string) ([]card, error) {
+	col := s.session.db.C(cardCol)
+
+	var cards []card
+
+	// TODO set a limit
+	err := col.Find(bson.M{"boardID": boardID}).Sort("_id").All(&cards)
+	return cards, err
 }

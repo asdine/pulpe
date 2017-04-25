@@ -7,7 +7,7 @@ var _ pulpe.ListService = new(ListService)
 
 // ListService is a mock service that runs provided functions. Useful for testing.
 type ListService struct {
-	CreateListFn      func(list *pulpe.ListCreation) (*pulpe.List, error)
+	CreateListFn      func(boardID string, list *pulpe.ListCreation) (*pulpe.List, error)
 	CreateListInvoked bool
 
 	ListFn      func(id string) (*pulpe.List, error)
@@ -27,9 +27,9 @@ type ListService struct {
 }
 
 // CreateList runs CreateListFn and sets CreateListInvoked to true when invoked.
-func (s *ListService) CreateList(list *pulpe.ListCreation) (*pulpe.List, error) {
+func (s *ListService) CreateList(boardID string, list *pulpe.ListCreation) (*pulpe.List, error) {
 	s.CreateListInvoked = true
-	return s.CreateListFn(list)
+	return s.CreateListFn(boardID, list)
 }
 
 // List runs ListFn and sets ListInvoked to true when invoked.

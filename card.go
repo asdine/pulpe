@@ -12,6 +12,7 @@ type Card struct {
 	ID          string     `json:"id"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+	OwnerID     string     `json:"ownerID"`
 	ListID      string     `json:"listID"`
 	BoardID     string     `json:"boardID"`
 	Name        string     `json:"name"`
@@ -22,8 +23,6 @@ type Card struct {
 
 // CardCreation is used to create a Card.
 type CardCreation struct {
-	ListID      string
-	BoardID     string
 	Name        string
 	Description string
 	Position    float64
@@ -38,11 +37,11 @@ type CardUpdate struct {
 
 // CardService represents a service for managing cards.
 type CardService interface {
-	CreateCard(card *CardCreation) (*Card, error)
+	CreateCard(listID string, card *CardCreation) (*Card, error)
 	Card(id string) (*Card, error)
 	DeleteCard(id string) error
+	UpdateCard(id string, u *CardUpdate) (*Card, error)
 	DeleteCardsByListID(listID string) error
 	DeleteCardsByBoardID(boardID string) error
-	UpdateCard(id string, u *CardUpdate) (*Card, error)
 	CardsByBoard(boardID string) ([]*Card, error)
 }

@@ -50,22 +50,9 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 	session := h.client.session(w, r)
 	defer session.Close()
 
-	// fetch list
 	listID := ps.ByName("listID")
-	list, err := session.ListService().List(listID)
-	if err != nil {
-		if err == pulpe.ErrListNotFound {
-			http.NotFound(w, r)
-		} else {
-			Error(w, err, http.StatusInternalServerError, h.logger)
-		}
-		return
-	}
 
-	cc.ListID = list.ID
-	cc.BoardID = list.BoardID
-
-	card, err := session.CardService().CreateCard(cc)
+	card, err := session.CardService().CreateCard(listID, cc)
 	switch err {
 	case nil:
 		encodeJSON(w, card, http.StatusCreated, h.logger)

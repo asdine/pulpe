@@ -3,6 +3,7 @@ package mongo_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -14,14 +15,35 @@ func newBoardID() string {
 	return bson.NewObjectId().Hex()
 }
 
+func newBoard(t require.TestingT, session *Session) *pulpe.Board {
+	board, err := session.BoardService().CreateBoard(&pulpe.BoardCreation{
+		Name: fmt.Sprintf("%d", time.Now().UTC().UnixNano()),
+	})
+	require.NoError(t, err)
+
+	return board
+}
+
 // Ensure boards can be created and retrieved.
 func TestBoardService_CreateBoard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.BoardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+		b := pulpe.BoardCreation{
+			Name: "XXX YYY ",
+		}
+
+		// Create new board.
+		_, err := s.CreateBoard(&b)
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("New", func(t *testing.T) {
+		s := sessions.Red.BoardService()
+
 		b := pulpe.BoardCreation{
 			Name: "XXX YYY ",
 		}
@@ -29,21 +51,29 @@ func TestBoardService_CreateBoard(t *testing.T) {
 		// Create new board.
 		board, err := s.CreateBoard(&b)
 		require.NoError(t, err)
-		require.Equal(t, board.Slug, "xxx-yyy")
+		require.Equal(t, "xxx-yyy", board.Slug)
 
 		// Retrieve board and compare.
-		other, err := s.Board("xxx-yyy")
+		other, err := s.Board(board.ID)
 		require.NoError(t, err)
 		require.Equal(t, board, other)
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
+		s1 := sessions.Red.BoardService()
+		s2 := sessions.Blue.BoardService()
+
 		b := pulpe.BoardCreation{
 			Name: "ZZZ KK ",
 		}
 
 		// Create new board.
-		board, err := s.CreateBoard(&b)
+		board, err := s1.CreateBoard(&b)
+		require.NoError(t, err)
+		require.Equal(t, board.Slug, "zzz-kk")
+
+		// Create another board with the same slug but with another user.
+		board, err = s2.CreateBoard(&b)
 		require.NoError(t, err)
 		require.Equal(t, board.Slug, "zzz-kk")
 
@@ -51,34 +81,69 @@ func TestBoardService_CreateBoard(t *testing.T) {
 		b = pulpe.BoardCreation{
 			Name: "  ZZZ   KK ",
 		}
-		board, err = s.CreateBoard(&b)
+
+		board, err = s1.CreateBoard(&b)
+		require.NoError(t, err)
+		require.Equal(t, "zzz-kk-1", board.Slug)
+
+		board, err = s2.CreateBoard(&b)
 		require.NoError(t, err)
 		require.Equal(t, "zzz-kk-1", board.Slug)
 	})
 }
 
 func TestBoardService_Board(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.BoardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+
+		// Get a board.
+		_, err := s.Board("someid")
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("Exists", func(t *testing.T) {
+		s1 := sessions.Red.BoardService()
+		s2 := sessions.Blue.BoardService()
+
 		b := pulpe.BoardCreation{
 			Name: "ZZZ",
 		}
 
-		// Create new board.
-		board, err := s.CreateBoard(&b)
+		// Create new board as red
+		board1, err := s1.CreateBoard(&b)
 		require.NoError(t, err)
 
-		// Retrieve board and compare.
-		other, err := s.Board(board.Slug)
+		// Create new board as blue
+		board2, err := s2.CreateBoard(&b)
 		require.NoError(t, err)
-		require.Equal(t, board, other)
+
+		// Retrieve board1 as blue
+		other, err := s2.Board(board1.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+
+		// Retrieve board2 as blue
+		other, err = s2.Board(board2.ID)
+		require.NoError(t, err)
+		require.Equal(t, board2, other)
+
+		// Retrieve board2 as red
+		other, err = s1.Board(board2.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+
+		// Retrieve board1 as red
+		other, err = s1.Board(board1.ID)
+		require.NoError(t, err)
+		require.Equal(t, board1, other)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Red.BoardService()
 		// Trying to fetch a board that doesn't exist.
 		_, err := s.Board("something")
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
@@ -86,34 +151,52 @@ func TestBoardService_Board(t *testing.T) {
 }
 
 func TestBoardService_Boards(t *testing.T) {
-	t.Run("Exists", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
-		defer cleanup()
+	sessions, cleanup := MustGetSessions(t)
+	defer cleanup()
 
-		s := session.BoardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+
+		_, err := s.Boards()
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
+
+	t.Run("Exists", func(t *testing.T) {
+		s1 := sessions.Red.BoardService()
+		s2 := sessions.Blue.BoardService()
 
 		for i := 0; i < 5; i++ {
 			b := pulpe.BoardCreation{
 				Name: fmt.Sprintf("board%d", i),
 			}
-			// Create new board.
-			_, err := s.CreateBoard(&b)
+			// Create new board as red.
+			_, err := s1.CreateBoard(&b)
+			require.NoError(t, err)
+
+			_, err = s2.CreateBoard(&b)
 			require.NoError(t, err)
 		}
 
 		// Retrieve boards.
-		boards, err := s.Boards()
+		boards1, err := s1.Boards()
 		require.NoError(t, err)
-		require.Len(t, boards, 5)
-		require.Equal(t, boards[0].Name, "board0")
-		require.Equal(t, boards[4].Name, "board4")
+		require.Len(t, boards1, 5)
+		require.Equal(t, boards1[0].Name, "board0")
+		require.Equal(t, boards1[4].Name, "board4")
+
+		// Retrieve boards.
+		boards2, err := s2.Boards()
+		require.NoError(t, err)
+		require.Len(t, boards2, 5)
+		require.Equal(t, boards2[0].Name, "board0")
+		require.Equal(t, boards2[4].Name, "board4")
+
+		require.NotEmpty(t, boards1, boards2)
 	})
 
 	t.Run("No boards", func(t *testing.T) {
-		session, cleanup := MustGetSession(t)
-		defer cleanup()
-
-		s := session.BoardService()
+		s := sessions.Green.BoardService()
 
 		boards, err := s.Boards()
 		require.NoError(t, err)
@@ -122,29 +205,62 @@ func TestBoardService_Boards(t *testing.T) {
 }
 
 func TestBoardService_DeleteBoard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.BoardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+
+		// Trying to delete a board.
+		err := s.DeleteBoard("something")
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("Exists", func(t *testing.T) {
+		s1 := sessions.Red.BoardService()
+		s2 := sessions.Blue.BoardService()
+
 		b := pulpe.BoardCreation{
-			Name: "Board1",
+			Name: "Board",
 		}
 
-		// Create new board.
-		board, err := s.CreateBoard(&b)
+		// Create new board as red
+		board1, err := s1.CreateBoard(&b)
 		require.NoError(t, err)
 
-		// Delete board.
-		err = s.DeleteBoard(board.ID)
+		// Create new board as blue
+		board2, err := s2.CreateBoard(&b)
 		require.NoError(t, err)
 
-		_, err = s.Board(board.Slug)
+		// Delete board1 as blue
+		err = s2.DeleteBoard(board1.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+
+		// Delete board2 as red
+		err = s1.DeleteBoard(board2.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+
+		// Delete board1 as red
+		err = s1.DeleteBoard(board1.ID)
+		require.NoError(t, err)
+
+		// Delete board2 as blue
+		err = s2.DeleteBoard(board2.ID)
+		require.NoError(t, err)
+
+		_, err = s1.Board(board1.Slug)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+
+		_, err = s2.Board(board2.Slug)
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Green.BoardService()
+
 		// Trying to delete a board that doesn't exist.
 		err := s.DeleteBoard("something")
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
@@ -152,12 +268,21 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 }
 
 func TestBoardService_UpdateBoard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.BoardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+
+		// Trying to delete a board.
+		err := s.DeleteBoard("something")
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("OK", func(t *testing.T) {
+		s := sessions.Red.BoardService()
+
 		b := pulpe.BoardCreation{
 			Name: "name",
 		}
@@ -195,9 +320,31 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("Bad user", func(t *testing.T) {
+		s1 := sessions.Red.BoardService()
+		s2 := sessions.Blue.BoardService()
+
+		b := pulpe.BoardCreation{
+			Name: "name",
+		}
+
+		// Create new board as red.
+		board, err := s1.CreateBoard(&b)
+		require.NoError(t, err)
+
+		// Update as blue.
+		newName := "new name"
+		_, err = s2.UpdateBoard(board.ID, &pulpe.BoardUpdate{
+			Name: &newName,
+		})
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+	})
+
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Red.BoardService()
 		// Trying to update a board that doesn't exist with no patch.
-		updatedBoard, err := s.UpdateBoard(newBoardID(), &pulpe.BoardUpdate{})
+		updatedBoard, err := s.UpdateBoard(newBoardID(), new(pulpe.BoardUpdate))
 		require.Equal(t, pulpe.ErrBoardNotFound, err)
 		require.Nil(t, updatedBoard)
 
@@ -209,6 +356,8 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
+		s := sessions.Green.BoardService()
+
 		b1 := pulpe.BoardCreation{
 			Name: "hello",
 		}
@@ -236,10 +385,10 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 }
 
 func BenchmarkCreateBoard(b *testing.B) {
-	session, cleanup := MustGetSession(b)
+	sessions, cleanup := MustGetSessions(b)
 	defer cleanup()
 
-	s := session.BoardService()
+	s := sessions.Red.BoardService()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -252,10 +401,10 @@ func BenchmarkCreateBoard(b *testing.B) {
 }
 
 func BenchmarkGetBoard(b *testing.B) {
-	session, cleanup := MustGetSession(b)
+	sessions, cleanup := MustGetSessions(b)
 	defer cleanup()
 
-	s := session.BoardService()
+	s := sessions.Red.BoardService()
 
 	var id string
 	for i := 0; i < 1000; i++ {

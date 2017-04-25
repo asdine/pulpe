@@ -19,9 +19,9 @@ func registerListHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.POST("/v1/boards/:board/lists", h.handlePostList)
-	router.DELETE("/v1/lists/:id", h.handleDeleteList)
-	router.PATCH("/v1/lists/:id", h.handlePatchList)
+	router.POST("/boards/:boardID/lists", h.handlePostList)
+	router.DELETE("/lists/:id", h.handleDeleteList)
+	router.PATCH("/lists/:id", h.handlePatchList)
 }
 
 // listHandler represents an HTTP API handler for lists.
@@ -35,6 +35,8 @@ type listHandler struct {
 
 // handlePostList handles requests to create a new list.
 func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	boardID := ps.ByName("boardID")
+
 	// decode request
 	var req ListCreateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -53,24 +55,8 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 	session := h.client.session(w, r)
 	defer session.Close()
 
-	boardSelector := ps.ByName("board")
-
-	// fetch board
-	board, err := session.BoardService().Board(boardSelector)
-	if err != nil {
-		if err == pulpe.ErrBoardNotFound {
-			http.NotFound(w, r)
-		} else {
-			Error(w, err, http.StatusInternalServerError, h.logger)
-		}
-		return
-	}
-
-	// set the boardID to the ListCreate
-	lc.BoardID = board.ID
-
 	// create the list
-	list, err := session.ListService().CreateList(lc)
+	list, err := session.ListService().CreateList(boardID, lc)
 	switch err {
 	case nil:
 		encodeJSON(w, list, http.StatusCreated, h.logger)
@@ -93,12 +79,6 @@ func (h *listHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, p
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	err = session.CardService().DeleteCardsByListID(id)
-	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}

@@ -18,8 +18,11 @@ func newSession(session *mgo.Session) *Session {
 	}
 
 	s.boardService.session = &s
+	s.boardService.store.session = &s
 	s.listService.session = &s
+	s.listService.store.session = &s
 	s.cardService.session = &s
+	s.cardService.store.session = &s
 	s.userService.session = &s
 	s.userSessionService.session = &s
 
@@ -40,7 +43,7 @@ type Session struct {
 	userService        UserService
 	userSessionService UserSessionService
 
-	authenticator Authenticator
+	Authenticator pulpe.Authenticator
 	authToken     string
 	user          *pulpe.User
 }
@@ -76,7 +79,7 @@ func (s *Session) Authenticate() (*pulpe.User, error) {
 		return s.user, nil
 	}
 
-	u, err := s.authenticator.Authenticate(s.authToken)
+	u, err := s.Authenticator.Authenticate(s.authToken)
 	if err != nil {
 		return nil, err
 	}

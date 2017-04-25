@@ -15,21 +15,32 @@ func newCardID() string {
 
 // Ensure cards can be created and retrieved.
 func TestCardService_CreateCard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.CardService()
+		l := pulpe.CardCreation{
+			Name: "Name",
+		}
+
+		// Create new card.
+		_, err := s.CreateCard(newListID(), &l)
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("New", func(t *testing.T) {
+		s := sessions.Red.CardService()
+
 		c := pulpe.CardCreation{
 			Name:        "YYY",
-			ListID:      newListID(),
-			BoardID:     newBoardID(),
 			Description: "MY CARD",
 			Position:    1,
 		}
+
 		// Create new card.
-		card, err := s.CreateCard(&c)
+		card, err := s.CreateCard(newList(t, sessions.Red).ID, &c)
 		require.NoError(t, err)
 		require.NotZero(t, card.ID)
 		require.Equal(t, "yyy", card.Slug)
@@ -41,27 +52,25 @@ func TestCardService_CreateCard(t *testing.T) {
 	})
 
 	t.Run("Slug conflict", func(t *testing.T) {
-		boardID := newBoardID()
-		b := pulpe.CardCreation{
+		s := sessions.Red.CardService()
+
+		listID := newList(t, sessions.Red).ID
+		c := pulpe.CardCreation{
 			Name:        "ZZZ KK ",
-			ListID:      newListID(),
-			BoardID:     boardID,
 			Description: "MY CARD",
 			Position:    1,
 		}
 
 		// Create new card.
-		card, err := s.CreateCard(&b)
+		card, err := s.CreateCard(listID, &c)
 		require.NoError(t, err)
 		require.Equal(t, card.Slug, "zzz-kk")
 
 		// Create second card with slightly different name that generates the same slug.
-		b = pulpe.CardCreation{
-			Name:    "  ZZZ   KK ",
-			ListID:  newListID(),
-			BoardID: boardID,
+		c = pulpe.CardCreation{
+			Name: "  ZZZ   KK ",
 		}
-		card, err = s.CreateCard(&b)
+		card, err = s.CreateCard(listID, &c)
 		require.NoError(t, err)
 		require.Equal(t, "zzz-kk-1", card.Slug)
 	})
@@ -69,29 +78,59 @@ func TestCardService_CreateCard(t *testing.T) {
 
 // Ensure cards can be retrieved.
 func TestCardService_Card(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.CardService()
+
+		// Get a card
+		_, err := s.Card("someid")
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("OK", func(t *testing.T) {
+		s1 := sessions.Red.CardService()
+		s2 := sessions.Blue.CardService()
+
 		c := pulpe.CardCreation{
-			ListID:  newListID(),
-			BoardID: newBoardID(),
-			Name:    "name",
+			Name: "name1",
 		}
 
-		// Create new card.
-		card, err := s.CreateCard(&c)
+		// Create new card as red
+		card1, err := s1.CreateCard(newList(t, sessions.Red).ID, &c)
 		require.NoError(t, err)
 
-		// Retrieve card and compare.
-		other, err := s.Card(card.ID)
+		c.Name = "name2"
+		// Create new card as blue
+		card2, err := s2.CreateCard(newList(t, sessions.Blue).ID, &c)
 		require.NoError(t, err)
-		require.Equal(t, card, other)
+
+		// Retrieve card1 as blue
+		other, err := s2.Card(card1.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+
+		// Retrieve card2 as blue
+		other, err = s2.Card(card2.ID)
+		require.NoError(t, err)
+		require.Equal(t, card2, other)
+
+		// Retrieve card2 as red
+		other, err = s1.Card(card2.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+
+		// Retrieve card1 as red
+		other, err = s1.Card(card1.ID)
+		require.NoError(t, err)
+		require.Equal(t, card1, other)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Green.CardService()
+
 		// Trying to fetch a card that doesn't exist.
 		_, err := s.Card("something")
 		require.Equal(t, pulpe.ErrCardNotFound, err)
@@ -99,32 +138,62 @@ func TestCardService_Card(t *testing.T) {
 }
 
 func TestCardService_DeleteCard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.CardService()
+
+		// Trying to delete a card.
+		err := s.DeleteCard("something")
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("OK", func(t *testing.T) {
+		s1 := sessions.Red.CardService()
+		s2 := sessions.Blue.CardService()
+
 		c := pulpe.CardCreation{
-			ListID:  newListID(),
-			BoardID: newBoardID(),
-			Name:    "name",
+			Name: "name",
 		}
 
-		// Create new card.
-		card, err := s.CreateCard(&c)
+		// Create new card as red
+		card1, err := s1.CreateCard(newList(t, sessions.Red).ID, &c)
 		require.NoError(t, err)
 
-		// Delete card.
-		err = s.DeleteCard(card.ID)
+		// Create new card as blue
+		card2, err := s2.CreateCard(newList(t, sessions.Blue).ID, &c)
 		require.NoError(t, err)
 
-		// Try to delete the same card.
-		err = s.DeleteCard(card.ID)
+		// Delete card1 as blue
+		err = s2.DeleteCard(card1.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+
+		// Delete card2 as red
+		err = s1.DeleteCard(card2.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+
+		// Delete card1 as red
+		err = s1.DeleteCard(card1.ID)
+		require.NoError(t, err)
+
+		// Delete card2 as blue
+		err = s2.DeleteCard(card2.ID)
+		require.NoError(t, err)
+
+		_, err = s1.Card(card1.Slug)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+
+		_, err = s2.Card(card2.Slug)
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Green.CardService()
+
 		// Trying to delete a card that doesn't exist.
 		err := s.DeleteCard(bson.NewObjectId().Hex())
 		require.Equal(t, pulpe.ErrCardNotFound, err)
@@ -132,35 +201,33 @@ func TestCardService_DeleteCard(t *testing.T) {
 }
 
 func TestCardService_DeleteCardsByListID(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
-
 	t.Run("OK", func(t *testing.T) {
-		list1 := newListID()
-		list2 := newListID()
-		boardID := newBoardID()
+		s := sessions.Red.CardService()
 
+		boardID := newBoard(t, sessions.Red).ID
+		list1 := newListWithBoardID(t, sessions.Red, boardID).ID
+		list2 := newListWithBoardID(t, sessions.Red, boardID).ID
+
+		var err error
 		for i := 0; i < 10; i++ {
 			c := pulpe.CardCreation{
-				BoardID: boardID,
-				Name:    "name",
+				Name: "name",
 			}
 
 			if i%2 != 0 {
-				c.ListID = list1
+				_, err = s.CreateCard(list1, &c)
 			} else {
-				c.ListID = list2
+				_, err = s.CreateCard(list2, &c)
 			}
 
-			// Create new card.
-			_, err := s.CreateCard(&c)
 			require.NoError(t, err)
 		}
 
 		// Delete card.
-		err := s.DeleteCardsByListID(list1)
+		err = s.DeleteCardsByListID(list1)
 		require.NoError(t, err)
 
 		cards, err := s.CardsByBoard(boardID)
@@ -172,29 +239,46 @@ func TestCardService_DeleteCardsByListID(t *testing.T) {
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Red.CardService()
+
+		l := pulpe.ListCreation{
+			Name: "name",
+		}
+
+		// Create new List.
+		list, err := sessions.Red.ListService().CreateList(newBoard(t, sessions.Red).ID, &l)
+		require.NoError(t, err)
+
 		// Calling with a listID with no associated cards.
-		err := s.DeleteCardsByListID(newListID())
+		err = s.DeleteCardsByListID(list.ID)
 		require.NoError(t, err)
 	})
 }
 
 func TestCardService_UpdateCard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.CardService()
+
+		// Update a card.
+		_, err := s.UpdateCard("someid", new(pulpe.CardUpdate))
+		require.Error(t, err)
+		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+	})
 
 	t.Run("OK", func(t *testing.T) {
+		s := sessions.Red.CardService()
+
 		c := pulpe.CardCreation{
-			ListID:      newListID(),
-			BoardID:     newBoardID(),
 			Name:        "name",
 			Description: "description",
 			Position:    1,
 		}
 
 		// Create new card.
-		card, err := s.CreateCard(&c)
+		card, err := s.CreateCard(newList(t, sessions.Red).ID, &c)
 		require.NoError(t, err)
 
 		// Update the name.
@@ -247,9 +331,32 @@ func TestCardService_UpdateCard(t *testing.T) {
 		require.Zero(t, updatedCard.Position)
 	})
 
+	t.Run("Bad user", func(t *testing.T) {
+		s1 := sessions.Red.CardService()
+		s2 := sessions.Blue.CardService()
+
+		l := pulpe.CardCreation{
+			Name: "name",
+		}
+
+		// Create new Card as red.
+		card, err := s1.CreateCard(newList(t, sessions.Red).ID, &l)
+		require.NoError(t, err)
+
+		// Update as blue.
+		newName := "new name"
+		_, err = s2.UpdateCard(card.ID, &pulpe.CardUpdate{
+			Name: &newName,
+		})
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrCardNotFound, err)
+	})
+
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Green.CardService()
+
 		// Trying to update a card that doesn't exist with no patch
-		updatedCard, err := s.UpdateCard(newCardID(), &pulpe.CardUpdate{})
+		updatedCard, err := s.UpdateCard(newList(t, sessions.Red).ID, &pulpe.CardUpdate{})
 		require.Equal(t, pulpe.ErrCardNotFound, err)
 		require.Nil(t, updatedCard)
 
@@ -262,29 +369,39 @@ func TestCardService_UpdateCard(t *testing.T) {
 }
 
 func TestCardService_CardsByBoard(t *testing.T) {
-	session, cleanup := MustGetSession(t)
+	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
 
-	s := session.CardService()
-
 	t.Run("Exists", func(t *testing.T) {
-		boardID1 := newBoardID()
-		boardID2 := newBoardID()
+		s := sessions.Red.CardService()
+
+		boardID1 := newBoard(t, sessions.Red).ID
+		boardID2 := newBoard(t, sessions.Red).ID
+
+		l := pulpe.ListCreation{
+			Name: "name",
+		}
+
+		// Create new List.
+		list1, err := sessions.Red.ListService().CreateList(boardID1, &l)
+		require.NoError(t, err)
+
+		list2, err := sessions.Red.ListService().CreateList(boardID2, &l)
+		require.NoError(t, err)
+
 		for i := 0; i < 6; i++ {
 			c := pulpe.CardCreation{
-				ListID:      newListID(),
 				Name:        "name",
 				Description: "description",
 			}
 
 			if i%2 == 0 {
-				c.BoardID = boardID1
+				_, err = s.CreateCard(list1.ID, &c)
 			} else {
-				c.BoardID = boardID2
+				_, err = s.CreateCard(list2.ID, &c)
 			}
 
 			// Create new card.
-			_, err := s.CreateCard(&c)
 			require.NoError(t, err)
 		}
 
@@ -294,6 +411,8 @@ func TestCardService_CardsByBoard(t *testing.T) {
 	})
 
 	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Green.CardService()
+
 		// Trying to find cards of a board that doesn't exist.
 		cards, err := s.CardsByBoard(newBoardID())
 		require.NoError(t, err)

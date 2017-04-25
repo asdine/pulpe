@@ -20,31 +20,17 @@ func registerBoardHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.GET("/v1/boards", h.handleGetBoards)
-	router.POST("/v1/boards", h.handlePostBoard)
-	router.GET("/v1/boards/:board", h.handleGetBoard)
-	router.DELETE("/v1/boards/:id", h.handleDeleteBoard)
-	router.PATCH("/v1/boards/:id", h.handlePatchBoard)
+	router.GET("/user/boards", h.handleGetBoards)
+	router.POST("/user/boards", h.handlePostBoard)
+	router.GET("/boards/:owner/:board", h.handleGetBoard)
+	router.DELETE("/boards/:id", h.handleDeleteBoard)
+	router.PATCH("/boards/:id", h.handlePatchBoard)
 }
 
 // boardHandler represents an HTTP API handler for boards.
 type boardHandler struct {
 	client *client
 	logger *log.Logger
-}
-
-// handlePostBoard handles requests to create a new board.
-func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	session := h.client.session(w, r)
-	defer session.Close()
-
-	boards, err := session.BoardService().Boards()
-	switch err {
-	case nil:
-		encodeJSON(w, boards, http.StatusOK, h.logger)
-	default:
-		Error(w, err, http.StatusInternalServerError, h.logger)
-	}
 }
 
 // handlePostBoard handles requests to create a new board.
@@ -75,35 +61,36 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	}
 }
 
+// handlePostBoard handles requests to create a new board.
+func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	session := h.client.session(w, r)
+	defer session.Close()
+
+	boards, err := session.BoardService().Boards()
+	switch err {
+	case nil:
+		encodeJSON(w, boards, http.StatusOK, h.logger)
+	default:
+		Error(w, err, http.StatusInternalServerError, h.logger)
+	}
+}
+
 // handleGetBoard handles requests to fetch a single board.
 func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	selector := ps.ByName("board")
+	owner := ps.ByName("id")
+	slug := ps.ByName("board")
 
 	session := h.client.session(w, r)
 	defer session.Close()
 
-	// Get the board
-	board, err := session.BoardService().Board(selector)
+	// Get the board and all of its lists and cards
+	board, err := session.BoardService().BoardByOwnerAndSlug(owner, slug, pulpe.WithLists(), pulpe.WithCards())
 	if err != nil {
 		if err == pulpe.ErrBoardNotFound {
 			http.NotFound(w, r)
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	// Get the board's lists
-	board.Lists, err = session.ListService().ListsByBoard(board.ID)
-	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	// Get the board's cards
-	board.Cards, err = session.CardService().CardsByBoard(board.ID)
-	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}
@@ -125,18 +112,6 @@ func (h *boardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	err = session.ListService().DeleteListsByBoardID(id)
-	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
-	err = session.CardService().DeleteCardsByBoardID(id)
-	if err != nil {
 		Error(w, err, http.StatusInternalServerError, h.logger)
 		return
 	}

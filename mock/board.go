@@ -10,8 +10,11 @@ type BoardService struct {
 	CreateBoardFn      func(board *pulpe.BoardCreation) (*pulpe.Board, error)
 	CreateBoardInvoked bool
 
-	BoardFn      func(id string) (*pulpe.Board, error)
+	BoardFn      func(id string, options ...pulpe.BoardGetOption) (*pulpe.Board, error)
 	BoardInvoked bool
+
+	BoardByOwnerAndSlugFn      func(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error)
+	BoardByOwnerAndSlugInvoked bool
 
 	BoardsFn      func() ([]*pulpe.Board, error)
 	BoardsInvoked bool
@@ -30,9 +33,15 @@ func (s *BoardService) CreateBoard(Board *pulpe.BoardCreation) (*pulpe.Board, er
 }
 
 // Board runs BoardFn and sets BoardInvoked to true when invoked.
-func (s *BoardService) Board(id string) (*pulpe.Board, error) {
+func (s *BoardService) Board(id string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
 	s.BoardInvoked = true
-	return s.BoardFn(id)
+	return s.BoardFn(id, options...)
+}
+
+// BoardByOwnerAndSlug runs BoardByOwnerAndSlugFn and sets BoardByOwnerAndSlugInvoked to true when invoked.
+func (s *BoardService) BoardByOwnerAndSlug(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
+	s.BoardByOwnerAndSlugInvoked = true
+	return s.BoardByOwnerAndSlugFn(owner, slug, options...)
 }
 
 // Boards runs BoardsFn and sets BoardsInvoked to true when invoked.

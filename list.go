@@ -12,6 +12,7 @@ type List struct {
 	ID        string     `json:"id"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	OwnerID   string     `json:"ownerID"`
 	BoardID   string     `json:"boardID"`
 	Name      string     `json:"name"`
 	Slug      string     `json:"slug"`
@@ -19,8 +20,7 @@ type List struct {
 
 // ListCreation is used to create a List.
 type ListCreation struct {
-	BoardID string
-	Name    string
+	Name string
 }
 
 // ListUpdate is used to update a List.
@@ -30,10 +30,10 @@ type ListUpdate struct {
 
 // ListService represents a service for managing lists.
 type ListService interface {
-	CreateList(list *ListCreation) (*List, error)
+	CreateList(boardID string, list *ListCreation) (*List, error)
 	List(id string) (*List, error)
 	DeleteList(id string) error
-	DeleteListsByBoardID(boardID string) error
 	UpdateList(id string, u *ListUpdate) (*List, error)
+	DeleteListsByBoardID(boardID string) error
 	ListsByBoard(boardID string) ([]*List, error)
 }

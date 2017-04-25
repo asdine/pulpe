@@ -14,37 +14,23 @@ const boardCol = "boards"
 // Ensure BoardService implements pulpe.BoardService.
 var _ pulpe.BoardService = new(BoardService)
 
-// Board representation stored in MongoDB.
-type Board struct {
+// board representation stored in MongoDB.
+type board struct {
 	ID        bson.ObjectId `bson:"_id"`
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
 	Name      string        `bson:"name"`
 	Slug      string        `bson:"slug"`
+	OwnerID   string        `bson:"ownerID"`
 }
 
-// ToMongoBoard creates a mongo board from a pulpe board.
-func ToMongoBoard(p *pulpe.Board) *Board {
-	id := bson.NewObjectId()
-	p.ID = id.Hex()
-	p.CreatedAt = id.Time().UTC()
-
-	b := Board{
-		ID:        id,
-		UpdatedAt: p.UpdatedAt,
-		Name:      p.Name,
-		Slug:      p.Slug,
-	}
-
-	return &b
-}
-
-// FromMongoBoard creates a pulpe board from a mongo board.
-func FromMongoBoard(b *Board) *pulpe.Board {
+// toPulpeBoard creates a pulpe board from a mongo board.
+func (b *board) toPulpeBoard() *pulpe.Board {
 	p := pulpe.Board{
 		ID:        b.ID.Hex(),
 		CreatedAt: b.ID.Time().UTC(),
 		Name:      b.Name,
 		Slug:      b.Slug,
+		OwnerID:   b.OwnerID,
 	}
 
 	if b.UpdatedAt != nil {
@@ -58,6 +44,7 @@ func FromMongoBoard(b *Board) *pulpe.Board {
 // BoardService represents a service for managing boards.
 type BoardService struct {
 	session *Session
+	store   boardStore
 }
 
 func (s *BoardService) ensureIndexes() error {
@@ -65,7 +52,7 @@ func (s *BoardService) ensureIndexes() error {
 
 	// Unique slug
 	index := mgo.Index{
-		Key:    []string{"slug"},
+		Key:    []string{"ownerID", "slug"},
 		Unique: true,
 		Sparse: true,
 	}
@@ -75,29 +62,34 @@ func (s *BoardService) ensureIndexes() error {
 
 // CreateBoard creates a new Board.
 func (s *BoardService) CreateBoard(bc *pulpe.BoardCreation) (*pulpe.Board, error) {
-	var err error
-	col := s.session.db.C(boardCol)
-
-	board := pulpe.Board{
-		Name: bc.Name,
-		Slug: slugify.Slugify(bc.Name),
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
 	}
 
-	b := ToMongoBoard(&board)
+	b := board{
+		ID:      bson.NewObjectId(),
+		Name:    bc.Name,
+		Slug:    slugify.Slugify(bc.Name),
+		OwnerID: user.ID,
+	}
 
-	board.Slug, err = resolveSlugAndDo(col, "slug", b.Slug, "-", func(slug string) error {
-		b.Slug = slug
-		return col.Insert(b)
-	})
+	err = s.store.createBoard(&b)
+	if err != nil {
+		return nil, err
+	}
 
-	return &board, err
+	return b.toPulpeBoard(), nil
 }
 
-// Board returns a Board by slug or ID.
-func (s *BoardService) Board(selector string) (*pulpe.Board, error) {
-	var b Board
+// Board returns a Board by id.
+func (s *BoardService) Board(id string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.session.db.C(boardCol).Find(getSelector("slug", selector)).One(&b)
+	b, err := s.store.boardByOwnerIDAndID(user.ID, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrBoardNotFound
@@ -106,73 +98,160 @@ func (s *BoardService) Board(selector string) (*pulpe.Board, error) {
 		return nil, err
 	}
 
-	return FromMongoBoard(&b), nil
+	board := b.toPulpeBoard()
+
+	var opts pulpe.BoardGetOptions
+
+	for i := range options {
+		options[i](&opts)
+	}
+
+	if opts.WithLists {
+		board.Lists, err = s.session.ListService().ListsByBoard(board.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if opts.WithCards {
+		board.Cards, err = s.session.CardService().CardsByBoard(board.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return board, nil
 }
 
-// Boards returns all the boards.
-func (s *BoardService) Boards() ([]*pulpe.Board, error) {
-	var bs []Board
+// BoardByOwnerAndSlug returns a Board by owner and slug.
+func (s *BoardService) BoardByOwnerAndSlug(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.session.db.C(boardCol).Find(nil).All(&bs)
+	if user.Login != owner {
+		return nil, pulpe.ErrBoardNotFound
+	}
+
+	b, err := s.store.boardByOwnerIDAndSlug(user.ID, slug)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrBoardNotFound
+		}
+
+		return nil, err
+	}
+
+	if b.OwnerID != user.ID {
+		return nil, pulpe.ErrBoardNotFound
+	}
+
+	board := b.toPulpeBoard()
+
+	var opts pulpe.BoardGetOptions
+
+	for i := range options {
+		options[i](&opts)
+	}
+
+	if opts.WithLists {
+		board.Lists, err = s.session.ListService().ListsByBoard(board.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if opts.WithCards {
+		board.Cards, err = s.session.CardService().CardsByBoard(board.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return board, nil
+}
+
+// Boards returns all the boards of the authenticated user.
+func (s *BoardService) Boards() ([]*pulpe.Board, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+
+	bs, err := s.store.boardsByOwnerID(user.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	boards := make([]*pulpe.Board, len(bs))
 	for i := range bs {
-		boards[i] = FromMongoBoard(&bs[i])
+		boards[i] = bs[i].toPulpeBoard()
 	}
 
 	return boards, nil
 }
 
-// DeleteBoard deletes a Board by ID, and all of its lists and cards .
+// DeleteBoard deletes a Board and its related cards and lists.
 func (s *BoardService) DeleteBoard(id string) error {
-	if !bson.IsObjectIdHex(id) {
-		return pulpe.ErrBoardNotFound
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return err
 	}
 
-	err := s.session.db.C(boardCol).RemoveId(bson.ObjectIdHex(id))
+	b, err := s.store.boardByOwnerIDAndID(user.ID, id)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return pulpe.ErrBoardNotFound
+		}
+
+		return err
+	}
+
+	err = s.store.deleteBoardByID(b.ID)
 	if err == mgo.ErrNotFound {
 		return pulpe.ErrBoardNotFound
 	}
 
-	return err
+	err = s.session.ListService().DeleteListsByBoardID(b.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	return s.session.CardService().DeleteCardsByBoardID(b.ID.Hex())
 }
 
-// UpdateBoard updates a Board by ID.
+// UpdateBoard updates a Board.
 func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrBoardNotFound
 	}
 
-	var b Board
-	var err error
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
 
-	col := s.session.db.C(boardCol)
+	var newSlug string
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		patch["name"] = *u.Name
-		b.Slug = slugify.Slugify(*u.Name)
+		newSlug = slugify.Slugify(*u.Name)
 	}
 
-	if len(patch) == 0 {
-		return s.Board(id)
-	}
+	if len(patch) > 0 {
+		newSlug, err = s.store.updateBoardByID(bson.ObjectIdHex(id), user.ID, newSlug, patch)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, pulpe.ErrBoardNotFound
+			}
 
-	b.Slug, err = resolveSlugAndDo(col, "slug", b.Slug, "-", func(slug string) error {
-		if slug != "" {
-			patch["slug"] = slug
+			return nil, err
 		}
+	}
 
-		return col.UpdateId(
-			bson.ObjectIdHex(id),
-			bson.M{
-				"$set":         patch,
-				"$currentDate": bson.M{"updatedAt": true},
-			})
-	})
+	b, err := s.store.boardByOwnerIDAndID(user.ID, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrBoardNotFound
@@ -181,5 +260,78 @@ func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Boar
 		return nil, err
 	}
 
-	return s.Board(id)
+	return b.toPulpeBoard(), nil
+}
+
+type boardStore struct {
+	session *Session
+}
+
+func (s *boardStore) boardByOwnerIDAndID(ownerID, id string) (*board, error) {
+	var b board
+
+	if !bson.IsObjectIdHex(id) {
+		return nil, mgo.ErrNotFound
+	}
+
+	query := bson.M{
+		"ownerID": ownerID,
+		"_id":     bson.ObjectIdHex(id),
+	}
+
+	return &b, s.session.db.C(boardCol).Find(query).One(&b)
+}
+
+func (s *boardStore) boardByOwnerIDAndSlug(ownerID, slug string) (*board, error) {
+	var b board
+
+	query := bson.M{
+		"ownerID": ownerID,
+		"slug":    slug,
+	}
+
+	return &b, s.session.db.C(boardCol).Find(query).One(&b)
+}
+
+func (s *boardStore) createBoard(b *board) error {
+	var err error
+	col := s.session.db.C(boardCol)
+
+	b.Slug, err = resolveSlugAndDo(col, b.OwnerID, "slug", b.Slug, "-", func(slug string) error {
+		b.Slug = slug
+		return col.Insert(b)
+	})
+
+	return err
+}
+
+func (s *boardStore) boardsByOwnerID(ownerID string) ([]board, error) {
+	var bs []board
+
+	return bs, s.session.db.C(boardCol).Find(bson.M{"ownerID": ownerID}).All(&bs)
+}
+
+func (s *boardStore) deleteBoardByID(id bson.ObjectId) error {
+	return s.session.db.C(boardCol).RemoveId(id)
+}
+
+func (s *boardStore) updateBoardByID(id bson.ObjectId, ownerID, slug string, patch bson.M) (string, error) {
+	col := s.session.db.C(boardCol)
+
+	newSlug, err := resolveSlugAndDo(col, ownerID, "slug", slug, "-", func(slug string) error {
+		if slug != "" {
+			patch["slug"] = slug
+		}
+
+		return col.Update(
+			bson.M{
+				"_id":     id,
+				"ownerID": ownerID,
+			},
+			bson.M{
+				"$set":         patch,
+				"$currentDate": bson.M{"updatedAt": true},
+			})
+	})
+	return newSlug, err
 }

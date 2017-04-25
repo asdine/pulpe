@@ -15,36 +15,23 @@ const listCol = "lists"
 // Ensure ListService implements pulpe.ListService.
 var _ pulpe.ListService = new(ListService)
 
-// List representation stored in MongoDB.
-type List struct {
+// list representation stored in MongoDB.
+type list struct {
 	ID        bson.ObjectId `bson:"_id"`
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
-	BoardID   bson.ObjectId `bson:"boardID"`
+	OwnerID   string        `bson:"ownerID"`
+	BoardID   string        `bson:"boardID"`
 	Name      string        `bson:"name"`
 	Slug      string        `bson:"slug"`
 }
 
-// ToMongoList creates a mongo list from a pulpe list.
-func ToMongoList(p *pulpe.List) *List {
-	id := bson.NewObjectId()
-	p.ID = id.Hex()
-	p.CreatedAt = id.Time().UTC()
-
-	return &List{
-		ID:        id,
-		UpdatedAt: p.UpdatedAt,
-		BoardID:   bson.ObjectIdHex(p.BoardID),
-		Name:      p.Name,
-		Slug:      p.Slug,
-	}
-}
-
-// FromMongoList creates a pulpe list from a mongo list.
-func FromMongoList(l *List) *pulpe.List {
+// toPulpeList creates a pulpe list from a mongo list.
+func (l *list) toPulpeList() *pulpe.List {
 	p := pulpe.List{
 		ID:        l.ID.Hex(),
 		CreatedAt: l.ID.Time().UTC(),
-		BoardID:   l.BoardID.Hex(),
+		OwnerID:   l.OwnerID,
+		BoardID:   l.BoardID,
 		Name:      l.Name,
 		Slug:      l.Slug,
 	}
@@ -60,6 +47,7 @@ func FromMongoList(l *List) *pulpe.List {
 // ListService represents a service for managing lists.
 type ListService struct {
 	session *Session
+	store   listStore
 }
 
 func (s *ListService) ensureIndexes() error {
@@ -72,42 +60,59 @@ func (s *ListService) ensureIndexes() error {
 		Sparse: true,
 	}
 
+	err := col.EnsureIndex(index)
+	if err != nil {
+		return err
+	}
+
+	index = mgo.Index{
+		Key:    []string{"_id", "ownerID"},
+		Sparse: true,
+	}
+
 	return col.EnsureIndex(index)
 }
 
 // CreateList creates a new List
-func (s *ListService) CreateList(lc *pulpe.ListCreation) (*pulpe.List, error) {
-	var err error
-
-	// generate slug
-	slug := slugify.Slugify(lc.Name)
-
-	list := pulpe.List{
-		BoardID: lc.BoardID,
-		Name:    lc.Name,
-		Slug:    slug,
+func (s *ListService) CreateList(boardID string, lc *pulpe.ListCreation) (*pulpe.List, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
 	}
 
-	l := ToMongoList(&list)
-	col := s.session.db.C(listCol)
+	board, err := s.session.BoardService().Board(boardID)
+	if err != nil {
+		return nil, err
+	}
 
-	list.Slug, err = resolveSlugAndDo(col, "slug", l.Slug, "-", func(slug string) error {
-		l.Slug = slug
-		return col.Insert(l)
-	})
+	if board.OwnerID != user.ID {
+		return nil, pulpe.ErrBoardNotFound
+	}
 
-	return &list, err
+	l := list{
+		ID:      bson.NewObjectId(),
+		OwnerID: user.ID,
+		BoardID: board.ID,
+		Name:    lc.Name,
+		Slug:    slugify.Slugify(lc.Name),
+	}
+
+	err = s.store.createList(&l)
+	if err != nil {
+		return nil, err
+	}
+
+	return l.toPulpeList(), err
 }
 
-// List returns a List by ID.
+// List returns a List.
 func (s *ListService) List(id string) (*pulpe.List, error) {
-	if !bson.IsObjectIdHex(id) {
-		return nil, pulpe.ErrListNotFound
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
 	}
 
-	var l List
-
-	err := s.session.db.C(listCol).FindId(bson.ObjectIdHex(id)).One(&l)
+	l, err := s.store.listByOwnerIDAndID(user.ID, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrListNotFound
@@ -116,95 +121,174 @@ func (s *ListService) List(id string) (*pulpe.List, error) {
 		return nil, err
 	}
 
-	return FromMongoList(&l), nil
+	return l.toPulpeList(), nil
 }
 
-// DeleteList deletes a List by ID.
+// DeleteList deletes a List.
 func (s *ListService) DeleteList(id string) error {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return err
+	}
+
 	if !bson.IsObjectIdHex(id) {
 		return pulpe.ErrListNotFound
 	}
 
-	err := s.session.db.C(listCol).RemoveId(bson.ObjectIdHex(id))
-	if err == mgo.ErrNotFound {
-		return pulpe.ErrListNotFound
+	err = s.store.deleteListByOwnerIDAndID(user.ID, bson.ObjectIdHex(id))
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return pulpe.ErrListNotFound
+
+		}
+
+		return err
 	}
 
-	return err
+	return s.session.CardService().DeleteCardsByListID(id)
 }
 
 // DeleteListsByBoardID deletes all the lists of a board.
 func (s *ListService) DeleteListsByBoardID(boardID string) error {
-	if !bson.IsObjectIdHex(boardID) {
-		return pulpe.ErrBoardNotFound
-	}
-
-	_, err := s.session.db.C(listCol).RemoveAll(bson.M{"boardID": bson.ObjectIdHex(boardID)})
-	return err
+	return s.store.deleteListsByBoardID(boardID)
 }
 
 // UpdateList updates a List by ID.
 func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
+	user, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+
 	if !bson.IsObjectIdHex(id) {
 		return nil, pulpe.ErrListNotFound
 	}
 
-	var err error
-	var l List
-
-	col := s.session.db.C(listCol)
+	var newSlug string
 
 	patch := make(bson.M)
 	if u.Name != nil {
 		patch["name"] = *u.Name
-		l.Slug = slugify.Slugify(*u.Name)
+		newSlug = slugify.Slugify(*u.Name)
 	}
 
-	if len(patch) == 0 {
-		return s.List(id)
+	if len(patch) > 0 {
+		newSlug, err = s.store.updateListByID(bson.ObjectIdHex(id), user.ID, newSlug, patch)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, pulpe.ErrListNotFound
+			}
+
+			return nil, err
+		}
 	}
 
-	l.Slug, err = resolveSlugAndDo(col, "slug", l.Slug, "-", func(slug string) error {
+	l, err := s.store.listByOwnerIDAndID(user.ID, id)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, pulpe.ErrListNotFound
+		}
+
+		return nil, err
+	}
+
+	return l.toPulpeList(), nil
+}
+
+// ListsByBoard returns all the lists of a given board.
+func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
+	_, err := s.session.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+
+	ls, err := s.store.listsByBoardID(boardID)
+	if err != nil {
+		return nil, err
+	}
+
+	lists := make([]*pulpe.List, len(ls))
+	for i := range ls {
+		lists[i] = ls[i].toPulpeList()
+	}
+
+	return lists, nil
+}
+
+type listStore struct {
+	session *Session
+}
+
+func (s *listStore) listByOwnerIDAndID(ownerID, id string) (*list, error) {
+	var b list
+
+	if !bson.IsObjectIdHex(id) {
+		return nil, mgo.ErrNotFound
+	}
+
+	query := bson.M{
+		"ownerID": ownerID,
+		"_id":     bson.ObjectIdHex(id),
+	}
+
+	return &b, s.session.db.C(listCol).Find(query).One(&b)
+}
+
+func (s *listStore) createList(l *list) error {
+	var err error
+	col := s.session.db.C(listCol)
+
+	l.Slug, err = resolveSlugAndDo(col, l.OwnerID, "slug", l.Slug, "-", func(slug string) error {
+		l.Slug = slug
+		return col.Insert(l)
+	})
+
+	return err
+}
+
+func (s *listStore) deleteListByOwnerIDAndID(ownerID string, id bson.ObjectId) error {
+	return s.session.db.C(listCol).Remove(bson.M{
+		"_id":     id,
+		"ownerID": ownerID,
+	})
+}
+
+func (s *listStore) deleteListsByBoardID(boardID string) error {
+	_, err := s.session.db.C(listCol).RemoveAll(bson.M{
+		"boardID": boardID,
+	})
+
+	return err
+}
+
+func (s *listStore) updateListByID(id bson.ObjectId, ownerID, slug string, patch bson.M) (string, error) {
+	col := s.session.db.C(listCol)
+
+	newSlug, err := resolveSlugAndDo(col, ownerID, "slug", slug, "-", func(slug string) error {
 		if slug != "" {
 			patch["slug"] = slug
 		}
 
-		return col.UpdateId(
-			bson.ObjectIdHex(id),
+		return col.Update(
+			bson.M{
+				"_id":     id,
+				"ownerID": ownerID,
+			},
 			bson.M{
 				"$set":         patch,
 				"$currentDate": bson.M{"updatedAt": true},
 			})
 	})
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			return nil, pulpe.ErrListNotFound
-		}
 
-		return nil, err
-	}
-
-	return s.List(id)
+	return newSlug, err
 }
 
-// ListsByBoard returns all the lists of a given board.
-func (s *ListService) ListsByBoard(boardID string) ([]*pulpe.List, error) {
-	if !bson.IsObjectIdHex(boardID) {
-		return nil, pulpe.ErrBoardNotFound
-	}
+func (s *listStore) listsByBoardID(boardID string) ([]list, error) {
+	col := s.session.db.C(listCol)
 
-	var lists []List
+	var lists []list
 
 	// TODO set a limit
-	err := s.session.db.C(listCol).Find(bson.M{"boardID": bson.ObjectIdHex(boardID)}).Sort("_id").All(&lists)
-	if err != nil {
-		return nil, err
-	}
-
-	list := make([]*pulpe.List, len(lists))
-	for i := range lists {
-		list[i] = FromMongoList(&lists[i])
-	}
-
-	return list, nil
+	err := col.Find(bson.M{"boardID": boardID}).Sort("_id").All(&lists)
+	return lists, err
 }
