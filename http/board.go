@@ -20,8 +20,8 @@ func registerBoardHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.GET("/user/boards", h.handleGetBoards)
-	router.POST("/user/boards", h.handlePostBoard)
+	router.GET("/boards", h.handleGetBoards)
+	router.POST("/boards", h.handlePostBoard)
 	router.GET("/boards/:owner/:board", h.handleGetBoard)
 	router.DELETE("/boards/:id", h.handleDeleteBoard)
 	router.PATCH("/boards/:id", h.handlePatchBoard)
@@ -56,6 +56,8 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 	switch err {
 	case nil:
 		encodeJSON(w, board, http.StatusCreated, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
@@ -70,6 +72,8 @@ func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 	switch err {
 	case nil:
 		encodeJSON(w, boards, http.StatusOK, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
@@ -77,7 +81,7 @@ func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _
 
 // handleGetBoard handles requests to fetch a single board.
 func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	owner := ps.ByName("id")
+	owner := ps.ByName("owner")
 	slug := ps.ByName("board")
 
 	session := h.client.session(w, r)
@@ -85,17 +89,16 @@ func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 
 	// Get the board and all of its lists and cards
 	board, err := session.BoardService().BoardByOwnerAndSlug(owner, slug, pulpe.WithLists(), pulpe.WithCards())
-	if err != nil {
-		if err == pulpe.ErrBoardNotFound {
-			http.NotFound(w, r)
-			return
-		}
-
+	switch err {
+	case nil:
+		encodeJSON(w, board, http.StatusOK, h.logger)
+	case pulpe.ErrBoardNotFound:
+		http.NotFound(w, r)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
+	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
 	}
-
-	encodeJSON(w, board, http.StatusOK, h.logger)
 }
 
 // handleDeleteBoard handles requests to delete a single board and all of its content.
@@ -106,17 +109,16 @@ func (h *boardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request,
 	defer session.Close()
 
 	err := session.BoardService().DeleteBoard(id)
-	if err != nil {
-		if err == pulpe.ErrBoardNotFound {
-			http.NotFound(w, r)
-			return
-		}
-
+	switch err {
+	case nil:
+		w.WriteHeader(http.StatusNoContent)
+	case pulpe.ErrBoardNotFound:
+		http.NotFound(w, r)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
+	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
 	}
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 // handlePatchBoard handles requests to update a board.
@@ -145,6 +147,8 @@ func (h *boardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		encodeJSON(w, board, http.StatusOK, h.logger)
 	case pulpe.ErrBoardNotFound:
 		http.NotFound(w, r)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}

@@ -24,18 +24,9 @@ func TestCardHandler_CreateCard(t *testing.T) {
 func testCardHandler_CreateCard_OK(t *testing.T) {
 	c := mock.NewClient()
 
-	c.ListService.ListFn = func(id string) (*pulpe.List, error) {
-		require.Equal(t, "456", string(id))
-		return &pulpe.List{
-			ID:      "456",
-			BoardID: "789",
-		}, nil
-	}
-
-	c.CardService.CreateCardFn = func(c *pulpe.CardCreation) (*pulpe.Card, error) {
+	c.CardService.CreateCardFn = func(listID string, c *pulpe.CardCreation) (*pulpe.Card, error) {
+		require.Equal(t, "456", listID)
 		require.Equal(t, &pulpe.CardCreation{
-			ListID:      "456",
-			BoardID:     "789",
 			Name:        "name",
 			Description: "description",
 			Position:    1,
@@ -45,8 +36,8 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 			ID:          "123",
 			CreatedAt:   mock.Now,
 			Slug:        "slug",
-			ListID:      c.ListID,
-			BoardID:     c.BoardID,
+			ListID:      listID,
+			BoardID:     "789",
 			Name:        c.Name,
 			Description: c.Description,
 			Position:    c.Position,
@@ -93,7 +84,7 @@ func testCardHandler_CreateCard_ListNotFound(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.ListService.ListFn = func(id string) (*pulpe.List, error) {
+	c.CardService.CreateCardFn = func(listID string, c *pulpe.CardCreation) (*pulpe.Card, error) {
 		return nil, pulpe.ErrListNotFound
 	}
 
@@ -112,18 +103,8 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 		c := mock.NewClient()
 		h := pulpeHttp.NewHandler(c)
 
-		c.CardService.CreateCardFn = func(card *pulpe.CardCreation) (*pulpe.Card, error) {
+		c.CardService.CreateCardFn = func(listID string, card *pulpe.CardCreation) (*pulpe.Card, error) {
 			return nil, err
-		}
-
-		c.ListService.ListFn = func(id string) (*pulpe.List, error) {
-			require.Equal(t, "456", string(id))
-			return new(pulpe.List), nil
-		}
-
-		c.BoardService.BoardFn = func(id string) (*pulpe.Board, error) {
-			require.Equal(t, "789", string(id))
-			return new(pulpe.Board), nil
 		}
 
 		w := httptest.NewRecorder()

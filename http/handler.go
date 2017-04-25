@@ -47,7 +47,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rw := NewResponseWriter(w)
 
 	switch {
-	case strings.HasPrefix(r.URL.Path, "/v1/"):
+	case strings.HasPrefix(r.URL.Path, "/boards"):
+		fallthrough
+	case strings.HasPrefix(r.URL.Path, "/lists"):
+		fallthrough
+	case strings.HasPrefix(r.URL.Path, "/cards"):
 		h.router.ServeHTTP(rw, r)
 	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
 		h.staticHandler.ServeHTTP(rw, r)
