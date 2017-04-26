@@ -129,7 +129,7 @@ func TestUserService_User(t *testing.T) {
 	})
 }
 
-func TestUserService_Login(t *testing.T) {
+func TestUserSessionService_Login(t *testing.T) {
 	t.Run("WithEmailOK", func(t *testing.T) {
 		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
@@ -147,9 +147,9 @@ func TestUserService_Login(t *testing.T) {
 		require.NoError(t, err)
 
 		// Login user.
-		authUser, err := s.Login(u.Email, u.Password)
+		userSession, err := sessions.NoAuth.UserSessionService().Login(u.Email, u.Password)
 		require.NoError(t, err)
-		require.Equal(t, authUser, user)
+		require.Equal(t, userSession.UserID, user.ID)
 	})
 
 	t.Run("WithLoginOK", func(t *testing.T) {
@@ -169,16 +169,16 @@ func TestUserService_Login(t *testing.T) {
 		require.NoError(t, err)
 
 		// Login user.
-		authUser, err := s.Login(user.Login, u.Password)
+		userSession, err := sessions.NoAuth.UserSessionService().Login(user.Login, u.Password)
 		require.NoError(t, err)
-		require.Equal(t, authUser, user)
+		require.Equal(t, userSession.UserID, user.ID)
 	})
 
 	t.Run("WithBadEmail", func(t *testing.T) {
 		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
 
-		s := sessions.NoAuth.UserService()
+		s := sessions.NoAuth.UserSessionService()
 
 		_, err := s.Login("someone@email.com", "passwd")
 		require.Error(t, err)
@@ -189,7 +189,7 @@ func TestUserService_Login(t *testing.T) {
 		sessions, cleanup := MustGetSessions(t)
 		defer cleanup()
 
-		s := sessions.NoAuth.UserService()
+		s := sessions.NoAuth.UserSessionService()
 
 		_, err := s.Login("someone", "passwd")
 		require.Error(t, err)
@@ -211,7 +211,7 @@ func TestUserService_Login(t *testing.T) {
 		user, err := s.Register(&u)
 		require.NoError(t, err)
 
-		_, err = s.Login(user.Login, "passwd")
+		_, err = sessions.NoAuth.UserSessionService().Login(user.Login, "passwd")
 		require.Error(t, err)
 		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})

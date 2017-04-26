@@ -19,8 +19,8 @@ func registerUserHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.POST("/v1/signup", h.handleUserRegistration)
-	router.POST("/v1/login", h.handleUserLogin)
+	router.HandlerFunc("POST", "/register", h.handleUserRegistration)
+	router.HandlerFunc("POST", "/login", h.handleUserLogin)
 }
 
 // userHandler represents an HTTP API handler for users.
@@ -30,7 +30,7 @@ type userHandler struct {
 }
 
 // handleUserRegistration handles requests to create a new user.
-func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request) {
 	var payload UserRegistrationRequest
 
 	err := json.NewDecoder(r.Body).Decode(&payload)
@@ -75,7 +75,7 @@ func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 }
 
 // handleUserLogin handles requests to login a user.
-func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	var payload UserLoginRequest
 
 	err := json.NewDecoder(r.Body).Decode(&payload)
@@ -93,7 +93,7 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 	session := h.client.session(w, r)
 	defer session.Close()
 
-	user, err := session.UserService().Login(payload.EmailOrLogin, payload.Password)
+	us, err := session.UserSessionService().Login(payload.EmailOrLogin, payload.Password)
 	if err != nil {
 		switch err {
 		case pulpe.ErrUserAuthenticationFailed:
@@ -104,19 +104,13 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request, _ 
 		return
 	}
 
-	us, err := session.UserSessionService().CreateSession(user)
-	if err != nil {
-		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
-	}
-
 	http.SetCookie(w, &http.Cookie{
 		Name:    "pulpesid",
 		Value:   us.ID,
 		Expires: us.ExpiresAt,
 	})
 
-	encodeJSON(w, user, http.StatusCreated, h.logger)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // UserRegistrationRequest is used to create a user.

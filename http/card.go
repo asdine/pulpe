@@ -56,6 +56,10 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 	switch err {
 	case nil:
 		encodeJSON(w, card, http.StatusCreated, h.logger)
+	case pulpe.ErrListNotFound:
+		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}
@@ -69,17 +73,16 @@ func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 	defer session.Close()
 
 	card, err := session.CardService().Card(id)
-	if err != nil {
-		if err == pulpe.ErrCardNotFound {
-			http.NotFound(w, r)
-			return
-		}
-
+	switch err {
+	case nil:
+		encodeJSON(w, card, http.StatusOK, h.logger)
+	case pulpe.ErrCardNotFound:
+		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
+	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
 	}
-
-	encodeJSON(w, card, http.StatusOK, h.logger)
 }
 
 // handleDeleteCard handles requests to delete a single card.
@@ -90,17 +93,16 @@ func (h *cardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, p
 	defer session.Close()
 
 	err := session.CardService().DeleteCard(id)
-	if err != nil {
-		if err == pulpe.ErrCardNotFound {
-			http.NotFound(w, r)
-			return
-		}
-
+	switch err {
+	case nil:
+		w.WriteHeader(http.StatusNoContent)
+	case pulpe.ErrCardNotFound:
+		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
+	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
-		return
 	}
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 // handlePatchCard handles requests to update a card.
@@ -128,7 +130,9 @@ func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 	case nil:
 		encodeJSON(w, card, http.StatusOK, h.logger)
 	case pulpe.ErrCardNotFound:
-		http.NotFound(w, r)
+		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}

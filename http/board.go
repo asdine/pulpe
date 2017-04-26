@@ -20,8 +20,8 @@ func registerBoardHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.GET("/boards", h.handleGetBoards)
-	router.POST("/boards", h.handlePostBoard)
+	router.HandlerFunc("GET", "/boards", h.handleGetBoards)
+	router.HandlerFunc("POST", "/boards", h.handlePostBoard)
 	router.GET("/boards/:owner/:board", h.handleGetBoard)
 	router.DELETE("/boards/:id", h.handleDeleteBoard)
 	router.PATCH("/boards/:id", h.handlePatchBoard)
@@ -34,7 +34,7 @@ type boardHandler struct {
 }
 
 // handlePostBoard handles requests to create a new board.
-func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request) {
 	var req BoardCreateRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -64,7 +64,7 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request, _
 }
 
 // handlePostBoard handles requests to create a new board.
-func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	session := h.client.session(w, r)
 	defer session.Close()
 

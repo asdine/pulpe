@@ -5,24 +5,17 @@ import (
 	"log"
 	"net/http"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/blankrobot/pulpe"
-	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
-)
-
-// HTTP errors
-const (
-	ErrInvalidJSON = pulpe.Error("invalid_json")
 )
 
 // NewHandler instantiates a new Handler.
 func NewHandler(c pulpe.Client) *Handler {
 	router := httprouter.New()
-	client := client{c}
 
+	client := client{c}
 	registerCardHandler(router, &client)
 	registerListHandler(router, &client)
 	registerBoardHandler(router, &client)
@@ -46,22 +39,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	rw := NewResponseWriter(w)
 
-	switch {
-	case strings.HasPrefix(r.URL.Path, "/boards"):
-		fallthrough
-	case strings.HasPrefix(r.URL.Path, "/lists"):
-		fallthrough
-	case strings.HasPrefix(r.URL.Path, "/cards"):
-		h.router.ServeHTTP(rw, r)
-	case h.assetsPath != "" && strings.HasPrefix(r.URL.Path, "/assets/"):
-		h.staticHandler.ServeHTTP(rw, r)
-	default:
-		if h.assetsPath != "" {
-			http.ServeFile(rw, r, path.Join(h.assetsPath, "index.html"))
-		} else {
-			http.NotFound(rw, r)
-		}
-	}
+	h.router.ServeHTTP(rw, r)
 
 	log.Printf(
 		"%s %s %s %d %d %s",
@@ -74,11 +52,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// SetStatic sets the assets directory to be served.
+// EnableStatic sets the assets directory to be served.
 // By default, no assets are served.
-func (h *Handler) SetStatic(assetsPath string) {
+func (h *Handler) EnableStatic(assetsPath string) {
 	h.staticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
 	h.assetsPath = assetsPath
+
+	h.router.Handler("GET", "/assets/*asset", h.staticHandler)
+
+	catchAllIndex := path.Join(h.assetsPath, "index.html")
+	h.router.HandlerFunc("GET", "/", func(rw http.ResponseWriter, r *http.Request) {
+		http.ServeFile(rw, r, catchAllIndex)
+	})
 }
 
 // NewResponseWriter instantiates a ResponseWriter.
@@ -108,46 +93,6 @@ func (w *ResponseWriter) WriteHeader(status int) {
 func (w *ResponseWriter) Write(data []byte) (int, error) {
 	w.len = len(data)
 	return w.ResponseWriter.Write(data)
-}
-
-// Error writes an API error message to the response and logger.
-func Error(w http.ResponseWriter, err error, code int, logger *log.Logger) {
-	// Log error.
-	logger.Printf("http error: %s (code=%d)", err, code)
-
-	// Hide error from client if it is internal.
-	if code == http.StatusInternalServerError {
-		err = pulpe.ErrInternal
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	enc := json.NewEncoder(w)
-	switch {
-	case validation.IsError(err):
-		err = enc.Encode(&validationErrorResponse{
-			Err:    "validation error",
-			Fields: err,
-		})
-	default:
-		err = enc.Encode(&errorResponse{Err: err.Error()})
-	}
-
-	if err != nil {
-		logger.Println(err)
-	}
-}
-
-// errorResponse is a generic response for sending an error.
-type errorResponse struct {
-	Err string `json:"err,omitempty"`
-}
-
-// validationErrorResponse is used for validation errors.
-type validationErrorResponse struct {
-	Err    string `json:"err,omitempty"`
-	Fields error  `json:"fields"`
 }
 
 // encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.

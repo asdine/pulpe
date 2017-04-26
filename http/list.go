@@ -60,6 +60,10 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 	switch err {
 	case nil:
 		encodeJSON(w, list, http.StatusCreated, h.logger)
+	case pulpe.ErrBoardNotFound:
+		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
 		Error(w, err, http.StatusInternalServerError, h.logger)
 	}

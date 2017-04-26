@@ -3,11 +3,10 @@ package mongo
 import (
 	"time"
 
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-
 	"github.com/Machiel/slugify"
 	"github.com/blankrobot/pulpe"
+	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const cardCol = "cards"
@@ -95,7 +94,6 @@ func (s *CardService) CreateCard(listID string, cc *pulpe.CardCreation) (*pulpe.
 		return nil, pulpe.ErrListNotFound
 	}
 
-	// create mongo card and pulpe card
 	c := card{
 		ID:          bson.NewObjectId(),
 		OwnerID:     user.ID,

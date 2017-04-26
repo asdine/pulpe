@@ -13,8 +13,8 @@ type UserService struct {
 	UserFn      func(id string) (*pulpe.User, error)
 	UserInvoked bool
 
-	LoginFn      func(login, passwd string) (*pulpe.User, error)
-	LoginInvoked bool
+	MatchPasswordFn      func(login, passwd string) (string, error)
+	MatchPasswordInvoked bool
 }
 
 // Register runs RegisterFn and sets RegisterInvoked to true when invoked.
@@ -29,10 +29,10 @@ func (s *UserService) User(id string) (*pulpe.User, error) {
 	return s.UserFn(id)
 }
 
-// Login runs LoginFn and sets LoginInvoked to true when invoked.
-func (s *UserService) Login(login, passwd string) (*pulpe.User, error) {
-	s.LoginInvoked = true
-	return s.LoginFn(login, passwd)
+// MatchPassword runs MatchPasswordFn and sets MatchPasswordnInvoked to true when invoked.
+func (s *UserService) MatchPassword(login, passwd string) (string, error) {
+	s.MatchPasswordInvoked = true
+	return s.MatchPasswordFn(login, passwd)
 }
 
 // Ensure UserSessionService implements pulpe.UserSessionService.
@@ -45,6 +45,9 @@ type UserSessionService struct {
 
 	GetSessionFn      func(sid string) (*pulpe.UserSession, error)
 	GetSessionInvoked bool
+
+	LoginFn      func(login, passwd string) (*pulpe.UserSession, error)
+	LoginInvoked bool
 }
 
 // CreateSession runs CreateSessionFn and sets CreateSessionInvoked to true when invoked.
@@ -57,4 +60,10 @@ func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession
 func (s *UserSessionService) GetSession(sid string) (*pulpe.UserSession, error) {
 	s.GetSessionInvoked = true
 	return s.GetSessionFn(sid)
+}
+
+// Login runs LoginFn and sets LoginInvoked to true when invoked.
+func (s *UserSessionService) Login(login, passwd string) (*pulpe.UserSession, error) {
+	s.LoginInvoked = true
+	return s.LoginFn(login, passwd)
 }

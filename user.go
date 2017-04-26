@@ -31,7 +31,7 @@ type UserRegistration struct {
 type UserService interface {
 	Register(*UserRegistration) (*User, error)
 	User(id string) (*User, error)
-	Login(loginOrEmail, password string) (*User, error)
+	MatchPassword(loginOrEmail, password string) (string, error)
 }
 
 // UserSession is stored and represents a logged in user.
@@ -46,6 +46,7 @@ type UserSession struct {
 type UserSessionService interface {
 	CreateSession(*User) (*UserSession, error)
 	GetSession(id string) (*UserSession, error)
+	Login(loginOrEmail, password string) (*UserSession, error)
 }
 
 // Authenticator represents a service for authenticating users.

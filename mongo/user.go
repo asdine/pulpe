@@ -21,8 +21,8 @@ const (
 // Ensure UserService implements pulpe.UserService.
 var _ pulpe.UserService = new(UserService)
 
-// User representation stored in MongoDB.
-type User struct {
+// user representation stored in MongoDB.
+type user struct {
 	ID        bson.ObjectId `bson:"_id"`
 	UpdatedAt *time.Time    `bson:"updatedAt,omitempty"`
 	FullName  string        `bson:"fullName"`
@@ -31,23 +31,7 @@ type User struct {
 	Password  string        `bson:"password"`
 }
 
-// ToMongoUser creates a mongo user from a pulpe user.
-func ToMongoUser(p *pulpe.User) *User {
-	id := bson.NewObjectId()
-	p.ID = id.Hex()
-	p.CreatedAt = id.Time().UTC()
-
-	return &User{
-		ID:        id,
-		UpdatedAt: p.UpdatedAt,
-		FullName:  p.FullName,
-		Login:     p.Login,
-		Email:     p.Email,
-	}
-}
-
-// FromMongoUser creates a pulpe user from a mongo user.
-func FromMongoUser(u *User) *pulpe.User {
+func (u *user) toPulpeUser() *pulpe.User {
 	p := pulpe.User{
 		ID:        u.ID.Hex(),
 		CreatedAt: u.ID.Time().UTC(),
@@ -114,13 +98,12 @@ func (s *UserService) Register(uc *pulpe.UserRegistration) (*pulpe.User, error) 
 	var err error
 	col := s.session.db.C(userCol)
 
-	user := pulpe.User{
+	u := user{
+		ID:       bson.NewObjectId(),
 		FullName: uc.FullName,
 		Login:    strings.Replace(slugify.Slugify(uc.FullName), "-", "", -1),
 		Email:    uc.Email,
 	}
-
-	u := ToMongoUser(&user)
 
 	passwd, err := bcrypt.GenerateFromPassword([]byte(uc.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -129,7 +112,7 @@ func (s *UserService) Register(uc *pulpe.UserRegistration) (*pulpe.User, error) 
 
 	u.Password = string(passwd)
 
-	user.Login, err = resolveSlugAndDo(col, "", "login", u.Login, "", func(login string) error {
+	u.Login, err = resolveSlugAndDo(col, "", "login", u.Login, "", func(login string) error {
 		u.Login = login
 		return col.Insert(u)
 	})
@@ -138,14 +121,24 @@ func (s *UserService) Register(uc *pulpe.UserRegistration) (*pulpe.User, error) 
 		return nil, pulpe.ErrUserEmailConflict
 	}
 
-	return &user, err
+	return u.toPulpeUser(), nil
 }
 
-// User returns a User by login or ID.
-func (s *UserService) User(selector string) (*pulpe.User, error) {
-	var u User
+// User returns a User by ID.
+func (s *UserService) User(id string) (*pulpe.User, error) {
+	if !bson.IsObjectIdHex(id) {
+		return nil, pulpe.ErrUserNotFound
+	}
 
-	err := s.session.db.C(userCol).Find(getSelector("login", selector)).One(&u)
+	return s.userBy(bson.M{
+		"_id": bson.ObjectIdHex(id),
+	})
+}
+
+func (s *UserService) userBy(query bson.M) (*pulpe.User, error) {
+	var u user
+
+	err := s.session.db.C(userCol).Find(query).One(&u)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrUserNotFound
@@ -154,12 +147,12 @@ func (s *UserService) User(selector string) (*pulpe.User, error) {
 		return nil, err
 	}
 
-	return FromMongoUser(&u), nil
+	return u.toPulpeUser(), nil
 }
 
-// Login user with login or email and password.
-func (s *UserService) Login(loginOrEmail, passwd string) (*pulpe.User, error) {
-	var u User
+// MatchPassword checks is the login or email and password are correct.
+func (s *UserService) MatchPassword(loginOrEmail, passwd string) (string, error) {
+	var u user
 	var field string
 
 	if govalidator.IsEmail(loginOrEmail) {
@@ -168,21 +161,23 @@ func (s *UserService) Login(loginOrEmail, passwd string) (*pulpe.User, error) {
 		field = "login"
 	}
 
-	err := s.session.db.C(userCol).Find(bson.M{field: loginOrEmail}).One(&u)
+	query := s.session.db.C(userCol).Find(bson.M{field: loginOrEmail})
+	query = query.Select(bson.M{"_id": 1, "password": 1})
+	err := query.One(&u)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil, pulpe.ErrUserAuthenticationFailed
+			return "", pulpe.ErrUserAuthenticationFailed
 		}
 
-		return nil, err
+		return "", err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(passwd))
 	if err != nil {
-		return nil, pulpe.ErrUserAuthenticationFailed
+		return "", pulpe.ErrUserAuthenticationFailed
 	}
 
-	return FromMongoUser(&u), nil
+	return u.ID.Hex(), nil
 }
 
 // UserSession is stored and represents a logged in user.
@@ -251,6 +246,16 @@ func (s *UserSessionService) GetSession(id string) (*pulpe.UserSession, error) {
 		UpdatedAt: us.UpdatedAt.UTC(),
 		ExpiresAt: us.UpdatedAt.Add(userSessionTTL).UTC(),
 	}, nil
+}
+
+// Login user with login or email and password.
+func (s *UserSessionService) Login(loginOrEmail, password string) (*pulpe.UserSession, error) {
+	id, err := s.session.UserService().MatchPassword(loginOrEmail, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.CreateSession(&pulpe.User{ID: id})
 }
 
 // Ensure Authenticator implements pulpe.Authenticator.

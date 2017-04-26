@@ -19,6 +19,7 @@ func TestCardHandler_CreateCard(t *testing.T) {
 	t.Run("ErrValidation", testCardHandler_CreateCard_ErrValidation)
 	t.Run("NotFound", testCardHandler_CreateCard_ListNotFound)
 	t.Run("ErrInternal", testCardHandler_CreateCard_WithResponse(t, http.StatusInternalServerError, errors.New("unexpected error")))
+	t.Run("ErrAuthFailed", testCardHandler_CreateCard_WithResponse(t, http.StatusUnauthorized, pulpe.ErrUserAuthenticationFailed))
 }
 
 func testCardHandler_CreateCard_OK(t *testing.T) {
@@ -38,6 +39,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 			Slug:        "slug",
 			ListID:      listID,
 			BoardID:     "789",
+			OwnerID:     "678",
 			Name:        c.Name,
 			Description: c.Description,
 			Position:    c.Position,
@@ -47,7 +49,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists/456/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
     "name": "name",
     "description": "description",
 		"position": 1
@@ -62,6 +64,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
     "boardID": "789",
     "name": "name",
 		"slug": "slug",
+		"ownerID": "678",
     "description": "description",
 		"position": 1,
 		"createdAt": `+string(date)+`
@@ -72,7 +75,7 @@ func testCardHandler_CreateCard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists/456/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -89,13 +92,12 @@ func testCardHandler_CreateCard_ListNotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists/abcd/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/lists/abcd/cards", bytes.NewReader([]byte(`{
 		"name": "Name",
 		"position": 10
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
-	require.False(t, c.CardService.CreateCardInvoked)
 }
 
 func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
@@ -108,7 +110,7 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/lists/456/cards", bytes.NewReader([]byte(`{
+		r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
 			"listID": "456",
 			"name": "name",
 			"description": "description",
@@ -124,7 +126,7 @@ func testCardHandler_CreateCard_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/lists/456/cards", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -133,6 +135,7 @@ func TestCardHandler_Card(t *testing.T) {
 	t.Run("OK", testCardHandler_Card_OK)
 	t.Run("Not found", testCardHandler_Card_NotFound)
 	t.Run("Internal error", testCardHandler_Card_InternalError)
+	t.Run("Auth failed", testCardHandler_Card_AuthenticationFailed)
 }
 
 func testCardHandler_Card_OK(t *testing.T) {
@@ -142,12 +145,23 @@ func testCardHandler_Card_OK(t *testing.T) {
 	// Mock service.
 	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
 		require.Equal(t, "XXX", string(id))
-		return &pulpe.Card{ID: id, Name: "name", Description: "description", Position: 2 << 3, ListID: "YYY", BoardID: "ZZZ", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Slug: "slug"}, nil
+		return &pulpe.Card{
+			ID:          id,
+			Name:        "name",
+			Description: "description",
+			Position:    2 << 3,
+			ListID:      "YYY",
+			BoardID:     "ZZZ",
+			OwnerID:     "PPP",
+			CreatedAt:   mock.Now,
+			UpdatedAt:   &mock.Now,
+			Slug:        "slug",
+		}, nil
 	}
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -158,6 +172,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 		"boardID": "ZZZ",
     "name": "name",
 		"slug": "slug",
+		"ownerID": "PPP",
     "description": "description",
 		"position": 16,
     "createdAt": `+string(date)+`,
@@ -176,7 +191,7 @@ func testCardHandler_Card_NotFound(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -192,15 +207,32 @@ func testCardHandler_Card_InternalError(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func testCardHandler_Card_AuthenticationFailed(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
+		return nil, pulpe.ErrUserAuthenticationFailed
+	}
+
+	// Retrieve Card.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestCardHandler_DeleteCard(t *testing.T) {
 	t.Run("OK", testCardHandler_DeleteCard_OK)
 	t.Run("Not found", testCardHandler_DeleteCard_NotFound)
 	t.Run("Internal error", testCardHandler_DeleteCard_InternalError)
+	t.Run("Auth failed", testCardHandler_DeleteCard_AuthenticationFailed)
 }
 
 func testCardHandler_DeleteCard_OK(t *testing.T) {
@@ -213,9 +245,9 @@ func testCardHandler_DeleteCard_OK(t *testing.T) {
 		return nil
 	}
 
-	// Retrieve Card.
+	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
 }
@@ -229,9 +261,9 @@ func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 		return pulpe.ErrCardNotFound
 	}
 
-	// Retrieve Card.
+	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -245,11 +277,27 @@ func testCardHandler_DeleteCard_InternalError(t *testing.T) {
 		return errors.New("unexpected error")
 	}
 
-	// Retrieve Card.
+	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/v1/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func testCardHandler_DeleteCard_AuthenticationFailed(t *testing.T) {
+	c := mock.NewClient()
+	h := pulpeHttp.NewHandler(c)
+
+	// Mock service.
+	c.CardService.DeleteCardFn = func(id string) error {
+		return pulpe.ErrUserAuthenticationFailed
+	}
+
+	// Delete Card.
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestCardHandler_UpdateCard(t *testing.T) {
@@ -278,13 +326,14 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 			Name:        *u.Name,
 			Description: *u.Description,
 			Position:    *u.Position,
+			OwnerID:     "PPP",
 			CreatedAt:   mock.Now,
 			UpdatedAt:   &mock.Now,
 		}, nil
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": "",
     "position": 0
@@ -301,6 +350,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 		"position": 0,
     "listID": "",
     "boardID": "",
+		"ownerID": "PPP",
 		"createdAt": `+string(date)+`,
 		"updatedAt": `+string(date)+`
   }`, w.Body.String())
@@ -310,7 +360,7 @@ func testCardHandler_UpdateCard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -322,7 +372,7 @@ func testCardHandler_UpdateCard_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
 		"name": ""
 	}`)))
 	h.ServeHTTP(w, r)
@@ -338,7 +388,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": ""
   }`)))
@@ -355,7 +405,7 @@ func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/v1/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": ""
   }`)))

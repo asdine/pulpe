@@ -60,7 +60,7 @@ func testUserHandler_Registration_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/signup", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/register", bytes.NewReader([]byte(`{
     "fullName": "Jon Snow",
     "email": "jon.snow@wall.com",
 		"password": "password"
@@ -83,7 +83,7 @@ func testUserHandler_Registration_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/signup", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/register", bytes.NewReader([]byte(`{
     "fullName": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -100,7 +100,7 @@ func testUserHandler_Registration_EmailConflict(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/signup", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/register", bytes.NewReader([]byte(`{
 		"fullName": "Jon Snow",
     "email": "jon.snow@wall.com",
 		"password": "password"
@@ -119,7 +119,7 @@ func testUserHandler_Registration_WithResponse(t *testing.T, status int, err err
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/signup", bytes.NewReader([]byte(`{
+		r, _ := http.NewRequest("POST", "/register", bytes.NewReader([]byte(`{
 			"fullName": "Jon Snow",
     "email": "jon.snow@wall.com",
 		"password": "password"
@@ -134,7 +134,7 @@ func testUserHandler_Registration_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/signup", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/register", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -150,27 +150,9 @@ func TestUserHandler_Login(t *testing.T) {
 func testUserHandler_Login_OK(t *testing.T) {
 	c := mock.NewClient()
 
-	c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+	c.UserSessionService.LoginFn = func(loginOrEmail, password string) (*pulpe.UserSession, error) {
 		require.Equal(t, "jonsnow", loginOrEmail)
 		require.Equal(t, "password", password)
-
-		return &pulpe.User{
-			ID:        "123",
-			CreatedAt: mock.Now,
-			Login:     "login",
-			FullName:  "Jon Snow",
-			Email:     "jon.snow@wall.com",
-		}, nil
-	}
-
-	c.UserSessionService.CreateSessionFn = func(u *pulpe.User) (*pulpe.UserSession, error) {
-		require.Equal(t, &pulpe.User{
-			ID:        "123",
-			CreatedAt: mock.Now,
-			Login:     "login",
-			FullName:  "Jon Snow",
-			Email:     "jon.snow@wall.com",
-		}, u)
 
 		return &pulpe.UserSession{
 			ID:        "456",
@@ -182,28 +164,20 @@ func testUserHandler_Login_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/login", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{
     "login": "jonsnow",
 		"password": "password"
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
 	require.Equal(t, "pulpesid=456; Expires=Sat, 01 Jan 2000 00:10:00 GMT", w.HeaderMap.Get("Set-Cookie"))
-	date, _ := mock.Now.MarshalJSON()
-	require.JSONEq(t, `{
-		"id": "123",
-		"fullName": "Jon Snow",
-		"login": "login",
-		"email": "jon.snow@wall.com",
-		"createdAt": `+string(date)+`
-	}`, w.Body.String())
 }
 
 func testUserHandler_Login_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/login", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{
     "fullName": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -215,12 +189,12 @@ func testUserHandler_Login_UserAuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
 	h := pulpeHttp.NewHandler(c)
 
-	c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+	c.UserSessionService.LoginFn = func(loginOrEmail, password string) (*pulpe.UserSession, error) {
 		return nil, pulpe.ErrUserAuthenticationFailed
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/login", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{
     "login": "jon.snow@wall.com",
 		"password": "password"
   }`)))
@@ -233,12 +207,12 @@ func testUserHandler_Login_WithResponse(t *testing.T, status int, err error) fun
 		c := mock.NewClient()
 		h := pulpeHttp.NewHandler(c)
 
-		c.UserService.LoginFn = func(loginOrEmail, password string) (*pulpe.User, error) {
+		c.UserSessionService.LoginFn = func(loginOrEmail, password string) (*pulpe.UserSession, error) {
 			return nil, err
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/v1/login", bytes.NewReader([]byte(`{
+		r, _ := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{
     "login": "jon.snow@wall.com",
 		"password": "password"
 		}`)))
@@ -252,7 +226,7 @@ func testUserHandler_Login_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/v1/login", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/login", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }

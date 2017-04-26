@@ -78,7 +78,9 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 	defer client.Close()
 
 	handler := http.NewHandler(client)
-	handler.SetStatic(c.assetsPath)
+	if c.assetsPath != "" {
+		handler.EnableStatic(c.assetsPath)
+	}
 
 	srv := http.NewServer(c.addr, handler)
 	err = srv.Open()
