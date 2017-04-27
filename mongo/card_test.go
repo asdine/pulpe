@@ -27,7 +27,7 @@ func TestCardService_CreateCard(t *testing.T) {
 		// Create new card.
 		_, err := s.CreateCard(newListID(), &l)
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("New", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestCardService_Card(t *testing.T) {
 		// Get a card
 		_, err := s.Card("someid")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestCardService_DeleteCard(t *testing.T) {
 		// Trying to delete a card.
 		err := s.DeleteCard("something")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -265,7 +265,7 @@ func TestCardService_UpdateCard(t *testing.T) {
 		// Update a card.
 		_, err := s.UpdateCard("someid", new(pulpe.CardUpdate))
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {

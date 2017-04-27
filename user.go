@@ -51,5 +51,5 @@ type UserSessionService interface {
 
 // Authenticator represents a service for authenticating users.
 type Authenticator interface {
-	Authenticate(token string) (*User, error)
+	Authenticate(session Session, token string) (*User, error)
 }

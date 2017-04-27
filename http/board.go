@@ -20,11 +20,11 @@ func registerBoardHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.HandlerFunc("GET", "/boards", h.handleGetBoards)
-	router.HandlerFunc("POST", "/boards", h.handlePostBoard)
-	router.GET("/boards/:owner/:board", h.handleGetBoard)
-	router.DELETE("/boards/:id", h.handleDeleteBoard)
-	router.PATCH("/boards/:id", h.handlePatchBoard)
+	router.HandlerFunc("GET", "/api/boards", h.handleGetBoards)
+	router.HandlerFunc("POST", "/api/boards", h.handlePostBoard)
+	router.GET("/api/boards/:owner/:board", h.handleGetBoard)
+	router.DELETE("/api/boards/:id", h.handleDeleteBoard)
+	router.PATCH("/api/boards/:id", h.handlePatchBoard)
 }
 
 // boardHandler represents an HTTP API handler for boards.

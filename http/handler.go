@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/blankrobot/pulpe"
@@ -30,6 +31,7 @@ func NewHandler(c pulpe.Client) *Handler {
 type Handler struct {
 	staticHandler http.Handler
 	assetsPath    string
+	indexPath     string
 	router        *httprouter.Router
 }
 
@@ -38,8 +40,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	rw := NewResponseWriter(w)
-
-	h.router.ServeHTTP(rw, r)
+	switch {
+	case strings.HasPrefix(r.URL.Path, "/api"):
+		h.router.ServeHTTP(rw, r)
+	case h.staticHandler != nil && strings.HasPrefix(r.URL.Path, "/assets/"):
+		// save the actual path because the static handler strips the "assets" prefix.
+		actualPath := r.URL.Path
+		h.staticHandler.ServeHTTP(rw, r)
+		r.URL.Path = actualPath
+	default:
+		if h.assetsPath != "" {
+			http.ServeFile(rw, r, h.indexPath)
+		} else {
+			http.NotFound(rw, r)
+		}
+	}
 
 	log.Printf(
 		"%s %s %s %d %d %s",
@@ -57,13 +72,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) EnableStatic(assetsPath string) {
 	h.staticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
 	h.assetsPath = assetsPath
-
-	h.router.Handler("GET", "/assets/*asset", h.staticHandler)
-
-	catchAllIndex := path.Join(h.assetsPath, "index.html")
-	h.router.HandlerFunc("GET", "/", func(rw http.ResponseWriter, r *http.Request) {
-		http.ServeFile(rw, r, catchAllIndex)
-	})
+	h.indexPath = path.Join(h.assetsPath, "index.html")
 }
 
 // NewResponseWriter instantiates a ResponseWriter.

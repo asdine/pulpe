@@ -1,17 +1,20 @@
 package mongo_test
 
 import (
+	"fmt"
+	"time"
+
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/blankrobot/pulpe"
-	"github.com/blankrobot/pulpe/mock"
 	"github.com/blankrobot/pulpe/mongo"
+	"github.com/stretchr/testify/require"
 )
+
+const userPassword = "passw0rd"
 
 type Session struct {
 	*mongo.Session
-}
-
-func (s *Session) GetAuthenticator() *mock.Authenticator {
-	return s.Session.Authenticator.(*mock.Authenticator)
 }
 
 type Sessions struct {
@@ -28,50 +31,52 @@ func (s *Sessions) Close() {
 	s.Green.Close()
 }
 
-func MustGetSessions(t tester) (*Sessions, func()) {
-	s := Sessions{
-		NoAuth: &Session{client.Connect()},
-		Red:    getSessionAs("Red"),
-		Blue:   getSessionAs("Blue"),
-		Green:  getSessionAs("Green"),
+var sessions *Sessions
+
+func MustGetSessions(t require.TestingT) (*Sessions, func()) {
+	if sessions == nil {
+		sessions = &Sessions{
+			NoAuth: &Session{Session: client.Connect()},
+			Red:    getSessionAs(t, "Red"),
+			Blue:   getSessionAs(t, "Blue"),
+			Green:  getSessionAs(t, "Green"),
+		}
 	}
 
-	return &s, func() {
-		// close session
-		s.Close()
-
-		_, err := client.Session.DB("").C("users").RemoveAll(nil)
-		if err != nil {
-			t.Error(err)
-		}
+	return sessions, func() {
+		_, err := client.Session.DB("").C("users").RemoveAll(bson.M{
+			"fullName": bson.M{
+				"$nin": []string{"Red", "Blue", "Green"},
+			},
+		})
+		require.NoError(t, err)
 
 		_, err = client.Session.DB("").C("boards").RemoveAll(nil)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 
 		_, err = client.Session.DB("").C("lists").RemoveAll(nil)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 
 		_, err = client.Session.DB("").C("cards").RemoveAll(nil)
-		if err != nil {
-			t.Error(err)
-		}
-
-		_, err = client.Session.DB("").C("userSessions").RemoveAll(nil)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 	}
 }
 
-func getSessionAs(userID string) *Session {
+func getSessionAs(t require.TestingT, name string) *Session {
 	session := client.Connect()
-	session.Authenticator.(*mock.Authenticator).AuthenticateFn = func(_ string) (*pulpe.User, error) {
-		return &pulpe.User{ID: userID}, nil
-	}
+	user := createUser(t, session, name)
+	us, err := session.UserSessionService().CreateSession(user)
+	require.NoError(t, err)
+	session.SetAuthToken(us.ID)
+	return &Session{Session: session}
+}
 
-	return &Session{session}
+func createUser(t require.TestingT, s *mongo.Session, name string) *pulpe.User {
+	user, err := s.UserService().Register(&pulpe.UserRegistration{
+		FullName: name,
+		Email:    fmt.Sprintf("%s-%d@provider.com", name, time.Now().UTC().UnixNano()),
+		Password: userPassword,
+	})
+	require.NoError(t, err)
+	return user
 }

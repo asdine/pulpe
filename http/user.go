@@ -19,8 +19,8 @@ func registerUserHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.HandlerFunc("POST", "/register", h.handleUserRegistration)
-	router.HandlerFunc("POST", "/login", h.handleUserLogin)
+	router.HandlerFunc("POST", "/api/register", h.handleUserRegistration)
+	router.HandlerFunc("POST", "/api/login", h.handleUserLogin)
 }
 
 // userHandler represents an HTTP API handler for users.

@@ -98,16 +98,16 @@ func (s *Session) Close() error {
 
 // Authenticator represents a mock Authenticator.
 type Authenticator struct {
-	AuthenticateFn      func(string) (*pulpe.User, error)
+	AuthenticateFn      func(pulpe.Session, string) (*pulpe.User, error)
 	AuthenticateInvoked bool
 }
 
 // Authenticate runs AuthenticateFn and sets AuthenticateInvoked to true when invoked.
-func (a *Authenticator) Authenticate(token string) (*pulpe.User, error) {
+func (a *Authenticator) Authenticate(session pulpe.Session, token string) (*pulpe.User, error) {
 	a.AuthenticateInvoked = true
 	if a.AuthenticateFn == nil {
 		return nil, pulpe.ErrUserAuthenticationFailed
 	}
 
-	return a.AuthenticateFn(token)
+	return a.AuthenticateFn(session, token)
 }

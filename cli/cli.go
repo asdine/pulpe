@@ -77,6 +77,8 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 	defer client.Close()
 
+	client.Authenticator = new(mongo.Authenticator)
+
 	handler := http.NewHandler(client)
 	if c.assetsPath != "" {
 		handler.EnableStatic(c.assetsPath)

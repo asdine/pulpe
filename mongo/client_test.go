@@ -20,6 +20,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer sessions.Close()
 	defer client.Close()
 
 	code := m.Run()
@@ -37,7 +38,7 @@ func NewClient(uri string) *Client {
 	c := Client{
 		Client: mongo.NewClient(fmt.Sprintf("%s/pulpe-tests", uri)),
 	}
-	c.Now = func() time.Time { return mock.Now }
+	c.Client.Now = Now
 	c.Client.Authenticator = new(mock.Authenticator)
 
 	return &c
@@ -60,7 +61,7 @@ func OpenClient() (*Client, error) {
 
 // Connect creates a new session.
 func (c *Client) Connect() *mongo.Session {
-	c.Client.Authenticator = new(mock.Authenticator)
+	c.Client.Authenticator = new(mongo.Authenticator)
 	return c.Client.Connect().(*mongo.Session)
 }
 
@@ -74,6 +75,7 @@ func (c *Client) Close() error {
 	return c.Client.Close()
 }
 
-type tester interface {
-	Error(...interface{})
+func Now() time.Time {
+	n := time.Now().UTC()
+	return time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Second(), 0, time.UTC)
 }

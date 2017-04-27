@@ -180,8 +180,8 @@ func (s *UserService) MatchPassword(loginOrEmail, passwd string) (string, error)
 	return u.ID.Hex(), nil
 }
 
-// UserSession is stored and represents a logged in user.
-type UserSession struct {
+// userSession is stored and represents a logged in user.
+type userSession struct {
 	ID        string    `bson:"_id"`
 	UpdatedAt time.Time `bson:"updatedAt"`
 	UserID    string    `bson:"userID"`
@@ -195,6 +195,19 @@ type UserSessionService struct {
 // Ensure UserSessionService implements pulpe.UserSessionService.
 var _ pulpe.UserSessionService = new(UserSessionService)
 
+func (s *UserSessionService) ensureIndexes() error {
+	col := s.session.db.C(userSessionCol)
+
+	// Sessions expiration
+	index := mgo.Index{
+		Key:         []string{"updatedAt"},
+		Sparse:      true,
+		ExpireAfter: userSessionTTL,
+	}
+
+	return col.EnsureIndex(index)
+}
+
 // CreateSession store a user session in the database.
 func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession, error) {
 	sid, err := generateRandomString(32)
@@ -202,7 +215,7 @@ func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession
 		return nil, err
 	}
 
-	session := UserSession{
+	session := userSession{
 		ID:        sid,
 		UserID:    user.ID,
 		UpdatedAt: s.session.now,
@@ -223,7 +236,7 @@ func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession
 
 // GetSession gets a session and resets the session expiration date.
 func (s *UserSessionService) GetSession(id string) (*pulpe.UserSession, error) {
-	var us UserSession
+	var us userSession
 
 	change := mgo.Change{
 		Update: bson.M{"$set": bson.M{
@@ -261,17 +274,15 @@ func (s *UserSessionService) Login(loginOrEmail, password string) (*pulpe.UserSe
 // Ensure Authenticator implements pulpe.Authenticator.
 var _ pulpe.Authenticator = new(Authenticator)
 
-// Authenticator represents a service for authenticating users.
-type Authenticator struct {
-	session *Session
-}
+// Authenticator is a service for user authentication.
+type Authenticator struct{}
 
 // Authenticate returns the current authenticate user.
-func (a *Authenticator) Authenticate(token string) (*pulpe.User, error) {
-	us, err := a.session.userSessionService.GetSession(token)
+func (a Authenticator) Authenticate(session pulpe.Session, token string) (*pulpe.User, error) {
+	us, err := session.UserSessionService().GetSession(token)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.session.userService.User(us.ID)
+	return session.UserService().User(us.UserID)
 }

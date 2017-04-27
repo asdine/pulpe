@@ -19,9 +19,9 @@ func registerListHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.POST("/boards/:boardID/lists", h.handlePostList)
-	router.DELETE("/lists/:id", h.handleDeleteList)
-	router.PATCH("/lists/:id", h.handlePatchList)
+	router.POST("/api/boards/:boardID/lists", h.handlePostList)
+	router.DELETE("/api/lists/:id", h.handleDeleteList)
+	router.PATCH("/api/lists/:id", h.handlePatchList)
 }
 
 // listHandler represents an HTTP API handler for lists.

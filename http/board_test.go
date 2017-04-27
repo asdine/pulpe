@@ -32,7 +32,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -60,7 +60,7 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.BoardService.BoardsInvoked)
@@ -75,7 +75,7 @@ func testBoardHandler_Boards_AuthenticationFailed(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.True(t, c.BoardService.BoardsInvoked)
@@ -105,7 +105,7 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{
     "name": "name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -119,7 +119,7 @@ func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -131,7 +131,7 @@ func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"]}}`, w.Body.String())
@@ -148,7 +148,7 @@ func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err err
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/boards", bytes.NewReader([]byte(`{"name": "name"}`)))
+		r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{"name": "name"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 		require.True(t, c.BoardService.CreateBoardInvoked)
@@ -179,7 +179,7 @@ func testBoardHandler_Board_OK(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards/user/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/boards/user/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -198,7 +198,7 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards/user/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/boards/user/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.True(t, c.BoardService.BoardByOwnerAndSlugInvoked)
@@ -215,7 +215,7 @@ func testBoardHandler_Board_InternalError(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards/user/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/boards/user/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.BoardService.BoardByOwnerAndSlugInvoked)
@@ -232,7 +232,7 @@ func testBoardHandler_Board_AuthenticationFailed(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/boards/user/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/boards/user/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.True(t, c.BoardService.BoardByOwnerAndSlugInvoked)
@@ -258,7 +258,7 @@ func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/boards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
 	require.True(t, c.BoardService.DeleteBoardInvoked)
@@ -273,7 +273,7 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/boards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.True(t, c.BoardService.DeleteBoardInvoked)
@@ -289,7 +289,7 @@ func testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/boards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/boards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.BoardService.DeleteBoardInvoked)
@@ -317,7 +317,7 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/boards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -331,7 +331,7 @@ func testBoardHandler_UpdateBoard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/boards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -348,7 +348,7 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/boards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -365,7 +365,7 @@ func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/boards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
     "name": "       "
   }`)))
 	h.ServeHTTP(w, r)
@@ -382,7 +382,7 @@ func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/boards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)

@@ -49,7 +49,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{
     "name": "name",
     "description": "description",
 		"position": 1
@@ -75,7 +75,7 @@ func testCardHandler_CreateCard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -92,7 +92,7 @@ func testCardHandler_CreateCard_ListNotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/lists/abcd/cards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/lists/abcd/cards", bytes.NewReader([]byte(`{
 		"name": "Name",
 		"position": 10
   }`)))
@@ -110,7 +110,7 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{
+		r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{
 			"listID": "456",
 			"name": "name",
 			"description": "description",
@@ -126,7 +126,7 @@ func testCardHandler_CreateCard_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(c)
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/lists/456/cards", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -161,7 +161,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -191,7 +191,7 @@ func testCardHandler_Card_NotFound(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -207,7 +207,7 @@ func testCardHandler_Card_InternalError(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 }
@@ -223,7 +223,7 @@ func testCardHandler_Card_AuthenticationFailed(t *testing.T) {
 
 	// Retrieve Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/cards/XXX", nil)
+	r, _ := http.NewRequest("GET", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -247,7 +247,7 @@ func testCardHandler_DeleteCard_OK(t *testing.T) {
 
 	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
 }
@@ -263,7 +263,7 @@ func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 
 	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -279,7 +279,7 @@ func testCardHandler_DeleteCard_InternalError(t *testing.T) {
 
 	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 }
@@ -295,7 +295,7 @@ func testCardHandler_DeleteCard_AuthenticationFailed(t *testing.T) {
 
 	// Delete Card.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/cards/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/cards/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -333,7 +333,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": "",
     "position": 0
@@ -360,7 +360,7 @@ func testCardHandler_UpdateCard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -372,7 +372,7 @@ func testCardHandler_UpdateCard_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
 		"name": ""
 	}`)))
 	h.ServeHTTP(w, r)
@@ -388,7 +388,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": ""
   }`)))
@@ -405,7 +405,7 @@ func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/cards/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": ""
   }`)))

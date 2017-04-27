@@ -38,7 +38,7 @@ func TestBoardService_CreateBoard(t *testing.T) {
 		// Create new board.
 		_, err := s.CreateBoard(&b)
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("New", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestBoardService_Board(t *testing.T) {
 		// Get a board.
 		_, err := s.Board("someid")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("Exists", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestBoardService_Boards(t *testing.T) {
 
 		_, err := s.Boards()
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("Exists", func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestBoardService_DeleteBoard(t *testing.T) {
 		// Trying to delete a board.
 		err := s.DeleteBoard("something")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("Exists", func(t *testing.T) {
@@ -277,7 +277,7 @@ func TestBoardService_UpdateBoard(t *testing.T) {
 		// Trying to delete a board.
 		err := s.DeleteBoard("something")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {

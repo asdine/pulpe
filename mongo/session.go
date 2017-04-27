@@ -43,7 +43,7 @@ type Session struct {
 	userService        UserService
 	userSessionService UserSessionService
 
-	Authenticator pulpe.Authenticator
+	authenticator pulpe.Authenticator
 	authToken     string
 	user          *pulpe.User
 }
@@ -79,7 +79,11 @@ func (s *Session) Authenticate() (*pulpe.User, error) {
 		return s.user, nil
 	}
 
-	u, err := s.Authenticator.Authenticate(s.authToken)
+	if s.authToken == "" {
+		return nil, pulpe.ErrUserAuthenticationFailed
+	}
+
+	u, err := s.authenticator.Authenticate(s, s.authToken)
 	if err != nil {
 		return nil, err
 	}

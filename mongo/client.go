@@ -62,7 +62,12 @@ func (c *Client) EnsureIndexes() error {
 		return err
 	}
 
-	return session.UserService().(*UserService).ensureIndexes()
+	err = session.UserService().(*UserService).ensureIndexes()
+	if err != nil {
+		return err
+	}
+
+	return session.UserSessionService().(*UserSessionService).ensureIndexes()
 }
 
 // Close closes then underlying MongoDB database.
@@ -76,6 +81,6 @@ func (c *Client) Close() error {
 func (c *Client) Connect() pulpe.Session {
 	s := newSession(c.Session.Copy())
 	s.now = c.Now().UTC()
-	s.Authenticator = c.Authenticator
+	s.authenticator = c.Authenticator
 	return s
 }

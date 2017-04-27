@@ -40,7 +40,7 @@ func TestListService_CreateList(t *testing.T) {
 		// Create new list.
 		_, err := s.CreateList(newBoardID(), &l)
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("New", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestListService_List(t *testing.T) {
 		// Get a list
 		_, err := s.List("someid")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestListService_DeleteList(t *testing.T) {
 		// Trying to delete a list.
 		err := s.DeleteList("something")
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -262,7 +262,7 @@ func TestListService_UpdateList(t *testing.T) {
 		// Update a list.
 		_, err := s.UpdateList("someid", new(pulpe.ListUpdate))
 		require.Error(t, err)
-		require.True(t, sessions.NoAuth.GetAuthenticator().AuthenticateInvoked)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {

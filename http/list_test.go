@@ -42,7 +42,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards/XXX/lists", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/boards/XXX/lists", bytes.NewReader([]byte(`{
 		"name": "Name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -64,7 +64,7 @@ func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards/the-board/lists", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -76,7 +76,7 @@ func testListHandler_CreateList_ErrValidation(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards/the-board/lists", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"]}}`, w.Body.String())
@@ -91,7 +91,7 @@ func testListHandler_CreateList_BoardNotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/boards/the-board/lists", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{
 		"name": "Name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -110,7 +110,7 @@ func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/boards/the-board/lists", bytes.NewReader([]byte(`{"name": "name"}`)))
+		r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{"name": "name"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 	}
@@ -133,7 +133,7 @@ func testListHandler_DeleteList_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/lists/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNoContent, w.Code)
 	require.True(t, c.ListService.DeleteListInvoked)
@@ -150,7 +150,7 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 
 	// Retrieve List.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/lists/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 	require.True(t, c.ListService.DeleteListInvoked)
@@ -167,7 +167,7 @@ func testListHandler_DeleteList_InternalErrorOnDeleteList(t *testing.T) {
 
 	// Retrieve List.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/lists/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.ListService.DeleteListInvoked)
@@ -184,7 +184,7 @@ func testListHandler_DeleteList_AuthErrorOnDeleteList(t *testing.T) {
 
 	// Retrieve List.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("DELETE", "/lists/XXX", nil)
+	r, _ := http.NewRequest("DELETE", "/api/lists/XXX", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.ListService.DeleteListInvoked)
@@ -220,7 +220,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -242,7 +242,7 @@ func testListHandler_UpdateList_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -259,7 +259,7 @@ func testListHandler_UpdateList_NotFound(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -275,7 +275,7 @@ func testListHandler_UpdateList_InternalError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "name": "new name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -291,7 +291,7 @@ func testListHandler_UpdateList_ValidationError(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "name": ""
   }`)))
 	h.ServeHTTP(w, r)
@@ -308,7 +308,7 @@ func testListHandler_UpdateList_AuthenticationFailed(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("PATCH", "/lists/XXX", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
     "name": ""
   }`)))
 	h.ServeHTTP(w, r)

@@ -20,10 +20,10 @@ func registerCardHandler(router *httprouter.Router, c *client) {
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 
-	router.POST("/lists/:listID/cards", h.handlePostCard)
-	router.GET("/cards/:id", h.handleGetCard)
-	router.DELETE("/cards/:id", h.handleDeleteCard)
-	router.PATCH("/cards/:id", h.handlePatchCard)
+	router.POST("/api/lists/:listID/cards", h.handlePostCard)
+	router.GET("/api/cards/:id", h.handleGetCard)
+	router.DELETE("/api/cards/:id", h.handleDeleteCard)
+	router.PATCH("/api/cards/:id", h.handlePatchCard)
 }
 
 // cardHandler represents an HTTP API handler for cards.
