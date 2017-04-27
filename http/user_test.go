@@ -67,7 +67,7 @@ func testUserHandler_Registration_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-	require.Equal(t, "pulpesid=456; Expires=Sat, 01 Jan 2000 00:10:00 GMT", w.HeaderMap.Get("Set-Cookie"))
+	require.Equal(t, "pulpesid=456; Path=/; Expires=Sat, 01 Jan 2000 00:10:00 GMT", w.HeaderMap.Get("Set-Cookie"))
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	date, _ := mock.Now.MarshalJSON()
 	require.JSONEq(t, `{
@@ -170,7 +170,7 @@ func testUserHandler_Login_OK(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
-	require.Equal(t, "pulpesid=456; Expires=Sat, 01 Jan 2000 00:10:00 GMT", w.HeaderMap.Get("Set-Cookie"))
+	require.Equal(t, "pulpesid=456; Path=/; Expires=Sat, 01 Jan 2000 00:10:00 GMT", w.HeaderMap.Get("Set-Cookie"))
 }
 
 func testUserHandler_Login_ErrInvalidJSON(t *testing.T) {

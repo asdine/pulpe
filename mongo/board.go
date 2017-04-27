@@ -308,7 +308,7 @@ func (s *boardStore) createBoard(b *board) error {
 func (s *boardStore) boardsByOwnerID(ownerID string) ([]board, error) {
 	var bs []board
 
-	return bs, s.session.db.C(boardCol).Find(bson.M{"ownerID": ownerID}).All(&bs)
+	return bs, s.session.db.C(boardCol).Find(bson.M{"ownerID": ownerID}).Sort("_id").All(&bs)
 }
 
 func (s *boardStore) deleteBoardByID(id bson.ObjectId) error {

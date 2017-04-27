@@ -32,7 +32,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/api/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/user/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, "application/json", w.Header().Get("Content-Type"))
@@ -60,7 +60,7 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 
 	// Retrieve Board.
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/api/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/user/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	require.True(t, c.BoardService.BoardsInvoked)
@@ -75,7 +75,7 @@ func testBoardHandler_Boards_AuthenticationFailed(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("GET", "/api/boards", nil)
+	r, _ := http.NewRequest("GET", "/api/user/boards", nil)
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	require.True(t, c.BoardService.BoardsInvoked)
@@ -105,7 +105,7 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{
     "name": "name"
   }`)))
 	h.ServeHTTP(w, r)
@@ -119,7 +119,7 @@ func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{
+	r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{
     "id": "12
   }`)))
 	h.ServeHTTP(w, r)
@@ -131,7 +131,7 @@ func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
 	h := pulpeHttp.NewHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{}`)))
+	r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{}`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	require.JSONEq(t, `{"err": "validation error", "fields": {"name": ["non zero value required"]}}`, w.Body.String())
@@ -148,7 +148,7 @@ func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err err
 		}
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest("POST", "/api/boards", bytes.NewReader([]byte(`{"name": "name"}`)))
+		r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{"name": "name"}`)))
 		h.ServeHTTP(w, r)
 		require.Equal(t, status, w.Code)
 		require.True(t, c.BoardService.CreateBoardInvoked)

@@ -69,6 +69,7 @@ func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		Name:    "pulpesid",
 		Value:   us.ID,
 		Expires: us.ExpiresAt,
+		Path:    "/",
 	})
 
 	encodeJSON(w, user, http.StatusCreated, h.logger)
@@ -108,6 +109,7 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:    "pulpesid",
 		Value:   us.ID,
 		Expires: us.ExpiresAt,
+		Path:    "/",
 	})
 
 	w.WriteHeader(http.StatusCreated)
