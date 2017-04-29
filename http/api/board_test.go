@@ -1,4 +1,4 @@
-package http_test
+package api_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/blankrobot/pulpe"
-	pulpeHttp "github.com/blankrobot/pulpe/http"
+	"github.com/blankrobot/pulpe/http/api"
 	"github.com/blankrobot/pulpe/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func TestBoardHandler_Boards(t *testing.T) {
 
 func testBoardHandler_Boards_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
@@ -51,7 +51,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 
 func testBoardHandler_Boards_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
@@ -68,7 +68,7 @@ func testBoardHandler_Boards_InternalError(t *testing.T) {
 
 func testBoardHandler_Boards_AuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		return nil, pulpe.ErrUserAuthenticationFailed
@@ -91,7 +91,7 @@ func TestBoardHandler_CreateBoard(t *testing.T) {
 
 func testBoardHandler_CreateBoard_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.CreateBoardFn = func(c *pulpe.BoardCreation) (*pulpe.Board, error) {
@@ -116,7 +116,8 @@ func testBoardHandler_CreateBoard_OK(t *testing.T) {
 }
 
 func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	c := mock.NewClient()
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{
@@ -128,7 +129,8 @@ func testBoardHandler_CreateBoard_ErrInvalidJSON(t *testing.T) {
 }
 
 func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	c := mock.NewClient()
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/user/boards", bytes.NewReader([]byte(`{}`)))
@@ -140,7 +142,7 @@ func testBoardHandler_CreateBoard_ValidationError(t *testing.T) {
 func testBoardHandler_CreateBoard_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
-		h := pulpeHttp.NewHandler(c)
+		h := newHandler(c)
 
 		// Mock service.
 		c.BoardService.CreateBoardFn = func(Board *pulpe.BoardCreation) (*pulpe.Board, error) {
@@ -164,7 +166,7 @@ func TestBoardHandler_Board(t *testing.T) {
 
 func testBoardHandler_Board_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardByOwnerAndSlugFn = func(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
@@ -189,7 +191,7 @@ func testBoardHandler_Board_OK(t *testing.T) {
 
 func testBoardHandler_Board_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardByOwnerAndSlugFn = func(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
@@ -206,7 +208,7 @@ func testBoardHandler_Board_NotFound(t *testing.T) {
 
 func testBoardHandler_Board_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardByOwnerAndSlugFn = func(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
@@ -223,7 +225,7 @@ func testBoardHandler_Board_InternalError(t *testing.T) {
 
 func testBoardHandler_Board_AuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.BoardByOwnerAndSlugFn = func(owner, slug string, options ...pulpe.BoardGetOption) (*pulpe.Board, error) {
@@ -246,7 +248,7 @@ func TestBoardHandler_DeleteBoard(t *testing.T) {
 
 func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	byBoardID := func(id string) error {
@@ -266,7 +268,7 @@ func testBoardHandler_DeleteBoard_OK(t *testing.T) {
 
 func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.BoardService.DeleteBoardFn = func(id string) error {
 		return pulpe.ErrBoardNotFound
@@ -281,7 +283,7 @@ func testBoardHandler_DeleteBoard_NotFound(t *testing.T) {
 
 func testBoardHandler_DeleteBoard_InternalErrorOnDeleteBoard(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.DeleteBoardFn = func(id string) error {
@@ -305,7 +307,7 @@ func TestBoardHandler_UpdateBoard(t *testing.T) {
 
 func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
@@ -328,7 +330,8 @@ func testBoardHandler_UpdateBoard_OK(t *testing.T) {
 }
 
 func testBoardHandler_UpdateBoard_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	c := mock.NewClient()
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/api/boards/XXX", bytes.NewReader([]byte(`{
@@ -341,7 +344,7 @@ func testBoardHandler_UpdateBoard_ErrInvalidJSON(t *testing.T) {
 
 func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, pulpe.ErrBoardNotFound
@@ -358,7 +361,7 @@ func testBoardHandler_UpdateBoard_NotFound(t *testing.T) {
 
 func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, errors.New("internal error")
@@ -375,7 +378,7 @@ func testBoardHandler_UpdateBoard_ValidationError(t *testing.T) {
 
 func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.BoardService.UpdateBoardFn = func(id string, u *pulpe.BoardUpdate) (*pulpe.Board, error) {
 		return nil, errors.New("internal error")
@@ -392,13 +395,13 @@ func testBoardHandler_UpdateBoard_InternalError(t *testing.T) {
 
 func TestBoardCreateRequest_Validate(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
-		var b pulpeHttp.BoardCreateRequest
+		var b api.BoardCreateRequest
 		_, err := b.Validate()
 		require.Error(t, err)
 	})
 
 	t.Run("NameOnly", func(t *testing.T) {
-		b := pulpeHttp.BoardCreateRequest{
+		b := api.BoardCreateRequest{
 			Name: "    board name   ",
 		}
 		_, err := b.Validate()
@@ -407,7 +410,7 @@ func TestBoardCreateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		b := pulpeHttp.BoardCreateRequest{
+		b := api.BoardCreateRequest{
 			Name: "      ",
 		}
 		_, err := b.Validate()
@@ -420,14 +423,14 @@ func TestBoardUpdateRequest_Validate(t *testing.T) {
 	spaces := "    "
 
 	t.Run("Empty", func(t *testing.T) {
-		var b pulpeHttp.BoardUpdateRequest
+		var b api.BoardUpdateRequest
 		_, err := b.Validate()
 		require.NoError(t, err)
 	})
 
 	t.Run("NameOnly", func(t *testing.T) {
 		name := "   board name   "
-		b := pulpeHttp.BoardUpdateRequest{
+		b := api.BoardUpdateRequest{
 			Name: &name,
 		}
 		_, err := b.Validate()
@@ -436,7 +439,7 @@ func TestBoardUpdateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		b := pulpeHttp.BoardUpdateRequest{
+		b := api.BoardUpdateRequest{
 			Name: &spaces,
 		}
 		_, err := b.Validate()
@@ -444,7 +447,7 @@ func TestBoardUpdateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("EmptyName", func(t *testing.T) {
-		b := pulpeHttp.BoardUpdateRequest{
+		b := api.BoardUpdateRequest{
 			Name: &emptyName,
 		}
 		_, err := b.Validate()

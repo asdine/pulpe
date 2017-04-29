@@ -1,4 +1,4 @@
-package http
+package api
 
 import (
 	"encoding/json"
@@ -8,15 +8,16 @@ import (
 	"strings"
 
 	"github.com/blankrobot/pulpe"
+	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
-// registerListHandler register the listHandler routes.
-func registerListHandler(router *httprouter.Router, c *client) {
+// RegisterListHandler register the listHandler routes.
+func RegisterListHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := listHandler{
-		client: c,
-		logger: log.New(os.Stderr, "", log.LstdFlags),
+		connect: c,
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 	}
 
 	router.POST("/api/boards/:boardID/lists", h.handlePostList)
@@ -26,11 +27,8 @@ func registerListHandler(router *httprouter.Router, c *client) {
 
 // listHandler represents an HTTP API handler for lists.
 type listHandler struct {
-	*httprouter.Router
-
-	client *client
-
-	logger *log.Logger
+	connect pulpeHttp.Connector
+	logger  *log.Logger
 }
 
 // handlePostList handles requests to create a new list.
@@ -52,7 +50,7 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	// create the list
@@ -73,7 +71,7 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 func (h *listHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	err := session.ListService().DeleteList(id)
@@ -107,7 +105,7 @@ func (h *listHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	card, err := session.ListService().UpdateList(id, lu)

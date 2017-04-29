@@ -1,4 +1,4 @@
-package http_test
+package api_test
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/blankrobot/pulpe"
-	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +56,7 @@ func testUserHandler_Registration_OK(t *testing.T) {
 		}, nil
 	}
 
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/register", bytes.NewReader([]byte(`{
@@ -80,7 +79,7 @@ func testUserHandler_Registration_OK(t *testing.T) {
 }
 
 func testUserHandler_Registration_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/register", bytes.NewReader([]byte(`{
@@ -93,7 +92,7 @@ func testUserHandler_Registration_ErrInvalidJSON(t *testing.T) {
 
 func testUserHandler_Registration_EmailConflict(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.UserService.RegisterFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
 		return nil, pulpe.ErrUserEmailConflict
@@ -112,7 +111,7 @@ func testUserHandler_Registration_EmailConflict(t *testing.T) {
 func testUserHandler_Registration_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
-		h := pulpeHttp.NewHandler(c)
+		h := newHandler(c)
 
 		c.UserService.RegisterFn = func(user *pulpe.UserRegistration) (*pulpe.User, error) {
 			return nil, err
@@ -131,7 +130,7 @@ func testUserHandler_Registration_WithResponse(t *testing.T, status int, err err
 
 func testUserHandler_Registration_ErrValidation(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/register", bytes.NewReader([]byte(`{}`)))
@@ -161,7 +160,7 @@ func testUserHandler_Login_OK(t *testing.T) {
 		}, nil
 	}
 
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/login", bytes.NewReader([]byte(`{
@@ -174,7 +173,7 @@ func testUserHandler_Login_OK(t *testing.T) {
 }
 
 func testUserHandler_Login_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/login", bytes.NewReader([]byte(`{
@@ -187,7 +186,7 @@ func testUserHandler_Login_ErrInvalidJSON(t *testing.T) {
 
 func testUserHandler_Login_UserAuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.UserSessionService.LoginFn = func(loginOrEmail, password string) (*pulpe.UserSession, error) {
 		return nil, pulpe.ErrUserAuthenticationFailed
@@ -205,7 +204,7 @@ func testUserHandler_Login_UserAuthenticationFailed(t *testing.T) {
 func testUserHandler_Login_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
-		h := pulpeHttp.NewHandler(c)
+		h := newHandler(c)
 
 		c.UserSessionService.LoginFn = func(loginOrEmail, password string) (*pulpe.UserSession, error) {
 			return nil, err
@@ -223,7 +222,7 @@ func testUserHandler_Login_WithResponse(t *testing.T, status int, err error) fun
 
 func testUserHandler_Login_ErrValidation(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/login", bytes.NewReader([]byte(`{}`)))

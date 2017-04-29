@@ -24,7 +24,7 @@ type Client struct {
 	UserSessionService UserSessionService
 }
 
-// Connect creates mock Session.
+// Connect creates a mock Session.
 func (c *Client) Connect() pulpe.Session {
 	return &Session{
 		now:                Now,
@@ -52,6 +52,7 @@ type Session struct {
 
 	SetAuthTokenFn      func(string)
 	SetAuthTokenInvoked bool
+	AuthToken           string
 }
 
 // CardService returns the session CardService
@@ -85,10 +86,15 @@ func (s *Session) Authenticate() (*pulpe.User, error) {
 	return s.AuthenticateFn()
 }
 
-// SetAuthToken runs SetAuthTokenFn and sets SetAuthTokenInvoked to true when invoked.
+// SetAuthToken sets SetAuthTokenInvoked to true when invoked and runs SetAuthTokenFn if it exists,
+// otherwhise it stores the token in AuthToken.
 func (s *Session) SetAuthToken(token string) {
 	s.SetAuthTokenInvoked = true
-	s.SetAuthTokenFn(token)
+	if s.SetAuthTokenFn != nil {
+		s.SetAuthTokenFn(token)
+	} else {
+		s.AuthToken = token
+	}
 }
 
 // Close session.

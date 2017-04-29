@@ -1,4 +1,4 @@
-package http_test
+package api_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/blankrobot/pulpe"
-	pulpeHttp "github.com/blankrobot/pulpe/http"
+	"github.com/blankrobot/pulpe/http/api"
 	"github.com/blankrobot/pulpe/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -46,7 +46,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 		}, nil
 	}
 
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{
@@ -72,7 +72,7 @@ func testCardHandler_CreateCard_OK(t *testing.T) {
 }
 
 func testCardHandler_CreateCard_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{
@@ -85,7 +85,7 @@ func testCardHandler_CreateCard_ErrInvalidJSON(t *testing.T) {
 
 func testCardHandler_CreateCard_ListNotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.CardService.CreateCardFn = func(listID string, c *pulpe.CardCreation) (*pulpe.Card, error) {
 		return nil, pulpe.ErrListNotFound
@@ -103,7 +103,7 @@ func testCardHandler_CreateCard_ListNotFound(t *testing.T) {
 func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
-		h := pulpeHttp.NewHandler(c)
+		h := newHandler(c)
 
 		c.CardService.CreateCardFn = func(listID string, card *pulpe.CardCreation) (*pulpe.Card, error) {
 			return nil, err
@@ -123,7 +123,7 @@ func testCardHandler_CreateCard_WithResponse(t *testing.T, status int, err error
 
 func testCardHandler_CreateCard_ErrValidation(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/lists/456/cards", bytes.NewReader([]byte(`{}`)))
@@ -140,7 +140,7 @@ func TestCardHandler_Card(t *testing.T) {
 
 func testCardHandler_Card_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
@@ -182,7 +182,7 @@ func testCardHandler_Card_OK(t *testing.T) {
 
 func testCardHandler_Card_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
@@ -198,7 +198,7 @@ func testCardHandler_Card_NotFound(t *testing.T) {
 
 func testCardHandler_Card_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
@@ -214,7 +214,7 @@ func testCardHandler_Card_InternalError(t *testing.T) {
 
 func testCardHandler_Card_AuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.CardFn = func(id string) (*pulpe.Card, error) {
@@ -237,7 +237,7 @@ func TestCardHandler_DeleteCard(t *testing.T) {
 
 func testCardHandler_DeleteCard_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.DeleteCardFn = func(id string) error {
@@ -254,7 +254,7 @@ func testCardHandler_DeleteCard_OK(t *testing.T) {
 
 func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.DeleteCardFn = func(id string) error {
@@ -270,7 +270,7 @@ func testCardHandler_DeleteCard_NotFound(t *testing.T) {
 
 func testCardHandler_DeleteCard_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.DeleteCardFn = func(id string) error {
@@ -286,7 +286,7 @@ func testCardHandler_DeleteCard_InternalError(t *testing.T) {
 
 func testCardHandler_DeleteCard_AuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.DeleteCardFn = func(id string) error {
@@ -310,7 +310,7 @@ func TestCardHandler_UpdateCard(t *testing.T) {
 
 func testCardHandler_UpdateCard_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
@@ -357,7 +357,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 }
 
 func testCardHandler_UpdateCard_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
@@ -369,7 +369,7 @@ func testCardHandler_UpdateCard_ErrInvalidJSON(t *testing.T) {
 }
 
 func testCardHandler_UpdateCard_ErrValidation(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
@@ -381,7 +381,7 @@ func testCardHandler_UpdateCard_ErrValidation(t *testing.T) {
 
 func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		return nil, pulpe.ErrCardNotFound
@@ -398,7 +398,7 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
 
 func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
 		return nil, errors.New("internal error")
@@ -415,13 +415,13 @@ func testCardHandler_UpdateCard_InternalError(t *testing.T) {
 
 func TestCardCreateRequest_Validate(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
-		var cc pulpeHttp.CardCreateRequest
+		var cc api.CardCreateRequest
 		_, err := cc.Validate()
 		require.Error(t, err)
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		cc := pulpeHttp.CardCreateRequest{
+		cc := api.CardCreateRequest{
 			Name: "      ",
 		}
 		_, err := cc.Validate()
@@ -429,7 +429,7 @@ func TestCardCreateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("Valid", func(t *testing.T) {
-		cc := pulpeHttp.CardCreateRequest{
+		cc := api.CardCreateRequest{
 			Name: "Card name",
 		}
 		_, err := cc.Validate()
@@ -437,7 +437,7 @@ func TestCardCreateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("NegativePosition", func(t *testing.T) {
-		cc := pulpeHttp.CardCreateRequest{
+		cc := api.CardCreateRequest{
 			Name:     "Card name",
 			Position: -10.0,
 		}
@@ -455,13 +455,13 @@ func TestCardUpdate_Validate(t *testing.T) {
 	positiveFloat := 10.0
 
 	t.Run("Empty", func(t *testing.T) {
-		var cc pulpeHttp.CardUpdateRequest
+		var cc api.CardUpdateRequest
 		_, err := cc.Validate()
 		require.NoError(t, err)
 	})
 
 	t.Run("Valid", func(t *testing.T) {
-		cc := pulpeHttp.CardUpdateRequest{
+		cc := api.CardUpdateRequest{
 			Name:        &name,
 			Description: &name,
 			Position:    &positiveFloat,
@@ -471,7 +471,7 @@ func TestCardUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		cc := pulpeHttp.CardUpdateRequest{
+		cc := api.CardUpdateRequest{
 			Name:        &spaces,
 			Description: &spaces,
 		}
@@ -480,7 +480,7 @@ func TestCardUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("ZeroValues", func(t *testing.T) {
-		cc := pulpeHttp.CardUpdateRequest{
+		cc := api.CardUpdateRequest{
 			Name:        &emptyName,
 			Description: &emptyName,
 			Position:    &zeroFloat,
@@ -490,7 +490,7 @@ func TestCardUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("NegativePosition", func(t *testing.T) {
-		cc := pulpeHttp.CardUpdateRequest{
+		cc := api.CardUpdateRequest{
 			Name:        &name,
 			Description: &name,
 			Position:    &negativeFloat,

@@ -1,4 +1,4 @@
-package http_test
+package api_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/blankrobot/pulpe"
-	pulpeHttp "github.com/blankrobot/pulpe/http"
+	"github.com/blankrobot/pulpe/http/api"
 	"github.com/blankrobot/pulpe/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ func TestListHandler_CreateList(t *testing.T) {
 
 func testListHandler_CreateList_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.CreateListFn = func(boardID string, list *pulpe.ListCreation) (*pulpe.List, error) {
 		require.Equal(t, &pulpe.ListCreation{
@@ -61,7 +61,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 }
 
 func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{
@@ -73,7 +73,7 @@ func testListHandler_CreateList_ErrInvalidJSON(t *testing.T) {
 }
 
 func testListHandler_CreateList_ErrValidation(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/boards/the-board/lists", bytes.NewReader([]byte(`{}`)))
@@ -84,7 +84,7 @@ func testListHandler_CreateList_ErrValidation(t *testing.T) {
 
 func testListHandler_CreateList_BoardNotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.CreateListFn = func(boardID string, list *pulpe.ListCreation) (*pulpe.List, error) {
 		return nil, pulpe.ErrBoardNotFound
@@ -102,7 +102,7 @@ func testListHandler_CreateList_BoardNotFound(t *testing.T) {
 func testListHandler_CreateList_WithResponse(t *testing.T, status int, err error) func(*testing.T) {
 	return func(t *testing.T) {
 		c := mock.NewClient()
-		h := pulpeHttp.NewHandler(c)
+		h := newHandler(c)
 
 		// Mock service.
 		c.ListService.CreateListFn = func(boardID string, list *pulpe.ListCreation) (*pulpe.List, error) {
@@ -125,7 +125,7 @@ func TestListHandler_DeleteList(t *testing.T) {
 
 func testListHandler_DeleteList_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.DeleteListFn = func(id string) error {
 		require.Equal(t, "XXX", string(id))
@@ -141,7 +141,7 @@ func testListHandler_DeleteList_OK(t *testing.T) {
 
 func testListHandler_DeleteList_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.ListService.DeleteListFn = func(id string) error {
@@ -158,7 +158,7 @@ func testListHandler_DeleteList_NotFound(t *testing.T) {
 
 func testListHandler_DeleteList_InternalErrorOnDeleteList(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.ListService.DeleteListFn = func(id string) error {
@@ -175,7 +175,7 @@ func testListHandler_DeleteList_InternalErrorOnDeleteList(t *testing.T) {
 
 func testListHandler_DeleteList_AuthErrorOnDeleteList(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.ListService.DeleteListFn = func(id string) error {
@@ -201,7 +201,7 @@ func TestListHandler_UpdateList(t *testing.T) {
 
 func testListHandler_UpdateList_OK(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	// Mock service.
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
@@ -239,7 +239,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 }
 
 func testListHandler_UpdateList_ErrInvalidJSON(t *testing.T) {
-	h := pulpeHttp.NewHandler(mock.NewClient())
+	h := newHandler(mock.NewClient())
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
@@ -252,7 +252,7 @@ func testListHandler_UpdateList_ErrInvalidJSON(t *testing.T) {
 
 func testListHandler_UpdateList_NotFound(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, pulpe.ErrListNotFound
@@ -268,7 +268,7 @@ func testListHandler_UpdateList_NotFound(t *testing.T) {
 
 func testListHandler_UpdateList_InternalError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, errors.New("internal error")
@@ -284,7 +284,7 @@ func testListHandler_UpdateList_InternalError(t *testing.T) {
 
 func testListHandler_UpdateList_ValidationError(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, errors.New("internal error")
@@ -301,7 +301,7 @@ func testListHandler_UpdateList_ValidationError(t *testing.T) {
 
 func testListHandler_UpdateList_AuthenticationFailed(t *testing.T) {
 	c := mock.NewClient()
-	h := pulpeHttp.NewHandler(c)
+	h := newHandler(c)
 
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		return nil, pulpe.ErrUserAuthenticationFailed
@@ -318,13 +318,13 @@ func testListHandler_UpdateList_AuthenticationFailed(t *testing.T) {
 
 func TestListCreateRequest_Validate(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
-		var l pulpeHttp.ListCreateRequest
+		var l api.ListCreateRequest
 		_, err := l.Validate()
 		require.Error(t, err)
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		l := pulpeHttp.ListCreateRequest{
+		l := api.ListCreateRequest{
 			Name: "      ",
 		}
 		_, err := l.Validate()
@@ -332,7 +332,7 @@ func TestListCreateRequest_Validate(t *testing.T) {
 	})
 
 	t.Run("Valid", func(t *testing.T) {
-		l := pulpeHttp.ListCreateRequest{
+		l := api.ListCreateRequest{
 			Name: "list name",
 		}
 		_, err := l.Validate()
@@ -346,13 +346,13 @@ func TestListUpdate_Validate(t *testing.T) {
 	spaces := "    "
 
 	t.Run("Empty", func(t *testing.T) {
-		var l pulpeHttp.ListUpdateRequest
+		var l api.ListUpdateRequest
 		_, err := l.Validate()
 		require.NoError(t, err)
 	})
 
 	t.Run("ValidName", func(t *testing.T) {
-		l := pulpeHttp.ListUpdateRequest{
+		l := api.ListUpdateRequest{
 			Name: &name,
 		}
 		_, err := l.Validate()
@@ -360,7 +360,7 @@ func TestListUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("SpaceOnly", func(t *testing.T) {
-		l := pulpeHttp.ListUpdateRequest{
+		l := api.ListUpdateRequest{
 			Name: &spaces,
 		}
 		_, err := l.Validate()
@@ -368,7 +368,7 @@ func TestListUpdate_Validate(t *testing.T) {
 	})
 
 	t.Run("EmptyName", func(t *testing.T) {
-		l := pulpeHttp.ListUpdateRequest{
+		l := api.ListUpdateRequest{
 			Name: &emptyName,
 		}
 		_, err := l.Validate()

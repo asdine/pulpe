@@ -1,4 +1,4 @@
-package http
+package api
 
 import (
 	"encoding/json"
@@ -8,15 +8,16 @@ import (
 	"strings"
 
 	"github.com/blankrobot/pulpe"
+	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
-// registerUserHandler register the userHandler routes.
-func registerUserHandler(router *httprouter.Router, c *client) {
+// RegisterUserHandler register the userHandler routes.
+func RegisterUserHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := userHandler{
-		client: c,
-		logger: log.New(os.Stderr, "", log.LstdFlags),
+		connect: c,
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 	}
 
 	router.HandlerFunc("POST", "/api/register", h.handleUserRegistration)
@@ -25,8 +26,8 @@ func registerUserHandler(router *httprouter.Router, c *client) {
 
 // userHandler represents an HTTP API handler for users.
 type userHandler struct {
-	client *client
-	logger *log.Logger
+	connect pulpeHttp.Connector
+	logger  *log.Logger
 }
 
 // handleUserRegistration handles requests to create a new user.
@@ -45,7 +46,7 @@ func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	user, err := session.UserService().Register(ur)
@@ -91,7 +92,7 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	us, err := session.UserSessionService().Login(payload.EmailOrLogin, payload.Password)

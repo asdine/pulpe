@@ -1,4 +1,4 @@
-package http
+package api
 
 import (
 	"encoding/json"
@@ -9,15 +9,16 @@ import (
 	"strings"
 
 	"github.com/blankrobot/pulpe"
+	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
-// registerBoardHandler register the BoardHandler routes.
-func registerBoardHandler(router *httprouter.Router, c *client) {
+// RegisterBoardHandler register the BoardHandler routes.
+func RegisterBoardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := boardHandler{
-		client: c,
-		logger: log.New(os.Stderr, "", log.LstdFlags),
+		connect: c,
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 	}
 
 	router.HandlerFunc("GET", "/api/user/boards", h.handleGetBoards)
@@ -29,8 +30,8 @@ func registerBoardHandler(router *httprouter.Router, c *client) {
 
 // boardHandler represents an HTTP API handler for boards.
 type boardHandler struct {
-	client *client
-	logger *log.Logger
+	connect pulpeHttp.Connector
+	logger  *log.Logger
 }
 
 // handlePostBoard handles requests to create a new board.
@@ -49,7 +50,7 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	board, err := session.BoardService().CreateBoard(cr)
@@ -65,7 +66,7 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request) {
 
 // handlePostBoard handles requests to create a new board.
 func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request) {
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	boards, err := session.BoardService().Boards()
@@ -84,7 +85,7 @@ func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	owner := ps.ByName("owner")
 	slug := ps.ByName("board")
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	// Get the board and all of its lists and cards
@@ -105,7 +106,7 @@ func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 func (h *boardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	err := session.BoardService().DeleteBoard(id)
@@ -138,7 +139,7 @@ func (h *boardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	board, err := session.BoardService().UpdateBoard(id, bu)

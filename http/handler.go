@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"path"
@@ -13,15 +12,7 @@ import (
 )
 
 // NewHandler instantiates a new Handler.
-func NewHandler(c pulpe.Client) *Handler {
-	router := httprouter.New()
-
-	client := client{c}
-	registerCardHandler(router, &client)
-	registerListHandler(router, &client)
-	registerBoardHandler(router, &client)
-	registerUserHandler(router, &client)
-
+func NewHandler(router *httprouter.Router) *Handler {
 	return &Handler{
 		router: router,
 	}
@@ -56,6 +47,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// TODO use httprouter and define all the routes
 	log.Printf(
 		"%s %s %s %d %d %s",
 		r.RemoteAddr,
@@ -104,26 +96,19 @@ func (w *ResponseWriter) Write(data []byte) (int, error) {
 	return w.ResponseWriter.Write(data)
 }
 
-// encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.
-func encodeJSON(w http.ResponseWriter, v interface{}, status int, logger *log.Logger) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		Error(w, err, http.StatusInternalServerError, logger)
+// Connector creates a session from a client and a request.
+type Connector func(http.ResponseWriter, *http.Request) pulpe.Session
+
+// NewCookieConnector returns a connector that creates a session and loads the session token from a cookie.
+func NewCookieConnector(client pulpe.Client) Connector {
+	return func(w http.ResponseWriter, r *http.Request) pulpe.Session {
+		session := client.Connect()
+
+		cookie, err := r.Cookie("pulpesid")
+		if err == nil {
+			session.SetAuthToken(cookie.Value)
+		}
+
+		return session
 	}
-}
-
-type client struct {
-	client pulpe.Client
-}
-
-func (c *client) session(w http.ResponseWriter, r *http.Request) pulpe.Session {
-	session := c.client.Connect()
-
-	cookie, err := r.Cookie("pulpesid")
-	if err == nil {
-		session.SetAuthToken(cookie.Value)
-	}
-
-	return session
 }

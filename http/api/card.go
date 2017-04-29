@@ -1,4 +1,4 @@
-package http
+package api
 
 import (
 	"encoding/json"
@@ -9,15 +9,16 @@ import (
 	"strings"
 
 	"github.com/blankrobot/pulpe"
+	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/validation"
 	"github.com/julienschmidt/httprouter"
 )
 
-// registerCardHandler register the cardHandler routes.
-func registerCardHandler(router *httprouter.Router, c *client) {
+// RegisterCardHandler register the CardHandler routes.
+func RegisterCardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := cardHandler{
-		client: c,
-		logger: log.New(os.Stderr, "", log.LstdFlags),
+		connect: c,
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 	}
 
 	router.POST("/api/lists/:listID/cards", h.handlePostCard)
@@ -28,8 +29,8 @@ func registerCardHandler(router *httprouter.Router, c *client) {
 
 // cardHandler represents an HTTP API handler for cards.
 type cardHandler struct {
-	client *client
-	logger *log.Logger
+	connect pulpeHttp.Connector
+	logger  *log.Logger
 }
 
 // handlePostCard handles requests to create a new card.
@@ -47,7 +48,7 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	listID := ps.ByName("listID")
@@ -69,7 +70,7 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	card, err := session.CardService().Card(id)
@@ -89,7 +90,7 @@ func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 func (h *cardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	err := session.CardService().DeleteCard(id)
@@ -122,7 +123,7 @@ func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	session := h.client.session(w, r)
+	session := h.connect(w, r)
 	defer session.Close()
 
 	card, err := session.CardService().UpdateCard(id, cu)
