@@ -9,7 +9,9 @@ import (
 
 	"github.com/blankrobot/pulpe"
 	"github.com/blankrobot/pulpe/http"
+	"github.com/blankrobot/pulpe/http/api"
 	"github.com/blankrobot/pulpe/mongo"
+	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/cobra"
 )
 
@@ -79,7 +81,10 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 
 	client.Authenticator = new(mongo.Authenticator)
 
-	handler := http.NewHandler(client)
+	router := httprouter.New()
+	connect := http.NewCookieConnector(client)
+	api.Register(router, connect)
+	handler := http.NewHandler(router)
 	if c.assetsPath != "" {
 		handler.EnableStatic(c.assetsPath)
 	}

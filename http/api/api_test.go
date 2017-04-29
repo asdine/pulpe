@@ -12,9 +12,6 @@ import (
 func newHandler(c pulpe.Client) http.Handler {
 	router := httprouter.New()
 	connect := pulpeHttp.NewCookieConnector(c)
-	api.RegisterBoardHandler(router, connect)
-	api.RegisterCardHandler(router, connect)
-	api.RegisterListHandler(router, connect)
-	api.RegisterUserHandler(router, connect)
+	api.Register(router, connect)
 	return router
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// RegisterBoardHandler register the BoardHandler routes.
-func RegisterBoardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
+// registerBoardHandler register the BoardHandler routes.
+func registerBoardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := boardHandler{
 		connect: c,
 		logger:  log.New(os.Stderr, "", log.LstdFlags),

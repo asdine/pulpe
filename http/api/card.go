@@ -14,8 +14,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// RegisterCardHandler register the CardHandler routes.
-func RegisterCardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
+// registerCardHandler register the CardHandler routes.
+func registerCardHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := cardHandler{
 		connect: c,
 		logger:  log.New(os.Stderr, "", log.LstdFlags),

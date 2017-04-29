@@ -13,8 +13,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// RegisterListHandler register the listHandler routes.
-func RegisterListHandler(router *httprouter.Router, c pulpeHttp.Connector) {
+// registerListHandler register the listHandler routes.
+func registerListHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 	h := listHandler{
 		connect: c,
 		logger:  log.New(os.Stderr, "", log.LstdFlags),
