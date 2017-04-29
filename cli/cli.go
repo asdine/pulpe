@@ -90,7 +90,7 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 
 	api.Register(mux, connect)
 	http.RegisterStaticHandler(mux, c.assetsPath)
-	http.RegisterPageHandler(mux, c.templatesPath, c.lazy)
+	http.RegisterPageHandler(mux, connect, c.templatesPath, c.lazy)
 
 	srv := http.NewServer(c.addr, mux)
 	err = srv.Open()

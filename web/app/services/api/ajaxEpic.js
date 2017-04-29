@@ -16,7 +16,10 @@ const ajaxEpic = (type, req, schema) =>
           };
         }
 
-        return response;
+        return {
+          type: successOf(type),
+          response
+        };
       })
       .catch(error => Observable.of({
         type: failureOf(type),

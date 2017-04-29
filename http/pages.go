@@ -8,12 +8,13 @@ import (
 )
 
 // RegisterPageHandler register the routes for serving pages.
-func RegisterPageHandler(mux *ServeMux, dir string, lazy bool) {
+func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool) {
 	pattern := filepath.Join(dir, "*.tmpl.html")
 
 	h := pageHandler{
-		lazy: lazy,
-		dir:  dir,
+		lazy:    lazy,
+		dir:     dir,
+		connect: connect,
 	}
 
 	if !lazy {
@@ -34,6 +35,7 @@ type pageHandler struct {
 	templates *template.Template
 	lazy      bool
 	dir       string
+	connect   Connector
 }
 
 func (h *pageHandler) render(wr io.Writer, name string, data interface{}) {
@@ -45,6 +47,14 @@ func (h *pageHandler) render(wr io.Writer, name string, data interface{}) {
 }
 
 func (h *pageHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
+	session := h.connect(r)
+	defer session.Close()
+
+	_, err := session.Authenticate()
+	if err != nil {
+		http.Redirect(w, r, "/join", http.StatusFound)
+	}
+
 	h.render(w, "index.tmpl.html", map[string]string{
 		"Title": "Pulpe",
 	})
