@@ -87,6 +87,7 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 	api.Register(mux, connect)
 	if c.assetsPath != "" {
 		http.RegisterStaticHandler(mux, c.assetsPath)
+		http.RegisterPageHandler(mux, c.assetsPath)
 	}
 
 	srv := http.NewServer(c.addr, mux)
