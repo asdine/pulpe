@@ -3,51 +3,30 @@ package http
 import (
 	"log"
 	"net/http"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/blankrobot/pulpe"
-	"github.com/julienschmidt/httprouter"
 )
 
 // NewHandler instantiates a new Handler.
-func NewHandler(router *httprouter.Router) *Handler {
+func NewHandler(handler http.Handler) *Handler {
 	return &Handler{
-		router: router,
+		handler: handler,
 	}
 }
 
-// Handler is a collection of all the service handlers.
+// Handler is a wrapper around a http.Handler.
 type Handler struct {
-	staticHandler http.Handler
-	assetsPath    string
-	indexPath     string
-	router        *httprouter.Router
+	handler http.Handler
 }
 
-// ServeHTTP delegates a request to the appropriate subhandler.
+// ServeHTTP delegates a request to the given handler.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	rw := NewResponseWriter(w)
-	switch {
-	case strings.HasPrefix(r.URL.Path, "/api"):
-		h.router.ServeHTTP(rw, r)
-	case h.staticHandler != nil && strings.HasPrefix(r.URL.Path, "/assets/"):
-		// save the actual path because the static handler strips the "assets" prefix.
-		actualPath := r.URL.Path
-		h.staticHandler.ServeHTTP(rw, r)
-		r.URL.Path = actualPath
-	default:
-		if h.assetsPath != "" {
-			http.ServeFile(rw, r, h.indexPath)
-		} else {
-			http.NotFound(rw, r)
-		}
-	}
+	h.handler.ServeHTTP(rw, r)
 
-	// TODO use httprouter and define all the routes
 	log.Printf(
 		"%s %s %s %d %d %s",
 		r.RemoteAddr,
@@ -57,14 +36,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rw.len,
 		time.Since(start),
 	)
-}
-
-// EnableStatic sets the assets directory to be served.
-// By default, no assets are served.
-func (h *Handler) EnableStatic(assetsPath string) {
-	h.staticHandler = http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsPath)))
-	h.assetsPath = assetsPath
-	h.indexPath = path.Join(h.assetsPath, "index.html")
 }
 
 // NewResponseWriter instantiates a ResponseWriter.

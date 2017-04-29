@@ -84,10 +84,11 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 	router := httprouter.New()
 	connect := http.NewCookieConnector(client)
 	api.Register(router, connect)
-	handler := http.NewHandler(router)
 	if c.assetsPath != "" {
-		handler.EnableStatic(c.assetsPath)
+		http.RegisterStaticHandler(router, c.assetsPath)
 	}
+
+	handler := http.NewHandler(router)
 
 	srv := http.NewServer(c.addr, handler)
 	err = srv.Open()
