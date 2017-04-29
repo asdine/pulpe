@@ -10,11 +10,14 @@ import (
 )
 
 // Register all the routes and handlers to the given router
-func Register(router *httprouter.Router, connect pulpeHttp.Connector) {
+func Register(mux *pulpeHttp.ServeMux, connect pulpeHttp.Connector) {
+	router := httprouter.New()
 	registerBoardHandler(router, connect)
 	registerCardHandler(router, connect)
 	registerListHandler(router, connect)
 	registerUserHandler(router, connect)
+
+	mux.Handle("/api/", router)
 }
 
 // encodeJSON encodes v to w in JSON format. Error() is called if encoding fails.

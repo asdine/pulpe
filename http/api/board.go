@@ -50,7 +50,7 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	board, err := session.BoardService().CreateBoard(cr)
@@ -66,7 +66,7 @@ func (h *boardHandler) handlePostBoard(w http.ResponseWriter, r *http.Request) {
 
 // handlePostBoard handles requests to create a new board.
 func (h *boardHandler) handleGetBoards(w http.ResponseWriter, r *http.Request) {
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	boards, err := session.BoardService().Boards()
@@ -85,7 +85,7 @@ func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 	owner := ps.ByName("owner")
 	slug := ps.ByName("board")
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	// Get the board and all of its lists and cards
@@ -106,7 +106,7 @@ func (h *boardHandler) handleGetBoard(w http.ResponseWriter, r *http.Request, ps
 func (h *boardHandler) handleDeleteBoard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	err := session.BoardService().DeleteBoard(id)
@@ -139,7 +139,7 @@ func (h *boardHandler) handlePatchBoard(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	board, err := session.BoardService().UpdateBoard(id, bu)

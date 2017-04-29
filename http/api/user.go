@@ -46,7 +46,7 @@ func (h *userHandler) handleUserRegistration(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	user, err := session.UserService().Register(ur)
@@ -92,7 +92,7 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	us, err := session.UserSessionService().Login(payload.EmailOrLogin, payload.Password)

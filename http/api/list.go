@@ -50,7 +50,7 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	// create the list
@@ -71,7 +71,7 @@ func (h *listHandler) handlePostList(w http.ResponseWriter, r *http.Request, ps 
 func (h *listHandler) handleDeleteList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	err := session.ListService().DeleteList(id)
@@ -105,7 +105,7 @@ func (h *listHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	card, err := session.ListService().UpdateList(id, lu)

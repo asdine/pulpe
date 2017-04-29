@@ -11,7 +11,6 @@ import (
 	"github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/http/api"
 	"github.com/blankrobot/pulpe/mongo"
-	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/cobra"
 )
 
@@ -81,16 +80,16 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 
 	client.Authenticator = new(mongo.Authenticator)
 
-	router := httprouter.New()
 	connect := http.NewCookieConnector(client)
-	api.Register(router, connect)
+
+	mux := http.NewServeMux()
+
+	api.Register(mux, connect)
 	if c.assetsPath != "" {
-		http.RegisterStaticHandler(router, c.assetsPath)
+		http.RegisterStaticHandler(mux, c.assetsPath)
 	}
 
-	handler := http.NewHandler(router)
-
-	srv := http.NewServer(c.addr, handler)
+	srv := http.NewServer(c.addr, mux)
 	err = srv.Open()
 	if err != nil {
 		return err

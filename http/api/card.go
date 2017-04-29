@@ -48,7 +48,7 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	listID := ps.ByName("listID")
@@ -70,7 +70,7 @@ func (h *cardHandler) handlePostCard(w http.ResponseWriter, r *http.Request, ps 
 func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	card, err := session.CardService().Card(id)
@@ -90,7 +90,7 @@ func (h *cardHandler) handleGetCard(w http.ResponseWriter, r *http.Request, ps h
 func (h *cardHandler) handleDeleteCard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	err := session.CardService().DeleteCard(id)
@@ -123,7 +123,7 @@ func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	session := h.connect(w, r)
+	session := h.connect(r)
 	defer session.Close()
 
 	card, err := session.CardService().UpdateCard(id, cu)

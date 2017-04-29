@@ -8,15 +8,14 @@ import (
 
 	pulpeHttp "github.com/blankrobot/pulpe/http"
 	"github.com/blankrobot/pulpe/mock"
-	"github.com/julienschmidt/httprouter"
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandler(t *testing.T) {
-	h := pulpeHttp.NewHandler(httprouter.New())
+func TestServeMux(t *testing.T) {
+	mux := pulpeHttp.NewServeMux()
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/routethatdoesntexist", bytes.NewReader([]byte(`{}`)))
-	h.ServeHTTP(w, r)
+	mux.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
 
@@ -30,6 +29,6 @@ func TestCookieConnector(t *testing.T) {
 		Value: "token",
 	})
 
-	session := connect(nil, r)
+	session := connect(r)
 	require.Equal(t, "token", session.(*mock.Session).AuthToken)
 }
