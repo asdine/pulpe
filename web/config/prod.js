@@ -3,6 +3,7 @@ import merge from 'webpack-merge';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import ChunkManifestPlugin from 'chunk-manifest-webpack-plugin';
 import WebpackChunkHash from 'webpack-chunk-hash';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import baseConfig from './base';
 import packageConfig from '../package.json';
 
@@ -14,9 +15,10 @@ export default merge(baseConfig, {
   },
 
   entry: {
-    main: ['babel-polyfill', './app/index.jsx'],
+    home: './app/Home/index.jsx',
+    register: './app/Register/index.jsx',
     vendor: Object.keys(packageConfig.dependencies)
-      .filter(dep => packageConfig.excludedFromBuild.findIndex(exl => exl === dep) === -1)
+        .filter(dep => packageConfig.excludedFromBuild.findIndex(exl => exl === dep) === -1)
   },
 
   module: {
@@ -46,14 +48,6 @@ export default merge(baseConfig, {
 
   plugins: [
     new ExtractTextPlugin('style.css'),
-    // new webpack.optimize.CommonsChunkPlugin({
-    //   name: ['vendor', 'manifest'],
-    //   minChunks: Infinity,
-    // }),
-    // new ChunkManifestPlugin({
-    //   filename: 'chunk-manifest.json',
-    //   manifestVariable: 'webpackManifest'
-    // })
     new webpack.optimize.CommonsChunkPlugin({
       name: ['vendor', 'manifest'], // vendor libs + extracted manifest
       minChunks: Infinity,
@@ -63,6 +57,20 @@ export default merge(baseConfig, {
     new ChunkManifestPlugin({
       filename: 'chunk-manifest.json',
       manifestVariable: 'webpackManifest'
+    }),
+    new HtmlWebpackPlugin({
+      title: 'Pulpe',
+      filename: 'index.html',
+      template: 'app/index.html',
+      chunks: ['manifest', 'home', 'vendor'],
+      chunksSortMode: 'dependency'
+    }),
+    new HtmlWebpackPlugin({
+      title: 'Pulpe',
+      filename: 'register.html',
+      template: 'app/index.html',
+      chunks: ['manifest', 'register', 'vendor'],
+      chunksSortMode: 'dependency'
     })
   ]
 });

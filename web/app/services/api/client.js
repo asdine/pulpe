@@ -5,7 +5,9 @@ class Client {
     this.url = url;
   }
 
-  getBoards = (filters = {}) => get(`${this.url}/boards${
+  register = (payload) => post(`${this.url}/register`, payload)
+
+  getBoards = (filters = {}) => get(`${this.url}/user/boards${
     filters ?
       Object.keys(filters)
         .map((k, i) => `${i > 0 ? ',' : '?'}${k}=${filters[k]}`)
@@ -14,7 +16,7 @@ class Client {
 
   getBoard = (id) => get(`${this.url}/boards/${id}`)
 
-  createBoard = ({ name }) => post(`${this.url}/boards`, {
+  createBoard = ({ name }) => post(`${this.url}/user/boards`, {
     name
   })
 
@@ -73,6 +75,7 @@ const update = (url, data) => Observable.ajax({
   body: JSON.stringify(data)
 }).map(response => response.response);
 
-const client = new Client('/v1');
+
+const client = new Client('/api');
 
 export default client;

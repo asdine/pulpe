@@ -10,11 +10,10 @@ export default merge(baseConfig, {
     publicPath: '/'
   },
 
-  entry: [
-    'react-hot-loader',
-    'babel-polyfill',
-    './app/index.jsx'
-  ],
+  entry: {
+    home: ['react-hot-loader', 'babel-polyfill', './app/Home/index.jsx'],
+    register: ['react-hot-loader', 'babel-polyfill', './app/Register/index.jsx']
+  },
 
   module: {
     loaders: [
@@ -57,7 +56,9 @@ export default merge(baseConfig, {
     publicPath: '/',
     historyApiFallback: true,
     proxy: {
-      '/v1': 'http://localhost:4000'
+      '?(/)': 'http://localhost:4000',
+      '/join': 'http://localhost:4000',
+      '/api': 'http://localhost:4000'
     },
     host: '0.0.0.0'
   }
