@@ -1,5 +1,5 @@
-hash: 4d447530229ffb73b48051d1a02ce01615631b18c05d44a1990878912b95d386
-updated: 2017-04-17T14:59:40.649573627+02:00
+hash: 18a389dec3e3521f7e57df9c7ad8c79bb2e9caf21b4e7d8767f676b025a81261
+updated: 2017-04-29T19:00:05.776453364+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -14,7 +14,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: golang.org/x/crypto
-  version: cbc3d0884eac986df6e78a039b8792e869bff863
+  version: c7af5bf2638a1164f2eb5467c39c6cffbd13a02e
   subpackages:
   - bcrypt
   - blowfish
@@ -25,8 +25,6 @@ imports:
   - internal/json
   - internal/sasl
   - internal/scram
-- name: gopkg.in/tylerb/graceful.v1
-  version: 4654dfbb6ad53cb5e27f37d99b02e16c1872fbbb
 testImports:
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9

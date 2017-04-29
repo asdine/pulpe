@@ -1,14 +1,13 @@
 package http
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/blankrobot/pulpe"
-
-	graceful "gopkg.in/tylerb/graceful.v1"
 )
 
 // NewServer returns a new instance of Server.
@@ -27,7 +26,7 @@ type Server struct {
 	// Bind address to open.
 	Addr string
 
-	srv *graceful.Server
+	server http.Server
 }
 
 // Open opens a socket and serves the HTTP server.
@@ -38,13 +37,14 @@ func (s *Server) Open() error {
 		return err
 	}
 
-	srv := graceful.Server{
-		Server: &http.Server{Handler: s.Handler},
-	}
+	s.server.Handler = s.Handler
 
 	// Start HTTP server.
 	go func() {
-		srv.Serve(ln)
+		err := s.server.Serve(ln)
+		if err != http.ErrServerClosed {
+			log.Print(err)
+		}
 	}()
 
 	return nil
@@ -52,11 +52,9 @@ func (s *Server) Open() error {
 
 // Close closes the socket.
 func (s *Server) Close() error {
-	if s.srv != nil {
-		s.srv.Stop(time.Second)
-	}
-
-	return nil
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return s.server.Shutdown(ctx)
 }
 
 // NewServeMux instantiates a new ServeMux.
