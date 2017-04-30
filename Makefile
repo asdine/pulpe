@@ -36,3 +36,4 @@ docker:
 
 clean:
 	rm -fr dist/
+	rm -f $(NAME)
