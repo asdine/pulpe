@@ -15,7 +15,7 @@ const redirectOnBoardDeletionEpic = (action$, store) => action$.ofType(successOf
     setTimeout(() => {
       const boards = getBoards(store.getState());
       if (boards && boards.length > 0) {
-        browserHistory.push(`/${boards[0].slug}`);
+        browserHistory.push(`/${boards[0].owner.login}/${boards[0].slug}`);
       } else {
         browserHistory.push('/');
       }
@@ -27,7 +27,10 @@ const closeModalOnDeletionEpic = action$ => action$.ofType(successOf(DELETE))
   .map(hideModal);
 
 const redirectOnBoardUpdateEpic = action$ => action$.ofType(successOf(UPDATE))
-  .do((action) => browserHistory.push(`/${action.response.entities.boards[action.response.result].slug}`))
+  .do((action) => {
+    const board = action.response.entities.boards[action.response.result];
+    browserHistory.push(`/${board.owner.login}/${board.slug}`);
+  })
   .mergeMap(() => Observable.empty());
 
 export const epics = combineEpics(

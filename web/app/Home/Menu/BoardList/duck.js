@@ -4,7 +4,7 @@ import { combineEpics } from 'redux-observable';
 import client from '../../../services/api/client';
 import ajaxEpic, { successOf, requestOf } from '../../../services/api/ajaxEpic';
 import { hideModal } from '../../../components/Modal/duck';
-import { DELETE as BOARD_DELETE } from '../../Board/duck';
+import { UPDATE as BOARD_UPDATE, DELETE as BOARD_DELETE } from '../../Board/duck';
 
 const DOMAIN = 'pulpe/home/menu/boardList';
 
@@ -40,13 +40,15 @@ const createBoardEpic = ajaxEpic(
   boardSchema
 );
 
-
 const redirectOnBoardCreationEpic = action$ => action$.ofType(successOf(CREATE))
   .do((action) => {
     const board = action.response.entities.boards[action.response.result];
     browserHistory.push(`/${board.owner.login}/${board.slug}`);
   })
   .mapTo({ type: '' });
+
+const fetchOnBoardUpateEpic = action$ => action$.ofType(successOf(BOARD_UPDATE))
+  .mapTo(fetchBoards());
 
 const closeModalOnCreationEpic = action$ => action$.ofType(successOf(CREATE))
   .map(hideModal);
@@ -56,6 +58,7 @@ export const epics = combineEpics(
   createBoardEpic,
   closeModalOnCreationEpic,
   redirectOnBoardCreationEpic,
+  fetchOnBoardUpateEpic,
 );
 
 // reducer
@@ -71,7 +74,7 @@ const reducer = (state = [], action = {}) => {
       ];
     }
     case successOf(BOARD_DELETE): {
-      const idx = state.findIndex(b => b.id === action.id);
+      const idx = state.findIndex(b => b.id === action.response.id);
       if (idx === -1) {
         return state;
       }
