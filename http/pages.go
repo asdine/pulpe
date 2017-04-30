@@ -22,6 +22,7 @@ func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool
 	}
 
 	mux.HandleFunc("/join", h.handleRegister)
+	mux.HandleFunc("/login", h.handleLogin)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -53,6 +54,7 @@ func (h *pageHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
 	_, err := session.Authenticate()
 	if err != nil {
 		http.Redirect(w, r, "/join", http.StatusFound)
+		return
 	}
 
 	h.render(w, "index.tmpl.html", map[string]string{
@@ -63,5 +65,11 @@ func (h *pageHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (h *pageHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	h.render(w, "register.tmpl.html", map[string]string{
 		"Title": "Join",
+	})
+}
+
+func (h *pageHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	h.render(w, "login.tmpl.html", map[string]string{
+		"Title": "Sign in",
 	})
 }

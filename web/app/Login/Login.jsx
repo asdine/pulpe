@@ -1,26 +1,23 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { register } from './duck';
+import { login } from './duck';
 
-const Register = ({ onSubmit }) => {
-  let inputEmail;
-  let inputFullName;
+const Login = ({ onSubmit }) => {
+  let inputLogin;
   let inputPassword;
 
   const submit = (e) => {
     e.preventDefault();
 
-    const email = inputEmail.value.trim();
-    const fullName = inputFullName.value.trim();
+    const username = inputLogin.value.trim();
     const password = inputPassword.value.trim();
 
-    if (!email || !fullName || !password) {
+    if (!login || !password) {
       return;
     }
 
     onSubmit({
-      email,
-      fullName,
+      login: username,
       password
     });
   };
@@ -35,30 +32,20 @@ const Register = ({ onSubmit }) => {
               margin: '20px auto'
             }}
           >
-          Sign up to Pulpe
+          Sign in to Pulpe
         </h3>
           <div className="card">
             <div className="card-block">
               <form onSubmit={submit}>
                 <div className="form-group">
-                  <label htmlFor="emailField">Email address</label>
+                  <label htmlFor="loginField">Login or email address</label>
                   <input
-                    type="email"
-                    id="emailField"
+                    type="text"
+                    id="loginField"
                     className="form-control"
                     required
                     autoFocus
-                    ref={(node) => { inputEmail = node; }}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="fullNameField">Full name</label>
-                  <input
-                    type="text"
-                    id="fullNameField"
-                    className="form-control"
-                    required
-                    ref={(node) => { inputFullName = node; }}
+                    ref={(node) => { inputLogin = node; }}
                   />
                 </div>
                 <div className="form-group">
@@ -71,7 +58,7 @@ const Register = ({ onSubmit }) => {
                     ref={(node) => { inputPassword = node; }}
                   />
                 </div>
-                <button className="btn btn-primary btn-block" type="submit">Sign up</button>
+                <button className="btn btn-primary btn-block" type="submit">Sign in</button>
               </form>
             </div>
           </div>
@@ -84,6 +71,6 @@ const Register = ({ onSubmit }) => {
 export default connect(
   null,
   {
-    onSubmit: register
+    onSubmit: login
   }
-)(Register);
+)(Login);

@@ -12,7 +12,8 @@ export default merge(baseConfig, {
 
   entry: {
     home: ['react-hot-loader', 'babel-polyfill', './app/Home/index.jsx'],
-    register: ['react-hot-loader', 'babel-polyfill', './app/Register/index.jsx']
+    register: ['react-hot-loader', 'babel-polyfill', './app/Register/index.jsx'],
+    login: ['react-hot-loader', 'babel-polyfill', './app/Login/index.jsx']
   },
 
   module: {
@@ -58,6 +59,7 @@ export default merge(baseConfig, {
     proxy: {
       '?(/)': 'http://localhost:4000',
       '/join': 'http://localhost:4000',
+      '/login': 'http://localhost:4000',
       '/api': 'http://localhost:4000'
     },
     host: '0.0.0.0'

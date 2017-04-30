@@ -14,8 +14,8 @@ render(
     <Router history={browserHistory}>
       <Route path="/" component={Home}>
         <IndexRoute component={Index} />
-        <Route path="/:board" component={Board}>
-          <Route path="/:board/:list/:card" component={Card} />
+        <Route path="/:owner/:board" component={Board}>
+          <Route path="/:owner/:board/:list/:card" component={Card} />
         </Route>
       </Route>
     </Router>

@@ -1,36 +1,20 @@
 import React from 'react';
+import { render } from 'react-dom';
+import { Provider } from 'react-redux';
+import '@/app.global.scss';
+import store from './store';
+import Register from './Login';
 
-const Login = () =>
-  <div className="container">
-    <div className="row justify-content-md-center">
-      <div className="col col-lg-4">
-        <h3
-          style={{
-            textAlign: 'center',
-            margin: '20px auto'
-          }}
-        >
-          Sign in to Pulpe
-        </h3>
-        <div className="card">
-          <div className="card-block">
-            <form>
-              <div className="form-group">
-                <label htmlFor="loginField">Username or email address</label>
-                <input type="text" id="loginField" className="form-control" required autoFocus />
-              </div>
-              <div className="form-group">
-                <label htmlFor="passwordField">Password</label>
-                <input type="password" id="passwordField" className="form-control" required />
-              </div>
-              <button className="btn btn-primary btn-block" type="submit">Sign in</button>
-            </form>
-          </div>
-        </div>
+render(
+  <Provider store={store}>
+    <Register />
+  </Provider>,
+  document.getElementById('root')
+);
 
-      </div>
-
-    </div>
-  </div>;
-
-export default Login;
+if (module.hot) {
+  module.hot.accept('./store', () => {
+    const nextRootReducer = require('./store'); // eslint-disable-line global-require
+    store.replaceReducer(nextRootReducer);
+  });
+}

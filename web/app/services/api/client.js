@@ -7,6 +7,8 @@ class Client {
 
   register = (payload) => post(`${this.url}/register`, payload)
 
+  login = (payload) => post(`${this.url}/login`, payload)
+
   getBoards = (filters = {}) => get(`${this.url}/user/boards${
     filters ?
       Object.keys(filters)
