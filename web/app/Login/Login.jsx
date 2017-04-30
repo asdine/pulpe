@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { login } from './duck';
+import { login, getErrors } from './duck';
 
-const Login = ({ onSubmit }) => {
+const Login = ({ onSubmit, errors }) => {
   let inputLogin;
   let inputPassword;
 
@@ -37,7 +37,7 @@ const Login = ({ onSubmit }) => {
           <div className="card">
             <div className="card-block">
               <form onSubmit={submit}>
-                <div className="form-group">
+                <div className={`form-group ${errors.err && 'has-danger'}`}>
                   <label htmlFor="loginField">Login or email address</label>
                   <input
                     type="text"
@@ -48,7 +48,7 @@ const Login = ({ onSubmit }) => {
                     ref={(node) => { inputLogin = node; }}
                   />
                 </div>
-                <div className="form-group">
+                <div className={`form-group ${errors.err && 'has-danger'}`}>
                   <label htmlFor="passwordField">Password</label>
                   <input
                     type="password"
@@ -74,7 +74,9 @@ const Login = ({ onSubmit }) => {
 };
 
 export default connect(
-  null,
+  (state) => ({
+    errors: getErrors(state),
+  }),
   {
     onSubmit: login
   }
