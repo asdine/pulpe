@@ -3,12 +3,15 @@ PACKAGES        := $(shell glide novendor)
 
 .PHONY: all build $(NAME) deps install gen test testrace
 
-all: build
-
-build: $(NAME)
+all: $(NAME)
 
 $(NAME):
 	go install ./cmd/$@
+
+buildstatic:
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo ./cmd/pulpe
+
+build: clean buildstatic dist docker
 
 deps:
 	glide up
@@ -24,3 +27,12 @@ test:
 
 testrace:
 	go test -v -race -cover $(PACKAGES)
+
+dist:
+	cd web/ && yarn run build:prod
+
+docker:
+	docker build -t blankrobot/pulpe .
+
+clean:
+	rm -fr dist/
