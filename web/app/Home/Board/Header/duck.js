@@ -17,7 +17,7 @@ const redirectOnBoardDeletionEpic = (action$, store) => action$.ofType(successOf
       if (boards && boards.length > 0) {
         browserHistory.push(`/${boards[0].owner.login}/${boards[0].slug}`);
       } else {
-        browserHistory.push('/');
+        window.location.replace('/');
       }
     }, 450)
   )

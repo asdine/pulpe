@@ -194,7 +194,7 @@ export default connect(
         dispatch(closeSub(lastOpened));
       } else {
         dispatch(hideModal());
-        browserHistory.push(`/${board.slug}`);
+        browserHistory.push(`/${board.owner.login}/${board.slug}`);
       }
     },
     init: () => dispatch(closeAllSubs()),

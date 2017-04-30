@@ -7,7 +7,7 @@ import { DELETE } from '@/Home/Board/List/Card/duck';
 const closeCardModalOnDeleteSuccessEpic = (action$, store) => action$.ofType(successOf(DELETE))
   .do(() => {
     const board = getBoardSelector(store.getState());
-    browserHistory.push(`/${board.slug}`);
+    browserHistory.push(`/${board.owner.login}/${board.slug}`);
   })
   .ignoreElements();
 
