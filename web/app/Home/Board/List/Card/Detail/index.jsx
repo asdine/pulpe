@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Button, ModalBody } from 'reactstrap';
+import { Button, Modal, ModalBody } from 'reactstrap';
 import { browserHistory } from 'react-router';
-import Modal from '@/components/Modal';
 import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck';
 import Sub, { SubOpener, SubClosed, SubOpened } from '@/components/Sub';
 import { subsStillOpened, popSub, closeSub, closeAllSubs, getLastOpened } from '@/components/Sub/duck';
@@ -189,6 +188,7 @@ export default connect(
   },
   (dispatch) => ({
     toggle: ({ stillOpened, lastOpened, board }) => {
+      console.log('ICI');
       if (stillOpened) {
         dispatch(popSub());
         dispatch(closeSub(lastOpened));
