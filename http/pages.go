@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
+	"github.com/blankrobot/pulpe"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -27,6 +29,7 @@ func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool
 
 	mux.HandleFunc("/join", h.handleRegister)
 	mux.HandleFunc("/login", h.handleLogin)
+	mux.HandleFunc("/logout", h.handleLogout)
 
 	router := httprouter.New()
 	router.GET("/:owner", h.handleBoardPage)
@@ -80,6 +83,32 @@ func (h *pageHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.render(w, "login.tmpl.html", map[string]string{
 		"Title": "Sign in",
 	})
+}
+
+func (h *pageHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("pulpesid")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	session := h.connect(r)
+	defer session.Close()
+
+	err = session.UserSessionService().DeleteSession(cookie.Value)
+	if err != nil && err != pulpe.ErrUserSessionUnknownID {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "pulpesid",
+		Expires: time.Now().UTC(),
+		Path:    "/",
+	})
+
+	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
 func (h *pageHandler) handleBoardPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

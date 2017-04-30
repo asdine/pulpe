@@ -47,6 +47,7 @@ type UserSessionService interface {
 	CreateSession(*User) (*UserSession, error)
 	GetSession(id string) (*UserSession, error)
 	Login(loginOrEmail, password string) (*UserSession, error)
+	DeleteSession(id string) error
 }
 
 // Authenticator represents a service for authenticating users.

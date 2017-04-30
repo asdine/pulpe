@@ -48,6 +48,9 @@ type UserSessionService struct {
 
 	LoginFn      func(login, passwd string) (*pulpe.UserSession, error)
 	LoginInvoked bool
+
+	DeleteSessionFn      func(id string) error
+	DeleteSessionInvoked bool
 }
 
 // CreateSession runs CreateSessionFn and sets CreateSessionInvoked to true when invoked.
@@ -66,4 +69,10 @@ func (s *UserSessionService) GetSession(sid string) (*pulpe.UserSession, error) 
 func (s *UserSessionService) Login(login, passwd string) (*pulpe.UserSession, error) {
 	s.LoginInvoked = true
 	return s.LoginFn(login, passwd)
+}
+
+// DeleteSession runs DeleteSessionFn and sets DeleteSessionInvoked to true when invoked.
+func (s *UserSessionService) DeleteSession(id string) error {
+	s.DeleteSessionInvoked = true
+	return s.DeleteSessionFn(id)
 }

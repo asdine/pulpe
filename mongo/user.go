@@ -271,6 +271,15 @@ func (s *UserSessionService) Login(loginOrEmail, password string) (*pulpe.UserSe
 	return s.CreateSession(&pulpe.User{ID: id})
 }
 
+// DeleteSession removes the given session.
+func (s *UserSessionService) DeleteSession(id string) error {
+	err := s.session.db.C(userSessionCol).RemoveId(id)
+	if err == mgo.ErrNotFound {
+		return pulpe.ErrUserSessionUnknownID
+	}
+	return err
+}
+
 // Ensure Authenticator implements pulpe.Authenticator.
 var _ pulpe.Authenticator = new(Authenticator)
 

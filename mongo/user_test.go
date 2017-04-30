@@ -263,3 +263,34 @@ func TestUserSessionService_GetSession(t *testing.T) {
 		require.Equal(t, pulpe.ErrUserSessionUnknownID, err)
 	})
 }
+
+func TestUserSessionService_DeleteSession(t *testing.T) {
+	sessions, cleanup := MustGetSessions(t)
+	defer cleanup()
+
+	t.Run("OK", func(t *testing.T) {
+		s := sessions.NoAuth.UserSessionService()
+
+		u := pulpe.User{
+			ID: "id",
+		}
+
+		us, err := s.CreateSession(&u)
+		require.NoError(t, err)
+
+		err = s.DeleteSession(us.ID)
+		require.NoError(t, err)
+
+		us, err = s.GetSession(us.ID)
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrUserSessionUnknownID, err)
+	})
+
+	t.Run("UnknownSession", func(t *testing.T) {
+		s := sessions.NoAuth.UserSessionService()
+
+		err := s.DeleteSession("somesid")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrUserSessionUnknownID, err)
+	})
+}
