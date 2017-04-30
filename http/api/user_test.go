@@ -229,3 +229,55 @@ func testUserHandler_Login_ErrValidation(t *testing.T) {
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestUserHandler_Me(t *testing.T) {
+	t.Run("OK", testUserHandler_Me_OK)
+	t.Run("NotFound", testUserHandler_Me_UserAuthenticationFailed)
+	t.Run("ErrInternal", testUserHandler_Me_UnexpectedError)
+}
+
+func testUserHandler_Me_OK(t *testing.T) {
+	c := mock.NewClient()
+
+	c.Session.AuthenticateFn = func() (*pulpe.User, error) {
+		return &pulpe.User{
+			ID: "123",
+		}, nil
+	}
+
+	h := newHandler(c)
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/api/me", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.JSONEq(t, `{"email":"", "id":"123", "createdAt":"0001-01-01T00:00:00Z", "fullName":"", "login":""}`, w.Body.String())
+}
+
+func testUserHandler_Me_UserAuthenticationFailed(t *testing.T) {
+	c := mock.NewClient()
+	h := newHandler(c)
+
+	c.Session.AuthenticateFn = func() (*pulpe.User, error) {
+		return nil, pulpe.ErrUserAuthenticationFailed
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/api/me", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func testUserHandler_Me_UnexpectedError(t *testing.T) {
+	c := mock.NewClient()
+	h := newHandler(c)
+
+	c.Session.AuthenticateFn = func() (*pulpe.User, error) {
+		return nil, errors.New("unexpected error")
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "/api/me", nil)
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}

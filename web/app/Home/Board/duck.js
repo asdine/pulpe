@@ -21,9 +21,10 @@ const boardSchema = new schema.Entity('boards', {
 });
 
 // action creators
-export const fetchBoard = (id) => ({
+export const fetchBoard = (owner, slug) => ({
   type: requestOf(FETCH),
-  id
+  owner,
+  slug
 });
 
 export const updateBoard = ({ id, ...patch }) => ({
@@ -46,7 +47,7 @@ export const patchBoard = ({ id, ...patch }) => ({
 // epics
 const fetchBoardEpic = ajaxEpic(
   FETCH,
-  action => client.getBoard(action.id),
+  action => client.getBoard(action.owner, action.slug),
   boardSchema
 );
 

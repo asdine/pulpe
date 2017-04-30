@@ -22,6 +22,7 @@ func registerUserHandler(router *httprouter.Router, c pulpeHttp.Connector) {
 
 	router.HandlerFunc("POST", "/api/register", h.handleUserRegistration)
 	router.HandlerFunc("POST", "/api/login", h.handleUserLogin)
+	router.HandlerFunc("GET", "/api/me", h.handleUserMe)
 }
 
 // userHandler represents an HTTP API handler for users.
@@ -114,6 +115,22 @@ func (h *userHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+// handleUserMe returns the current user information.
+func (h *userHandler) handleUserMe(w http.ResponseWriter, r *http.Request) {
+	session := h.connect(r)
+	defer session.Close()
+
+	user, err := session.Authenticate()
+	switch err {
+	case nil:
+		encodeJSON(w, user, http.StatusOK, h.logger)
+	case pulpe.ErrUserAuthenticationFailed:
+		Error(w, err, http.StatusUnauthorized, h.logger)
+	default:
+		Error(w, err, http.StatusInternalServerError, h.logger)
+	}
 }
 
 // UserRegistrationRequest is used to create a user.

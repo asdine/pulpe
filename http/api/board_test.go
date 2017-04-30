@@ -26,7 +26,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 	// Mock service.
 	c.BoardService.BoardsFn = func() ([]*pulpe.Board, error) {
 		return []*pulpe.Board{
-			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now, OwnerID: "123"},
+			&pulpe.Board{ID: "id", Name: "name", Slug: "slug", CreatedAt: mock.Now, UpdatedAt: &mock.Now, Owner: &pulpe.User{ID: "123"}},
 		}, nil
 	}
 
@@ -42,7 +42,7 @@ func testBoardHandler_Boards_OK(t *testing.T) {
 			"id": "id",
 			"name": "name",
 			"slug": "slug",
-			"ownerID": "123",
+			"owner": {"fullName":"", "login":"", "email":"", "id":"123", "createdAt":"0001-01-01T00:00:00Z"},
       "createdAt": `+string(date)+`,
       "updatedAt": `+string(date)+`
 	  }
@@ -174,8 +174,8 @@ func testBoardHandler_Board_OK(t *testing.T) {
 		require.Equal(t, "XXX", slug)
 		require.Len(t, options, 2)
 		return &pulpe.Board{
-			ID:      "XXX",
-			OwnerID: "123",
+			ID:    "XXX",
+			Owner: &pulpe.User{ID: "123"},
 		}, nil
 	}
 

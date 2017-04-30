@@ -16,7 +16,7 @@ class BoardIndex extends Component {
     const { boards = [] } = this.props;
 
     if (boards.length > 0) {
-      browserHistory.push(`/${boards[0].slug}`);
+      browserHistory.push(`/${boards[0].owner.login}/${boards[0].slug}`);
     }
   }
 

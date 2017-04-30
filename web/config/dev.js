@@ -54,13 +54,10 @@ export default merge(baseConfig, {
 
   devServer: {
     hot: true,
-    publicPath: '/',
+    publicPath: '/assets/',
     historyApiFallback: true,
     proxy: {
-      '?(/)': 'http://localhost:4000',
-      '/join': 'http://localhost:4000',
-      '/login': 'http://localhost:4000',
-      '/api': 'http://localhost:4000'
+      '/!(assets)**': 'http://localhost:4000',
     },
     host: '0.0.0.0'
   }

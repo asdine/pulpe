@@ -13,7 +13,7 @@ type Board struct {
 	Slug      string     `json:"slug"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-	OwnerID   string     `json:"ownerID"`
+	Owner     *User      `json:"owner,omitempty"`
 	Name      string     `json:"name"`
 	Lists     []*List    `json:"lists,omitempty"`
 	Cards     []*Card    `json:"cards,omitempty"`

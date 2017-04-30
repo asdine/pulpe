@@ -11,7 +11,7 @@ var Now = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 // NewClient instantiates a mock Client.
 func NewClient() *Client {
-	return &Client{}
+	return new(Client)
 }
 
 // Client represents a mock client.
@@ -22,18 +22,19 @@ type Client struct {
 	BoardService       BoardService
 	UserService        UserService
 	UserSessionService UserSessionService
+	Session            Session
 }
 
 // Connect creates a mock Session.
 func (c *Client) Connect() pulpe.Session {
-	return &Session{
-		now:                Now,
-		cardService:        &c.CardService,
-		listService:        &c.ListService,
-		boardService:       &c.BoardService,
-		userService:        &c.UserService,
-		userSessionService: &c.UserSessionService,
-	}
+	c.Session.now = Now
+	c.Session.boardService = &c.BoardService
+	c.Session.cardService = &c.CardService
+	c.Session.listService = &c.ListService
+	c.Session.boardService = &c.BoardService
+	c.Session.userService = &c.UserService
+	c.Session.userSessionService = &c.UserSessionService
+	return &c.Session
 }
 
 // Session represents a mock connection to the database.

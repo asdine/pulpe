@@ -1,6 +1,7 @@
 import { combineEpics } from 'redux-observable';
+import { Observable } from 'rxjs/Observable';
 import client from '@/services/api/client';
-import ajaxEpic, { requestOf } from '@/services/api/ajaxEpic';
+import ajaxEpic, { successOf, requestOf } from '@/services/api/ajaxEpic';
 
 export const DOMAIN = 'pulpe/login';
 
@@ -20,6 +21,11 @@ const loginEpic = ajaxEpic(
   action => client.login(action.payload)
 );
 
+const redirectOnLoginSuccessEpic = action$ => action$.ofType(successOf(LOGIN))
+  .do(() => window.location.replace('/'))
+  .mergeMap(() => Observable.empty());
+
+
 const reducer = (state = {}) => state;
 
 export default {
@@ -28,5 +34,6 @@ export default {
 
 export const epics = combineEpics(
   loginEpic,
+  redirectOnLoginSuccessEpic
 );
 

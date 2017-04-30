@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { setActiveBoardID } from '@/Home/duck';
+import { setActiveBoard } from '@/Home/duck';
 
 class BoardRoute extends Component {
   componentDidMount() {
-    this.props.setActiveBoardID(this.props.boardSlug);
+    this.props.setActiveBoard(this.props.owner, this.props.boardSlug);
   }
 
   componentDidUpdate() {
-    this.props.setActiveBoardID(this.props.boardSlug);
+    this.props.setActiveBoard(this.props.owner, this.props.boardSlug);
   }
 
   render() {
@@ -19,7 +19,8 @@ class BoardRoute extends Component {
 export default connect(
   (state, { params }) => ({
     boardSlug: params.board,
+    owner: params.owner,
   }), {
-    setActiveBoardID,
+    setActiveBoard,
   },
 )(BoardRoute);

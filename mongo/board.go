@@ -24,13 +24,13 @@ type board struct {
 }
 
 // toPulpeBoard creates a pulpe board from a mongo board.
-func (b *board) toPulpeBoard() *pulpe.Board {
+func (b *board) toPulpeBoard(user *pulpe.User) *pulpe.Board {
 	p := pulpe.Board{
 		ID:        b.ID.Hex(),
 		CreatedAt: b.ID.Time().UTC(),
 		Name:      b.Name,
 		Slug:      b.Slug,
-		OwnerID:   b.OwnerID,
+		Owner:     user,
 	}
 
 	if b.UpdatedAt != nil {
@@ -79,7 +79,7 @@ func (s *BoardService) CreateBoard(bc *pulpe.BoardCreation) (*pulpe.Board, error
 		return nil, err
 	}
 
-	return b.toPulpeBoard(), nil
+	return b.toPulpeBoard(user), nil
 }
 
 // Board returns a Board by id.
@@ -98,7 +98,7 @@ func (s *BoardService) Board(id string, options ...pulpe.BoardGetOption) (*pulpe
 		return nil, err
 	}
 
-	board := b.toPulpeBoard()
+	board := b.toPulpeBoard(user)
 
 	var opts pulpe.BoardGetOptions
 
@@ -147,7 +147,7 @@ func (s *BoardService) BoardByOwnerAndSlug(owner, slug string, options ...pulpe.
 		return nil, pulpe.ErrBoardNotFound
 	}
 
-	board := b.toPulpeBoard()
+	board := b.toPulpeBoard(user)
 
 	var opts pulpe.BoardGetOptions
 
@@ -186,7 +186,7 @@ func (s *BoardService) Boards() ([]*pulpe.Board, error) {
 
 	boards := make([]*pulpe.Board, len(bs))
 	for i := range bs {
-		boards[i] = bs[i].toPulpeBoard()
+		boards[i] = bs[i].toPulpeBoard(user)
 	}
 
 	return boards, nil
@@ -260,7 +260,7 @@ func (s *BoardService) UpdateBoard(id string, u *pulpe.BoardUpdate) (*pulpe.Boar
 		return nil, err
 	}
 
-	return b.toPulpeBoard(), nil
+	return b.toPulpeBoard(user), nil
 }
 
 type boardStore struct {

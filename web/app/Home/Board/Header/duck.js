@@ -1,10 +1,10 @@
 import { browserHistory } from 'react-router';
 import { combineEpics } from 'redux-observable';
 import { Observable } from 'rxjs/Observable';
-import { successOf } from '../../../services/api/ajaxEpic';
-import { UPDATE, DELETE } from '../duck';
-import { getBoards } from '../../Menu/BoardList/duck';
-import { hideModal } from '../../../components/Modal/duck';
+import { successOf } from '@/services/api/ajaxEpic';
+import { UPDATE, DELETE } from '@/Home/Board/duck';
+import { getBoards } from '@/Home/Menu/BoardList/duck';
+import { hideModal } from '@/components/Modal/duck';
 
 // types
 export const MODAL_DELETE_BOARD = 'pulpe/home/board/header/modalDeleteBoard';

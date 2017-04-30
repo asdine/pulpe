@@ -1,10 +1,14 @@
 package http
 
 import (
+	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 // RegisterPageHandler register the routes for serving pages.
@@ -23,12 +27,18 @@ func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool
 
 	mux.HandleFunc("/join", h.handleRegister)
 	mux.HandleFunc("/login", h.handleLogin)
+
+	router := httprouter.New()
+	router.GET("/:owner", h.handleBoardPage)
+	router.GET("/:owner/:board", h.handleBoardPage)
+	router.GET("/:owner/:board/:list/:card", h.handleBoardPage)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
+		if r.URL.Path == "/" {
+			h.handleIndex(w, r)
 			return
 		}
-		h.handleIndex(w, r)
+
+		router.ServeHTTP(w, r)
 	})
 }
 
@@ -51,15 +61,13 @@ func (h *pageHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
 	session := h.connect(r)
 	defer session.Close()
 
-	_, err := session.Authenticate()
+	user, err := session.Authenticate()
 	if err != nil {
-		http.Redirect(w, r, "/join", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 
-	h.render(w, "index.tmpl.html", map[string]string{
-		"Title": "Pulpe",
-	})
+	http.Redirect(w, r, "/"+user.Login, http.StatusFound)
 }
 
 func (h *pageHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -72,4 +80,43 @@ func (h *pageHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	h.render(w, "login.tmpl.html", map[string]string{
 		"Title": "Sign in",
 	})
+}
+
+func (h *pageHandler) handleBoardPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	session := h.connect(r)
+	defer session.Close()
+
+	user, err := session.Authenticate()
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	if user.Login != ps.ByName("owner") {
+		http.NotFound(w, r)
+		return
+	}
+
+	if ps.ByName("board") != "" {
+		h.render(w, "board.tmpl.html", map[string]string{
+			"Title": "",
+		})
+		return
+	}
+
+	boards, err := session.BoardService().Boards()
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if len(boards) == 0 {
+		h.render(w, "board.tmpl.html", map[string]string{
+			"Title": "",
+		})
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/%s/%s", user.Login, boards[0].Slug), http.StatusFound)
 }

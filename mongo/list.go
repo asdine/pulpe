@@ -85,7 +85,7 @@ func (s *ListService) CreateList(boardID string, lc *pulpe.ListCreation) (*pulpe
 		return nil, err
 	}
 
-	if board.OwnerID != user.ID {
+	if board.Owner.ID != user.ID {
 		return nil, pulpe.ErrBoardNotFound
 	}
 

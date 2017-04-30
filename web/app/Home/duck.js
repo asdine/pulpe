@@ -3,12 +3,14 @@ import { Map } from 'immutable';
 export const DOMAIN = 'pulpe/home';
 
 // types
-const SET_ACTIVE_BOARD_ID = `${DOMAIN}/setActiveBoardID`;
+const SET_ACTIVE_BOARD = `${DOMAIN}/setActiveBoard`;
 
 // action creators
-export const setActiveBoardID = (id) => ({
-  type: SET_ACTIVE_BOARD_ID,
-  activeBoardID: id
+export const setActiveBoard = (owner, slug) => ({
+  type: SET_ACTIVE_BOARD,
+  activeBoard: {
+    owner, slug
+  },
 });
 
 // reducer
@@ -16,16 +18,9 @@ const initialState = new Map({});
 
 const reducer = (state = initialState, action) => {
   switch (action.type) {
-    case SET_ACTIVE_BOARD_ID: {
-      return state.set('activeBoardID', action.activeBoardID);
+    case SET_ACTIVE_BOARD: {
+      return state.set('activeBoard', action.activeBoard);
     }
-    // TODO: add this
-    // case successType(FETCH_CARD): {
-    //   return {
-    //     ...state,
-    //     activeBoard: action.response.entities.cards[action.response.result].boardID
-    //   };
-    // }
     default:
       return state;
   }
@@ -35,4 +30,4 @@ export default {
   [DOMAIN]: reducer
 };
 
-export const getActiveBoardID = (state) => state[DOMAIN].get('activeBoardID');
+export const getActiveBoard = (state) => state[DOMAIN].get('activeBoard');

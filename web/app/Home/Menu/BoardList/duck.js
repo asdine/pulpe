@@ -40,13 +40,12 @@ const createBoardEpic = ajaxEpic(
   boardSchema
 );
 
+
 const redirectOnBoardCreationEpic = action$ => action$.ofType(successOf(CREATE))
-  .do((action) =>
-    setTimeout(() =>
-      browserHistory.push(`/${action.response.entities.boards[action.response.result].slug}`),
-      450
-    )
-  )
+  .do((action) => {
+    const board = action.response.entities.boards[action.response.result];
+    browserHistory.push(`/${board.owner.login}/${board.slug}`);
+  })
   .mapTo({ type: '' });
 
 const closeModalOnCreationEpic = action$ => action$.ofType(successOf(CREATE))

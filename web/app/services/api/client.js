@@ -16,7 +16,7 @@ class Client {
         .reduce((a, c) => a + c, '')
       : ''}`)
 
-  getBoard = (id) => get(`${this.url}/boards/${id}`)
+  getBoard = (owner, slug) => get(`${this.url}/boards/${owner}/${slug}`)
 
   createBoard = ({ name }) => post(`${this.url}/user/boards`, {
     name

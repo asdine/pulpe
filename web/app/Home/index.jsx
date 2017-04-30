@@ -12,7 +12,7 @@ import Home from './Home';
 render(
   <Provider store={store}>
     <Router history={browserHistory}>
-      <Route path="/" component={Home}>
+      <Route path="/:owner" component={Home}>
         <IndexRoute component={Index} />
         <Route path="/:owner/:board" component={Board}>
           <Route path="/:owner/:board/:list/:card" component={Card} />

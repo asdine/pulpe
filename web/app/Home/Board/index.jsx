@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Button } from 'reactstrap';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import { getActiveBoardID } from '@/Home/duck';
+import { getActiveBoard } from '@/Home/duck';
 import { showModal } from '@/components/Modal/duck';
 import BoardHeader from './Header';
 import DragDropContainer from './DragDropContainer';
@@ -14,18 +14,18 @@ import { getListIDsSelector, MODAL_CREATE_LIST } from './List/duck';
 @DragDropContext(HTML5Backend)
 class Board extends Component {
   componentDidMount() {
-    const { fetch, id } = this.props;
-    if (!id) {
+    const { fetch, activeBoard } = this.props;
+    if (!activeBoard) {
       return;
     }
 
-    fetch(id);
+    fetch(activeBoard.owner, activeBoard.slug);
   }
 
   componentDidUpdate(prevProps) {
-    const { fetch, id } = this.props;
-    if (id && id !== prevProps.id) {
-      fetch(id);
+    const { fetch, activeBoard } = this.props;
+    if (activeBoard && activeBoard !== prevProps.activeBoard) {
+      fetch(activeBoard.owner, activeBoard.slug);
     }
   }
 
@@ -64,7 +64,7 @@ const BoardBody = ({ board, lists = [], onCreate }) => (
 
 export default connect(
   (state) => ({
-    id: getActiveBoardID(state),
+    activeBoard: getActiveBoard(state),
     board: getBoardSelector(state),
     lists: getListIDsSelector(state)
   }),
