@@ -5,7 +5,7 @@
     "build:prod": "node -r babel-register ./node_modules/webpack/bin/webpack --env=prod --optimize-minimize --define process.env.NODE_ENV=\"'production'\" --progress --profile --colors",
     "build:dev": "node -r babel-register ./node_modules/webpack/bin/webpack --env=dev --progress --profile --colors",
     "server": "node -r babel-register ./node_modules/webpack-dev-server/bin/webpack-dev-server --env=dev --open --progress --profile --colors",
-    "dev": "concurrently --kill-others -r 'pulpe server --templates ./app/templates --lazy' 'yarn run server'"
+    "dev": "concurrently --kill-others -r 'pulpe server --templates ./app/templates --dev' 'yarn run server'"
   },
   "devDependencies": {
     "babel-core": "^6.22.1",

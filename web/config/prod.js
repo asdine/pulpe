@@ -1,5 +1,6 @@
 import webpack from 'webpack';
 import merge from 'webpack-merge';
+import path from 'path';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import ChunkManifestPlugin from 'chunk-manifest-webpack-plugin';
 import WebpackChunkHash from 'webpack-chunk-hash';
@@ -11,12 +12,14 @@ export default merge(baseConfig, {
   devtool: 'source-map',
 
   output: {
-    publicPath: '/assets/'
+    publicPath: '/assets/',
+    path: path.resolve(__dirname, '../../dist')
   },
 
   entry: {
     home: './app/Home/index.jsx',
     register: './app/Register/index.jsx',
+    login: './app/Login/index.jsx',
     vendor: Object.keys(packageConfig.dependencies)
         .filter(dep => packageConfig.excludedFromBuild.findIndex(exl => exl === dep) === -1)
   },
@@ -59,18 +62,19 @@ export default merge(baseConfig, {
       manifestVariable: 'webpackManifest'
     }),
     new HtmlWebpackPlugin({
-      title: 'Pulpe',
-      filename: 'index.html',
-      template: 'app/index.html',
+      filename: 'board.tmpl.html',
+      template: 'app/templates/board.tmpl.html',
       chunks: ['manifest', 'home', 'vendor'],
-      chunksSortMode: 'dependency'
     }),
     new HtmlWebpackPlugin({
-      title: 'Pulpe',
-      filename: 'register.html',
-      template: 'app/index.html',
+      filename: 'register.tmpl.html',
+      template: 'app/templates/register.tmpl.html',
       chunks: ['manifest', 'register', 'vendor'],
-      chunksSortMode: 'dependency'
-    })
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'login.tmpl.html',
+      template: 'app/templates/login.tmpl.html',
+      chunks: ['manifest', 'login', 'vendor'],
+    }),
   ]
 });

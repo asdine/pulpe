@@ -57,9 +57,9 @@ func NewServerCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&s.addr, "http", ":4000", "HTTP address")
 	cmd.Flags().StringVar(&s.mongoURI, "mongo", "mongodb://localhost:27017/pulpe", "MongoDB uri")
-	cmd.Flags().StringVar(&s.assetsPath, "assets", "./web/build/assets", "Assets directory")
-	cmd.Flags().StringVar(&s.templatesPath, "templates", "./web/build/templates", "Templates directory")
-	cmd.Flags().BoolVar(&s.lazy, "lazy", false, "Lazy template loading")
+	cmd.Flags().StringVar(&s.assetsPath, "assets", "./dist", "Assets directory")
+	cmd.Flags().StringVar(&s.templatesPath, "templates", "./dist", "Templates directory")
+	cmd.Flags().BoolVar(&s.dev, "dev", false, "Developer mode")
 
 	return &cmd
 }
@@ -70,7 +70,7 @@ type ServerCmd struct {
 	mongoURI      string
 	assetsPath    string
 	templatesPath string
-	lazy          bool
+	dev           bool
 }
 
 // Run creates a bolt client and runs the HTTP server.
@@ -90,7 +90,7 @@ func (c *ServerCmd) Run(cmd *cobra.Command, args []string) error {
 
 	api.Register(mux, connect)
 	http.RegisterStaticHandler(mux, c.assetsPath)
-	http.RegisterPageHandler(mux, connect, c.templatesPath, c.lazy)
+	http.RegisterPageHandler(mux, connect, c.templatesPath, c.dev)
 
 	srv := http.NewServer(c.addr, mux)
 	err = srv.Open()

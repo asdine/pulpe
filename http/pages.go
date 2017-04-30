@@ -14,16 +14,16 @@ import (
 )
 
 // RegisterPageHandler register the routes for serving pages.
-func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool) {
+func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, dev bool) {
 	pattern := filepath.Join(dir, "*.tmpl.html")
 
 	h := pageHandler{
-		lazy:    lazy,
+		dev:     dev,
 		dir:     dir,
 		connect: connect,
 	}
 
-	if !lazy {
+	if !dev {
 		h.templates = template.Must(template.ParseGlob(pattern))
 	}
 
@@ -47,13 +47,13 @@ func RegisterPageHandler(mux *ServeMux, connect Connector, dir string, lazy bool
 
 type pageHandler struct {
 	templates *template.Template
-	lazy      bool
+	dev       bool
 	dir       string
 	connect   Connector
 }
 
 func (h *pageHandler) render(wr io.Writer, name string, data interface{}) {
-	if h.lazy {
+	if h.dev {
 		template.Must(template.ParseFiles(filepath.Join(h.dir, name))).Execute(wr, data)
 	} else {
 		h.templates.ExecuteTemplate(wr, name, data)
@@ -74,14 +74,16 @@ func (h *pageHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *pageHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
-	h.render(w, "register.tmpl.html", map[string]string{
+	h.render(w, "register.tmpl.html", map[string]interface{}{
 		"Title": "Join",
+		"Dev":   h.dev,
 	})
 }
 
 func (h *pageHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
-	h.render(w, "login.tmpl.html", map[string]string{
+	h.render(w, "login.tmpl.html", map[string]interface{}{
 		"Title": "Sign in",
+		"Dev":   h.dev,
 	})
 }
 
@@ -127,8 +129,8 @@ func (h *pageHandler) handleBoardPage(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	if ps.ByName("board") != "" {
-		h.render(w, "board.tmpl.html", map[string]string{
-			"Title": "",
+		h.render(w, "board.tmpl.html", map[string]interface{}{
+			"Dev": h.dev,
 		})
 		return
 	}
@@ -141,8 +143,8 @@ func (h *pageHandler) handleBoardPage(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	if len(boards) == 0 {
-		h.render(w, "board.tmpl.html", map[string]string{
-			"Title": "",
+		h.render(w, "board.tmpl.html", map[string]interface{}{
+			"Dev": h.dev,
 		})
 		return
 	}

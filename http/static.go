@@ -6,7 +6,7 @@ import "net/http"
 func RegisterStaticHandler(mux *ServeMux, path string) {
 	staticHandler := http.StripPrefix("/assets/", http.FileServer(http.Dir(path)))
 
-	mux.HandleFunc("assets/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
