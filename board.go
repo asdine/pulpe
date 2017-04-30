@@ -58,6 +58,6 @@ func WithCards() BoardGetOption {
 // WithLists is used to tell the BoardService to also fetch lists.
 func WithLists() BoardGetOption {
 	return func(b *BoardGetOptions) {
-		b.WithCards = true
+		b.WithLists = true
 	}
 }

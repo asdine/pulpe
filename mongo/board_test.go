@@ -150,6 +150,58 @@ func TestBoardService_Board(t *testing.T) {
 	})
 }
 
+func TestBoardService_BoardByOwnerAndSlug(t *testing.T) {
+	sessions, cleanup := MustGetSessions(t)
+	defer cleanup()
+
+	t.Run("Unauthenticated", func(t *testing.T) {
+		s := sessions.NoAuth.BoardService()
+
+		// Get a board.
+		_, err := s.BoardByOwnerAndSlug("someowner", "someslug")
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrUserAuthenticationFailed, err)
+	})
+
+	t.Run("Exists", func(t *testing.T) {
+		s := sessions.Red.BoardService()
+
+		b := pulpe.BoardCreation{
+			Name: "ZZZ",
+		}
+
+		board, err := s.CreateBoard(&b)
+		require.NoError(t, err)
+
+		list1, err := sessions.Red.ListService().CreateList(board.ID, &pulpe.ListCreation{
+			Name: "List1",
+		})
+		require.NoError(t, err)
+
+		sessions.Red.CardService().CreateCard(list1.ID, &pulpe.CardCreation{
+			Name: "Card1",
+		})
+
+		other, err := s.BoardByOwnerAndSlug(board.Owner.Login, board.Slug)
+		require.NoError(t, err)
+		require.Equal(t, board, other)
+		require.Empty(t, other.Cards)
+		require.Empty(t, other.Lists)
+
+		other, err = s.BoardByOwnerAndSlug(board.Owner.Login, board.Slug, pulpe.WithCards(), pulpe.WithLists())
+		require.NoError(t, err)
+		require.Len(t, other.Cards, 1)
+		require.Len(t, other.Lists, 1)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		s := sessions.Red.BoardService()
+		// Trying to fetch a board that doesn't exist.
+		_, err := s.BoardByOwnerAndSlug("owner", "something")
+		require.Equal(t, pulpe.ErrBoardNotFound, err)
+	})
+}
+
 func TestBoardService_Boards(t *testing.T) {
 	sessions, cleanup := MustGetSessions(t)
 	defer cleanup()
