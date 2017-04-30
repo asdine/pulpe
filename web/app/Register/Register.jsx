@@ -75,6 +75,11 @@ const Register = ({ onSubmit }) => {
               </form>
             </div>
           </div>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div className="card-block">
+              <p className="card-text">Already registered? <a href="/login">Sign in here</a>.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

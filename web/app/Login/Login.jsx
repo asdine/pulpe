@@ -62,6 +62,11 @@ const Login = ({ onSubmit }) => {
               </form>
             </div>
           </div>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div className="card-block">
+              <p className="card-text">New to Pulpe? <a href="/join">Create an account</a>.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
