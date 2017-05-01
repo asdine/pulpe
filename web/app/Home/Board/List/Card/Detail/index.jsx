@@ -188,7 +188,6 @@ export default connect(
   },
   (dispatch) => ({
     toggle: ({ stillOpened, lastOpened, board }) => {
-      console.log('ICI');
       if (stillOpened) {
         dispatch(popSub());
         dispatch(closeSub(lastOpened));

@@ -23,8 +23,10 @@ class Board extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { fetch, activeBoard } = this.props;
-    if (activeBoard && activeBoard !== prevProps.activeBoard) {
+    const { fetch, activeBoard = {} } = this.props;
+
+    if (activeBoard.slug &&
+       (!prevProps.activeBoard || activeBoard.slug !== prevProps.activeBoard.slug || activeBoard.owner !== prevProps.activeBoard.owner)) {
       fetch(activeBoard.owner, activeBoard.slug);
     }
   }
