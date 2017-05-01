@@ -33,10 +33,10 @@ class Detail extends Component {
     fetch(card.id);
   }
 
-  componentDidUpdate(prevProps) {
-    const { fetch, card = {} } = this.props;
+  componentWillReceiveProps(nextProps) {
+    const { fetch, card = {} } = nextProps;
 
-    if (card.id && (!prevProps.card || card.id !== prevProps.card.id)) {
+    if (card.id && (!this.props.card || card.id !== this.props.card.id)) {
       fetch(card.id);
     }
   }
@@ -197,7 +197,7 @@ export default connect(
       }
     },
     init: () => dispatch(closeAllSubs()),
-    fetch: fetchCard,
+    fetch: (id) => dispatch(fetchCard(id)),
     onSave: (id, patch) => {
       if (patch) {
         dispatch(updateCard({ id, ...patch }));
