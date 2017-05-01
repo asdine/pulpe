@@ -78,7 +78,7 @@ func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf(
 		"%s %s %s %d %d %s",
-		r.RemoteAddr,
+		clientIP(r),
 		r.Method,
 		r.URL,
 		rw.status,
