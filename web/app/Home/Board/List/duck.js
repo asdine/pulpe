@@ -27,10 +27,10 @@ export const createList = (boardID, name) => ({
   name
 });
 
-export const updateList = ({ id, ...rest }) => ({
+export const updateList = ({ id, ...patch }) => ({
   type: requestOf(UPDATE),
   id,
-  toUpdate: rest
+  patch
 });
 
 export const deleteList = (id) => ({
