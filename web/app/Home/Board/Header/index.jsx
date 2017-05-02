@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button } from 'reactstrap';
 import { showModal } from '@/components/Modal/duck';
 import Editable from '@/components/Editable';
 import { fetchBoard, updateBoard, patchBoard } from '@/Home/Board/duck';
@@ -16,11 +15,10 @@ const BoardHeader = ({ board = {}, onSave, onDelete }) => (
       <h2>{board.name}</h2>
     </Editable>
     <div className="board-options">
-      <Button
-        color="danger"
-        size="sm"
+      <button
+        className="btn btn-danger btn-sm"
         onClick={() => onDelete(board)}
-      >Delete</Button>
+      >Delete</button>
     </div>
   </header>
 );

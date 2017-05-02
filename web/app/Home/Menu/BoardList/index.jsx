@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router';
-import { Button } from 'reactstrap';
 import Editable from '@/components/Editable';
 import { getActiveBoard } from '@/Home/duck';
 import * as duck from './duck';
@@ -31,7 +30,7 @@ class BoardList extends Component {
         <Editable
           onSave={onCreate}
         >
-          <Button color="secondary" size="sm">+ Create a board</Button>
+          <button className="btn btn-sm btn-secondary" color="secondary" size="sm">+ Create a board</button>
         </Editable>
       </div>
     );

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Button } from 'reactstrap';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { getActiveBoard } from '@/Home/duck';
@@ -62,7 +61,7 @@ const BoardBody = ({ board, lists = [], onCreate }) => (
             onSave={(name) => onCreate(board.id, name)}
             className="plp-list-top-edit"
           >
-            <Button color="success" size="sm" className="btn-block">+ Create a new list</Button>
+            <button className="btn btn-success btn-sm btn-block">+ Create a new list</button>
           </Editable>
         </div>
       </div>

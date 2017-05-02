@@ -1,8 +1,8 @@
 import React from 'react';
-import { Modal } from 'reactstrap';
+import Modal from 'react-modal';
 
 const ConfirmModal = ({ isOpen = false, onConfirm, text, toggle }) =>
-  <Modal isOpen={isOpen} toggle={toggle}>
+  <Modal isOpen={isOpen} onRequestClose={toggle} contentLabel={text}>
     <div className="modal-body">
       <div className="row">
         <div className="col-5 offset-1">

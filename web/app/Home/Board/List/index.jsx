@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button } from 'reactstrap';
 import { showModal } from '@/components/Modal/duck';
 import Editable from '@/components/Editable';
 import { getBoardSelector } from '@/Home/Board/duck';
@@ -40,20 +39,16 @@ const Body = ({ board = {}, list = {}, cards = [], moveToList }) =>
 
 const Footer = ({ list = {}, cards = [], onCreateCard, onDelete }) =>
   <div className="plp-list-bottom">
-    <Button
-      color="secondary"
-      size="sm"
-      className="btn-new-card"
+    <button
+      className="btn btn-secondary btn-sm btn-new-card"
       onClick={() => onCreateCard(list)}
-    >+ Add a new card</Button>
-    <Button
-      color="secondary"
-      size="sm"
-      className="btn-delete-list"
+    >+ Add a new card</button>
+    <button
+      className="btn btn-secondary btn-sm btn-delete-list"
       onClick={() => onDelete(list.id, cards)}
     >
       Delete
-    </Button>
+    </button>
   </div>;
 
 export default connect(

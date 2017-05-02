@@ -1,13 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Modal, ModalBody } from 'reactstrap';
+import Modal from 'react-modal';
 import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck';
 import { MODAL_CREATE_CARD, createCard, getCardsByListIDSelector } from './duck';
 
 const CreateCardModal = (props) => {
   const { isOpen, toggle } = props;
   return (
-    <Modal isOpen={isOpen} toggle={toggle}>
+    <Modal isOpen={isOpen} onRequestClose={toggle} contentLabel="Create a card">
       <CreateCardForm {...props} />
     </Modal>
   );
@@ -72,7 +72,7 @@ const CreateCardForm = (props) => {
           </div>
         </div>
       </div>
-      <ModalBody>
+      <div className="modal-body">
         <div className="form-group">
           <label htmlFor="card-content">Content</label>
           <textarea
@@ -84,7 +84,7 @@ const CreateCardForm = (props) => {
             }}
           />
         </div>
-      </ModalBody>
+      </div>
     </div>
   );
 };

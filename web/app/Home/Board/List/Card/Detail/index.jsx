@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Button, Modal, ModalBody } from 'reactstrap';
+import Modal from 'react-modal';
 import { browserHistory } from 'react-router';
 import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck';
 import Sub, { SubOpener, SubClosed, SubOpened } from '@/components/Sub';
@@ -9,14 +9,15 @@ import { getBoardSelector } from '@/Home/Board/duck';
 import { MODAL_CARD_DETAIL, fetchCard, updateCard, patchCard, deleteCard, getCardBySlugSelector } from '@/Home/Board/List/Card/duck';
 
 const DetailModal = (props) => {
-  const { isOpen, toggle } = props;
+  const { isOpen, toggle, card = {} } = props;
 
   const close = () => toggle(props);
 
   return (
     <Modal
       isOpen={isOpen}
-      toggle={close}
+      onRequestClose={close}
+      contentLabel={card.name || 'Card'}
     >
       <Detail close={close} {...props} />
     </Modal>
@@ -63,26 +64,30 @@ const Header = ({ card, close, onSave, onDelete }) =>
     </div>
 
     <div className="modal-options clearfix">
-      <Button className="close" data-dismiss="modal" aria-label="Close" onClick={close}>
+      <button
+        type="button"
+        className="close btn btn-secondary"
+        data-dismiss="modal"
+        aria-label="Close"
+        onClick={close}
+      >
         <span aria-hidden="true">&times;</span>
-      </Button>
-      <Button
-        color="danger"
-        size="sm"
-        className="float-xs-right"
+      </button>
+      <button
+        className="float-xs-right btn btn-danger btn-sm"
         onClick={() => {
           onDelete(card.id);
         }}
       >
         Delete
-      </Button>
+      </button>
     </div>
   </div>;
 
 const Body = (props) =>
-  <ModalBody>
+  <div className="modal-body">
     <DescEditor {...props} />
-  </ModalBody>;
+  </div>;
 
 const NameEditor = ({ card = {}, onSave, close }) => {
   let input;
