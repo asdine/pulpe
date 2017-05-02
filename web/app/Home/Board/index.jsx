@@ -4,12 +4,12 @@ import { Button } from 'reactstrap';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { getActiveBoard } from '@/Home/duck';
-import { showModal } from '@/components/Modal/duck';
+import Editable from '@/components/Editable';
 import BoardHeader from './Header';
 import DragDropContainer from './DragDropContainer';
 import List from './List';
 import { getBoardSelector, fetchBoard } from './duck';
-import { getListIDsSelector, MODAL_CREATE_LIST } from './List/duck';
+import { getListIDsSelector, createList } from './List/duck';
 
 @DragDropContext(HTML5Backend)
 class Board extends Component {
@@ -55,10 +55,16 @@ const BoardBody = ({ board, lists = [], onCreate }) => (
         <List key={id} id={id} />
       ))}
     </DragDropContainer>
-
     <div className="plp-cards-list-wrapper">
       <div className="plp-cards-list">
-        <Button color="success" size="sm" className="btn-block" onClick={() => onCreate(board)}>+ Create a new list</Button>
+        <div className="plp-list-top">
+          <Editable
+            onSave={(name) => onCreate(board.id, name)}
+            className="plp-list-top-edit"
+          >
+            <Button color="success" size="sm" className="btn-block">+ Create a new list</Button>
+          </Editable>
+        </div>
       </div>
     </div>
   </div>
@@ -72,6 +78,6 @@ export default connect(
   }),
   {
     fetch: fetchBoard,
-    onCreate: (board) => showModal(MODAL_CREATE_LIST, board)
+    onCreate: createList,
   }
 )(Board);
