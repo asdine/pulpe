@@ -1,10 +1,9 @@
 import { schema } from 'normalizr';
 import { browserHistory } from 'react-router';
 import { combineEpics } from 'redux-observable';
-import client from '../../../services/api/client';
-import ajaxEpic, { successOf, requestOf } from '../../../services/api/ajaxEpic';
-import { hideModal } from '../../../components/Modal/duck';
-import { UPDATE as BOARD_UPDATE, DELETE as BOARD_DELETE } from '../../Board/duck';
+import client from '@/services/api/client';
+import ajaxEpic, { successOf, requestOf } from '@/services/api/ajaxEpic';
+import { UPDATE as BOARD_UPDATE, DELETE as BOARD_DELETE } from '@/Home/Board/duck';
 
 const DOMAIN = 'pulpe/home/menu/boardList';
 
@@ -50,13 +49,9 @@ const redirectOnBoardCreationEpic = action$ => action$.ofType(successOf(CREATE))
 const fetchOnBoardUpateEpic = action$ => action$.ofType(successOf(BOARD_UPDATE))
   .mapTo(fetchBoards());
 
-const closeModalOnCreationEpic = action$ => action$.ofType(successOf(CREATE))
-  .map(hideModal);
-
 export const epics = combineEpics(
   fetchBoardsEpic,
   createBoardEpic,
-  closeModalOnCreationEpic,
   redirectOnBoardCreationEpic,
   fetchOnBoardUpateEpic,
 );

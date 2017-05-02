@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router';
 import { Button } from 'reactstrap';
+import Editable from '@/components/Editable';
 import { getActiveBoard } from '@/Home/duck';
-import { showModal } from '@/components/Modal/duck';
 import * as duck from './duck';
 
 class BoardList extends Component {
@@ -28,7 +28,11 @@ class BoardList extends Component {
               </li>
           ))}
         </ul>
-        <Button color="secondary" size="sm" onClick={onCreate}>+ Create a board</Button>
+        <Editable
+          onSave={onCreate}
+        >
+          <Button color="secondary" size="sm">+ Create a board</Button>
+        </Editable>
       </div>
     );
   }
@@ -42,7 +46,7 @@ const mapStateToProps = (state) => ({
 export default connect(
   mapStateToProps,
   {
-    onCreate: () => showModal(duck.MODAL_CREATE_BOARD),
+    onCreate: duck.createBoard,
     fetchBoards: duck.fetchBoards,
   },
 )(BoardList);
