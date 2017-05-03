@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import update from 'react/lib/update';
-import Draggable, { DraggablePreview } from './Draggable';
+import Draggable from './Draggable';
 
 class DragDropContainer extends Component {
   constructor(props) {
@@ -47,7 +47,7 @@ class DragDropContainer extends Component {
   }
 
   render() {
-    const { className, itemClassName } = this.props;
+    const { className, itemClassName, onDrop } = this.props;
     const { items } = this.state;
 
     return (
@@ -61,11 +61,12 @@ class DragDropContainer extends Component {
             index={i}
             findItem={this.findItem}
             moveItem={this.moveItem}
+            onDrop={onDrop}
           >
             {child}
           </Draggable>
         ))}
-        <DraggablePreview items={items} />
+
       </div>
     );
   }

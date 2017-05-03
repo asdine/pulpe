@@ -33,6 +33,7 @@ type CardUpdate struct {
 	Name        *string
 	Description *string
 	Position    *float64
+	ListID      *string
 }
 
 // CardService represents a service for managing cards.

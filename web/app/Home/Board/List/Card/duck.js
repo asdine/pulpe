@@ -1,6 +1,7 @@
 import { schema } from 'normalizr';
 import { combineReducers } from 'redux';
 import { combineEpics } from 'redux-observable';
+import { Observable } from 'rxjs/Observable';
 import client from '@/services/api/client';
 import ajaxEpic, { successOf, requestOf } from '@/services/api/ajaxEpic';
 import { hideModal } from '@/components/Modal/duck';
@@ -14,6 +15,7 @@ export const FETCH = `${DOMAIN}/fetch`;
 export const UPDATE = `${DOMAIN}/update`;
 export const DELETE = `${DOMAIN}/delete`;
 export const PATCH = `${DOMAIN}/patch`;
+export const DROP = `${DOMAIN}/drop`;
 
 export const MODAL_CREATE_CARD = `${DOMAIN}/modalCreateCard`;
 export const MODAL_CARD_DETAIL = `${DOMAIN}/modalCardDetail`;
@@ -22,13 +24,12 @@ export const MODAL_CARD_DETAIL = `${DOMAIN}/modalCardDetail`;
 const cardSchema = new schema.Entity('cards');
 
 // action creators
-export const createCard = ({ boardID, listID, name, description, position }) => ({
-  type: requestOf(CREATE),
+export const createCard = ({ boardID, listID, name, description }) => ({
+  type: CREATE,
   boardID,
   listID,
   name,
   description,
-  position
 });
 
 export const fetchCard = (id) => ({
@@ -54,7 +55,31 @@ export const patchCard = ({ id, ...patch }) => ({
   patch
 });
 
+export const dropCard = (card, index, canceled) => ({
+  type: DROP,
+  card,
+  index,
+  canceled
+});
+
 // epics
+const beforeCreateCardEpic = (action$, store) => action$.ofType(CREATE)
+  .map(action => {
+    const { listID } = action;
+    const cards = getCardsByListIDSelector(store.getState(), listID);
+    let position = 1 << 16;
+
+    if (cards.length !== 0) {
+      position += cards[cards.length - 1].position;
+    }
+
+    return {
+      ...action,
+      position,
+      type: requestOf(CREATE),
+    };
+  });
+
 const createCardEpic = ajaxEpic(
   CREATE,
   action => client.createCard(action),
@@ -84,12 +109,67 @@ const deleteCardEpic = ajaxEpic(
   }))
 );
 
+const onDropCardEpic = (action$, store) => action$.ofType(DROP)
+  .mergeMap(action => {
+    const { card: outDatedCard, index, canceled } = action;
+
+    if (canceled) {
+      return Observable.of(patchCard({
+        id: outDatedCard.id,
+        listID: outDatedCard.listID
+      }));
+    }
+
+    const card = getCardSelector(store.getState(), outDatedCard.id);
+    const cards = getCardsByListIDSelector(store.getState(), card.listID);
+
+    const patch = {
+      id: card.id
+    };
+
+    if (outDatedCard.listID !== card.listID) {
+      patch.listID = card.listID;
+    }
+
+    if (cards[index].id === card.id && !patch.listID) {
+      return Observable.empty();
+    }
+
+    if (cards.length === 1) {
+      patch.position = 1 << 16;
+    } else if (index === 0) {
+      const { position: nextPosition } = cards[0];
+      patch.position = nextPosition / 2;
+    } else if (index < cards.length - 1) {
+      if (card.position > cards[index].position) {
+        const { position: prevPosition } = cards[index - 1];
+        const { position: nextPosition } = cards[index];
+        patch.position = prevPosition + ((nextPosition - prevPosition) / 2);
+      } else {
+        const { position: prevPosition } = cards[index];
+        const { position: nextPosition } = cards[index + 1];
+        patch.position = prevPosition + ((nextPosition - prevPosition) / 2);
+      }
+    } else {
+      const { position: prevPosition } = cards[index];
+      patch.position = prevPosition + (1 << 16);
+    }
+
+    if (patch.position === card.position && !patch.listID) {
+      return Observable.empty();
+    }
+
+    return Observable.of(patchCard(patch), updateCard(patch));
+  });
+
 export const epics = combineEpics(
+  beforeCreateCardEpic,
   createCardEpic,
   fetchCardEpic,
   closeCreateCardModalOnSuccessEpic,
   updateCardEpic,
   deleteCardEpic,
+  onDropCardEpic,
 );
 
 // reducer
@@ -160,4 +240,5 @@ export const getCardBySlugSelector = (state, slug) =>
 export const getCardsByListIDSelector = (state, listID) =>
   state[DOMAIN].ids
     .map(id => state[DOMAIN].byID[id])
+    .sort((a, b) => a.position > b.position)
     .filter(c => c.listID === listID);

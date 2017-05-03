@@ -11,10 +11,8 @@ export const showModal = (modalType, modalProps = {}) => ({
   modalProps
 });
 
-export const hideModal = (modalType, modalProps = {}) => ({
+export const hideModal = () => ({
   type: HIDE_MODAL,
-  modalType,
-  modalProps
 });
 
 // reducer

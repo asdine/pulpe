@@ -331,6 +331,46 @@ func TestCardService_UpdateCard(t *testing.T) {
 		require.Zero(t, updatedCard.Position)
 	})
 
+	t.Run("Change list", func(t *testing.T) {
+		s := sessions.Red.CardService()
+
+		c := pulpe.CardCreation{
+			Name:        "name",
+			Description: "description",
+			Position:    1,
+		}
+
+		list1 := newList(t, sessions.Red).ID
+		list2 := newList(t, sessions.Red).ID
+		list3 := newList(t, sessions.Blue).ID
+
+		// Create new card.
+		card, err := s.CreateCard(list1, &c)
+		require.NoError(t, err)
+
+		// Update the listID for an existing list.
+		updatedCard, err := s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			ListID: &list2,
+		})
+		require.NoError(t, err)
+		require.Equal(t, list2, updatedCard.ListID)
+
+		// Update the listID for an existing list that's not ours.
+		_, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			ListID: &list3,
+		})
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrListNotFound, err)
+
+		// Update the listID for a non existing list.
+		listID := "somelist"
+		_, err = s.UpdateCard(card.ID, &pulpe.CardUpdate{
+			ListID: &listID,
+		})
+		require.Error(t, err)
+		require.Equal(t, pulpe.ErrListNotFound, err)
+	})
+
 	t.Run("Bad user", func(t *testing.T) {
 		s1 := sessions.Red.CardService()
 		s2 := sessions.Blue.CardService()

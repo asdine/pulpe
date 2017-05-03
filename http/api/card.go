@@ -132,6 +132,8 @@ func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 		encodeJSON(w, card, http.StatusOK, h.logger)
 	case pulpe.ErrCardNotFound:
 		Error(w, err, http.StatusNotFound, h.logger)
+	case pulpe.ErrListNotFound:
+		Error(w, validation.AddError(nil, "listID", err), http.StatusBadRequest, h.logger)
 	case pulpe.ErrUserAuthenticationFailed:
 		Error(w, err, http.StatusUnauthorized, h.logger)
 	default:
@@ -174,6 +176,7 @@ type CardUpdateRequest struct {
 	Name        *string  `json:"name" valid:"stringlength(1|64)"`
 	Description *string  `json:"description" valid:"stringlength(1|100000)"`
 	Position    *float64 `json:"position"`
+	ListID      *string  `json:"listID"`
 }
 
 // Validate card update payload.
@@ -203,5 +206,6 @@ func (c *CardUpdateRequest) Validate() (*pulpe.CardUpdate, error) {
 		Name:        c.Name,
 		Description: c.Description,
 		Position:    c.Position,
+		ListID:      c.ListID,
 	}, nil
 }

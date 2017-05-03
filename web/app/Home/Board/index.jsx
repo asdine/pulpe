@@ -7,6 +7,7 @@ import Editable from '@/components/Editable';
 import BoardHeader from './Header';
 import DragDropContainer from './DragDropContainer';
 import List from './List';
+import { DraggablePreview } from './List/Draggable';
 import { getBoardSelector, fetchBoard } from './duck';
 import { getListIDsSelector, createList } from './List/duck';
 
@@ -54,6 +55,7 @@ const BoardBody = ({ board, lists = [], onCreate }) => (
         <List key={id} id={id} />
       ))}
     </DragDropContainer>
+    <DraggablePreview board={board} lists={lists} />
     <div className="plp-cards-list-wrapper">
       <div className="plp-cards-list">
         <div className="plp-list-top">

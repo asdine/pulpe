@@ -305,6 +305,7 @@ func TestCardHandler_UpdateCard(t *testing.T) {
 	t.Run("ErrInvalidJSON", testCardHandler_UpdateCard_ErrInvalidJSON)
 	t.Run("Not found", testCardHandler_UpdateCard_NotFound)
 	t.Run("Validation error", testCardHandler_UpdateCard_ErrValidation)
+	t.Run("List not found", testCardHandler_UpdateCard_ListNotFound)
 	t.Run("Internal error", testCardHandler_UpdateCard_InternalError)
 }
 
@@ -321,11 +322,14 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 		require.Zero(t, *u.Description)
 		require.NotNil(t, u.Position)
 		require.Zero(t, *u.Position)
+		require.NotNil(t, u.ListID)
+		require.Equal(t, "1234", *u.ListID)
 		return &pulpe.Card{
 			ID:          "XXX",
 			Name:        *u.Name,
 			Description: *u.Description,
 			Position:    *u.Position,
+			ListID:      *u.ListID,
 			OwnerID:     "PPP",
 			CreatedAt:   mock.Now,
 			UpdatedAt:   &mock.Now,
@@ -336,7 +340,8 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
     "name": "new name",
     "description": "",
-    "position": 0
+    "position": 0,
+		"listID": "1234"
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
@@ -348,7 +353,7 @@ func testCardHandler_UpdateCard_OK(t *testing.T) {
 		"slug": "",
 		"description": "",
 		"position": 0,
-    "listID": "",
+    "listID": "1234",
     "boardID": "",
 		"ownerID": "PPP",
 		"createdAt": `+string(date)+`,
@@ -394,6 +399,22 @@ func testCardHandler_UpdateCard_NotFound(t *testing.T) {
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func testCardHandler_UpdateCard_ListNotFound(t *testing.T) {
+	c := mock.NewClient()
+	h := newHandler(c)
+
+	c.CardService.UpdateCardFn = func(id string, u *pulpe.CardUpdate) (*pulpe.Card, error) {
+		return nil, pulpe.ErrListNotFound
+	}
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("PATCH", "/api/cards/XXX", bytes.NewReader([]byte(`{
+    "listID": "1234"
+  }`)))
+	h.ServeHTTP(w, r)
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func testCardHandler_UpdateCard_InternalError(t *testing.T) {

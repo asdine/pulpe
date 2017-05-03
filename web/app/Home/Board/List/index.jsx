@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import { showModal } from '@/components/Modal/duck';
 import Editable from '@/components/Editable';
 import { getBoardSelector } from '@/Home/Board/duck';
+import Draggable from './Draggable';
 import { patchList, updateList, deleteList, getListSelector, MODAL_DELETE_LIST } from './duck';
-import { getCardsByListIDSelector, patchCard, MODAL_CREATE_CARD } from './Card/duck';
+import { getCardsByListIDSelector, patchCard, dropCard, MODAL_CREATE_CARD } from './Card/duck';
 import DragDropContainer from './DragDropContainer';
 import Card from './Card';
 
@@ -30,14 +31,31 @@ const Header = ({ connectDragSource, list = {}, onChangeName, index }) =>
     </div>
   );
 
-const Body = ({ board = {}, list = {}, cards = [], moveToList }) =>
-  <DragDropContainer moveToList={moveToList}>
+const Body = ({ board = {}, list = {}, cards = [], moveToList, onDrop }) =>
+  <DragDropContainer moveToList={moveToList} onDrop={onDrop}>
     {cards.map((card) => (
       <Card key={card.id} id={card.id} card={card} board={board} list={list} />
     ))}
   </DragDropContainer>;
 
-const Footer = ({ list = {}, cards = [], onCreateCard, onDelete }) =>
+const Footer = (props) => {
+  const { list = {}, cards = [], moveToList } = props;
+
+  return (
+    <Draggable
+      locked="true"
+      id="addcard"
+      list={list}
+      cards={cards}
+      moveToList={moveToList}
+    >
+      <FooterActions {...props} />
+    </Draggable>
+  );
+};
+
+
+const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
   <div className="plp-list-bottom">
     <button
       className="btn btn-secondary btn-sm btn-new-card"
@@ -72,5 +90,8 @@ export default connect(
     moveToList: (patch) => {
       dispatch(patchCard(patch));
     },
+    onDrop: (card, index, canceled) => {
+      dispatch(dropCard(card, index, canceled));
+    }
   })
 )(List);

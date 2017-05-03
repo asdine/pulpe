@@ -1,27 +1,66 @@
 import React, { Component } from 'react';
 import { DragSource, DropTarget, DragLayer } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
+import List from './index';
+import Card from './Card';
 
 const itemSource = {
   beginDrag(props) {
-    const { id, index, list } = props;
-    return { id, index, list };
+    const { id, index, list, card } = props;
+    return { id, index, list, card };
+  },
+
+  canDrag(props = {}) {
+    return !props.locked;
   },
 
   isDragging(props, monitor) {
     return monitor.getItem().id === props.id;
   },
+
+  endDrag(props, monitor) {
+    if (!monitor.didDrop()) {
+      props.onDrop(props.card, props.index, true);
+      return;
+    }
+    const { card, index } = monitor.getDropResult();
+    if (!card) {
+      return;
+    }
+
+    props.onDrop(props.card, index);
+  }
 };
 
 const itemTarget = {
   hover(props, monitor) {
-    const { id: draggedId } = monitor.getItem();
-    const { id: overId, list } = props;
+    const { id: draggedId, list: fromList } = monitor.getItem();
+    const { id: overId, list, cards = [] } = props;
+
+    if (props.locked) {
+      if (cards.length === 0 || fromList.id !== list.id) {
+        const draggedCard = cards.find((c) => c.id === draggedId);
+        if (!draggedCard) {
+          props.moveToList({ id: draggedId, listID: list.id });
+        }
+      }
+      return;
+    }
 
     if (draggedId !== overId) {
       const { index: overIndex } = props.findItem(overId);
       props.moveItem(draggedId, list.id, overIndex);
     }
+  },
+
+  drop(props, monitor) {
+    if (props.locked) {
+      const { list, card } = monitor.getItem();
+      return { list, card, index: props.cards.length - 1 };
+    }
+
+    const { list = {}, card = {}, index } = props;
+    return { list, card, index };
   }
 };
 
@@ -82,7 +121,7 @@ function getItemStyles(props) {
 }
 
 @DragLayer(monitor => ({
-  card: monitor.getItem(),
+  item: monitor.getItem(),
   itemType: monitor.getItemType(),
   initialOffset: monitor.getInitialSourceClientOffset(),
   currentOffset: monitor.getSourceClientOffset(),
@@ -95,27 +134,37 @@ export class DraggablePreview extends Component { // eslint-disable-line react/n
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.items !== this.props.items || nextProps.card !== this.props.card) {
+    if (nextProps.item !== this.props.item) {
       this.setPreviewFromProps(nextProps);
     }
   }
 
   setPreviewFromProps(props) {
-    const { items, card = {} } = props;
+    const { item, lists = [], board = {}, itemType } = props;
 
-    if (!items || !card) {
+    if (!item) {
       return;
     }
 
-    const preview = items.find(item => item.props.id === card.id);
+    switch (itemType) {
+      case 'Card': {
+        const card = item.card;
 
-    if (!preview) {
-      return;
+        this.setState({
+          preview: <Card id={card.id} card={card} board={board} list={lists.find(l => l.id === card.listID)} />
+        });
+        break;
+      }
+      case 'List': {
+        this.setState({
+          preview: <List id={item.id} />
+        });
+        break;
+      }
+      default: {
+        this.setState({});
+      }
     }
-
-    this.setState({
-      preview
-    });
   }
 
   render() {

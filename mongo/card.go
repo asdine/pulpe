@@ -182,6 +182,18 @@ func (s *CardService) UpdateCard(id string, u *pulpe.CardUpdate) (*pulpe.Card, e
 		patch["position"] = *u.Position
 	}
 
+	if u.ListID != nil {
+		list, err := s.session.ListService().List(*u.ListID)
+		if err != nil {
+			return nil, err
+		}
+
+		if list.OwnerID != user.ID {
+			return nil, pulpe.ErrListNotFound
+		}
+		patch["listID"] = *u.ListID
+	}
+
 	if len(patch) > 0 {
 		newSlug, err = s.store.updateCardByID(bson.ObjectIdHex(id), user.ID, newSlug, patch)
 		if err != nil {
