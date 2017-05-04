@@ -238,14 +238,7 @@ func (s *UserSessionService) CreateSession(user *pulpe.User) (*pulpe.UserSession
 func (s *UserSessionService) GetSession(id string) (*pulpe.UserSession, error) {
 	var us userSession
 
-	change := mgo.Change{
-		Update: bson.M{"$set": bson.M{
-			"updatedAt": s.session.now,
-		}},
-		ReturnNew: true,
-	}
-
-	_, err := s.session.db.C(userSessionCol).FindId(id).Apply(change, &us)
+	err := s.session.db.C(userSessionCol).FindId(id).One(&us)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, pulpe.ErrUserSessionUnknownID
