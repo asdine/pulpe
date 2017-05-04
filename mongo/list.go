@@ -23,6 +23,7 @@ type list struct {
 	BoardID   string        `bson:"boardID"`
 	Name      string        `bson:"name"`
 	Slug      string        `bson:"slug"`
+	Position  float64       `bson:"position"`
 }
 
 // toPulpeList creates a pulpe list from a mongo list.
@@ -34,6 +35,7 @@ func (l *list) toPulpeList() *pulpe.List {
 		BoardID:   l.BoardID,
 		Name:      l.Name,
 		Slug:      l.Slug,
+		Position:  l.Position,
 	}
 
 	if l.UpdatedAt != nil {
@@ -90,11 +92,12 @@ func (s *ListService) CreateList(boardID string, lc *pulpe.ListCreation) (*pulpe
 	}
 
 	l := list{
-		ID:      bson.NewObjectId(),
-		OwnerID: user.ID,
-		BoardID: board.ID,
-		Name:    lc.Name,
-		Slug:    slugify.Slugify(lc.Name),
+		ID:       bson.NewObjectId(),
+		OwnerID:  user.ID,
+		BoardID:  board.ID,
+		Name:     lc.Name,
+		Slug:     slugify.Slugify(lc.Name),
+		Position: lc.Position,
 	}
 
 	err = s.store.createList(&l)
@@ -170,6 +173,10 @@ func (s *ListService) UpdateList(id string, u *pulpe.ListUpdate) (*pulpe.List, e
 	if u.Name != nil {
 		patch["name"] = *u.Name
 		newSlug = slugify.Slugify(*u.Name)
+	}
+
+	if u.Position != nil {
+		patch["position"] = *u.Position
 	}
 
 	if len(patch) > 0 {

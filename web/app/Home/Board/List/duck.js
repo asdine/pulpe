@@ -1,6 +1,7 @@
 import { schema } from 'normalizr';
 import { combineReducers } from 'redux';
 import { combineEpics } from 'redux-observable';
+import { Observable } from 'rxjs/Observable';
 import client from '@/services/api/client';
 import { hideModal } from '@/components/Modal/duck';
 import ajaxEpic, { successOf, requestOf } from '@/services/api/ajaxEpic';
@@ -13,6 +14,7 @@ export const CREATE = `${DOMAIN}/create`;
 export const UPDATE = `${DOMAIN}/update`;
 export const DELETE = `${DOMAIN}/delete`;
 export const PATCH = `${DOMAIN}/patch`;
+export const DROP = `${DOMAIN}/drop`;
 
 export const MODAL_CREATE_LIST = `${DOMAIN}/modalCreateList`;
 export const MODAL_DELETE_LIST = `${DOMAIN}/modalDeleteList`;
@@ -22,7 +24,7 @@ const listSchema = new schema.Entity('lists');
 
 // action creators
 export const createList = (boardID, name) => ({
-  type: requestOf(CREATE),
+  type: CREATE,
   boardID,
   name
 });
@@ -44,15 +46,36 @@ export const patchList = ({ id, ...patch }) => ({
   patch
 });
 
+export const dropList = (id, droppedOnId, index) => ({
+  type: DROP,
+  id,
+  droppedOnId,
+  index
+});
+
 // epics
+const beforeCreateListEpic = (action$, store) => action$.ofType(CREATE)
+  .map(action => {
+    const { boardID } = action;
+    const lists = getListsSelector(store.getState());
+    let position = 1 << 16;
+
+    if (lists.length !== 0) {
+      position += lists[lists.length - 1].position;
+    }
+
+    return {
+      ...action,
+      position,
+      type: requestOf(CREATE),
+    };
+  });
+
 const createListEpic = ajaxEpic(
   CREATE,
   action => client.createList(action),
   listSchema
 );
-
-const closeCreateListModalOnSuccessEpic = action$ => action$.ofType(successOf(CREATE))
-  .map(hideModal);
 
 const updateListEpic = ajaxEpic(
   UPDATE,
@@ -71,12 +94,55 @@ const deleteListEpic = ajaxEpic(
 const onListDeleteEpic = action$ => action$.ofType(successOf(DELETE))
   .map(() => hideModal());
 
+const onDropListEpic = (action$, store) => action$.ofType(DROP)
+  .mergeMap(action => {
+    const { id, index } = action;
+
+    const patch = {
+      id,
+    };
+
+    const list = getListSelector(store.getState(), id);
+    const lists = getListsSelector(store.getState());
+
+    if (lists[index].id === list.id) {
+      return Observable.empty();
+    }
+
+    if (lists.length === 1) {
+      patch.position = 1 << 16;
+    } else if (index === 0) {
+      const { position: nextPosition } = lists[0];
+      patch.position = nextPosition / 2;
+    } else if (index < lists.length - 1) {
+      if (list.position > lists[index].position) {
+        const { position: prevPosition } = lists[index - 1];
+        const { position: nextPosition } = lists[index];
+        patch.position = prevPosition + ((nextPosition - prevPosition) / 2);
+      } else {
+        const { position: prevPosition } = lists[index];
+        const { position: nextPosition } = lists[index + 1];
+        patch.position = prevPosition + ((nextPosition - prevPosition) / 2);
+      }
+    } else {
+      const { position: prevPosition } = lists[index];
+      patch.position = prevPosition + (1 << 16);
+    }
+
+    if (patch.position === list.position) {
+      return Observable.empty();
+    }
+
+    return Observable.of(patchList(patch), updateList(patch));
+  });
+
 export const epics = combineEpics(
+  beforeCreateListEpic,
   createListEpic,
-  closeCreateListModalOnSuccessEpic,
   updateListEpic,
   deleteListEpic,
-  onListDeleteEpic
+  onListDeleteEpic,
+  onDropListEpic,
 );
 
 // reducer
@@ -142,4 +208,8 @@ export default {
 };
 
 export const getListSelector = (state, id) => state[DOMAIN].byID[id];
-export const getListIDsSelector = (state) => state[DOMAIN].ids;
+export const getListIDsSelector = (state) => getListsSelector(state).map(list => list.id);
+export const getListsSelector = (state) =>
+  state[DOMAIN].ids
+    .map(id => getListSelector(state, id))
+    .sort((a, b) => a.position > b.position);

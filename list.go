@@ -16,16 +16,19 @@ type List struct {
 	BoardID   string     `json:"boardID"`
 	Name      string     `json:"name"`
 	Slug      string     `json:"slug"`
+	Position  float64    `json:"position"`
 }
 
 // ListCreation is used to create a List.
 type ListCreation struct {
-	Name string
+	Name     string
+	Position float64
 }
 
 // ListUpdate is used to update a List.
 type ListUpdate struct {
-	Name *string
+	Name     *string
+	Position *float64
 }
 
 // ListService represents a service for managing lists.

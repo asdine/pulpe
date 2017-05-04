@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -121,7 +122,8 @@ func (h *listHandler) handlePatchList(w http.ResponseWriter, r *http.Request, ps
 
 // ListCreateRequest is used to create a List.
 type ListCreateRequest struct {
-	Name string `json:"name" valid:"required,stringlength(1|64)"`
+	Name     string  `json:"name" valid:"required,stringlength(1|64)"`
+	Position float64 `json:"position"`
 }
 
 // Validate list creation payload.
@@ -134,29 +136,35 @@ func (l *ListCreateRequest) Validate() (*pulpe.ListCreation, error) {
 	}
 
 	return &pulpe.ListCreation{
-		Name: l.Name,
+		Name:     l.Name,
+		Position: l.Position,
 	}, nil
 }
 
 // ListUpdateRequest is used to update a List.
 type ListUpdateRequest struct {
-	Name *string `json:"name" valid:"required,stringlength(1|64)"`
+	Name     *string  `json:"name" valid:"stringlength(1|64)"`
+	Position *float64 `json:"position"`
 }
 
 // Validate list update payload.
 func (l *ListUpdateRequest) Validate() (*pulpe.ListUpdate, error) {
-	if l.Name == nil {
-		return nil, nil
+	if l.Name != nil {
+		*l.Name = strings.TrimSpace(*l.Name)
 	}
 
-	*l.Name = strings.TrimSpace(*l.Name)
-
 	err := validation.Validate(l)
+
+	if l.Name != nil && len(*l.Name) == 0 {
+		err = validation.AddError(err, "name", errors.New("should not be empty"))
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	return &pulpe.ListUpdate{
-		Name: l.Name,
+		Name:     l.Name,
+		Position: l.Position,
 	}, nil
 }

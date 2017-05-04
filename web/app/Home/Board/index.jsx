@@ -9,7 +9,7 @@ import DragDropContainer from './DragDropContainer';
 import List from './List';
 import { DraggablePreview } from './List/Draggable';
 import { getBoardSelector, fetchBoard } from './duck';
-import { getListIDsSelector, createList } from './List/duck';
+import { getListIDsSelector, createList, dropList } from './List/duck';
 
 @DragDropContext(HTML5Backend)
 class Board extends Component {
@@ -45,11 +45,12 @@ class Board extends Component {
   }
 }
 
-const BoardBody = ({ board, lists = [], onCreate }) => (
+const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
   <div className="plp-board-content gridBoard-horizontal">
     <DragDropContainer
       className="plp-cards-list-wrapper"
       itemClassName="plp-cards-list-wrapper"
+      onDrop={onDrop}
     >
       {lists.map((id) => (
         <List key={id} id={id} />
@@ -80,5 +81,6 @@ export default connect(
   {
     fetch: fetchBoard,
     onCreate: createList,
+    onDrop: dropList,
   }
 )(Board);

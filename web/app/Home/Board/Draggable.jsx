@@ -7,12 +7,14 @@ const itemSource = {
   },
 
   endDrag(props, monitor) {
-    const { id: droppedId, index } = monitor.getItem();
-    const didDrop = monitor.didDrop();
-
-    if (!didDrop) {
-      props.moveItem(droppedId, index);
+    if (!monitor.didDrop()) {
+      return;
     }
+
+    const { id: droppedOnId, index } = monitor.getDropResult();
+    const { id } = monitor.getItem();
+
+    props.onDrop(id, droppedOnId, index);
   },
 };
 
@@ -25,6 +27,11 @@ const itemTarget = {
       const { index: overIndex } = props.findItem(overId);
       props.moveItem(draggedId, overIndex);
     }
+  },
+
+  drop(props) {
+    const { id, index } = props;
+    return { id, index };
   }
 };
 

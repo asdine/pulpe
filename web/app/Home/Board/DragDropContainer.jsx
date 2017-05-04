@@ -41,7 +41,7 @@ class DragDropContainer extends Component {
   }
 
   render() {
-    const { className, itemClassName } = this.props;
+    const { className, itemClassName, onDrop } = this.props;
     const { items } = this.state;
 
     return (
@@ -54,6 +54,7 @@ class DragDropContainer extends Component {
             index={i}
             findItem={this.findItem}
             moveItem={this.moveItem}
+            onDrop={onDrop}
           >
             {child}
           </Draggable>

@@ -28,13 +28,15 @@ func testListHandler_CreateList_OK(t *testing.T) {
 
 	c.ListService.CreateListFn = func(boardID string, list *pulpe.ListCreation) (*pulpe.List, error) {
 		require.Equal(t, &pulpe.ListCreation{
-			Name: "Name",
+			Name:     "Name",
+			Position: 123.45,
 		}, list)
 
 		return &pulpe.List{
 			ID:        "123",
 			BoardID:   boardID,
 			Name:      "Name",
+			Position:  123.45,
 			Slug:      "slug",
 			OwnerID:   "456",
 			CreatedAt: mock.Now,
@@ -43,7 +45,8 @@ func testListHandler_CreateList_OK(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("POST", "/api/boards/XXX/lists", bytes.NewReader([]byte(`{
-		"name": "Name"
+		"name": "Name",
+		"position": 123.45
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -52,6 +55,7 @@ func testListHandler_CreateList_OK(t *testing.T) {
 	require.JSONEq(t, `{
 		"id": "123",
     "boardID": "XXX",
+		"position": 123.45,
 		"name": "Name",
 		"slug": "slug",
 		"ownerID": "456",
@@ -206,11 +210,13 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 	// Mock service.
 	c.ListService.UpdateListFn = func(id string, u *pulpe.ListUpdate) (*pulpe.List, error) {
 		require.Equal(t, "XXX", string(id))
-		require.NotNil(t, u.Name)
+		require.Equal(t, "new name", *u.Name)
+		require.Equal(t, 123.45, *u.Position)
 		require.Equal(t, "new name", *u.Name)
 		return &pulpe.List{
 			ID:        "XXX",
 			Name:      *u.Name,
+			Position:  *u.Position,
 			Slug:      "new-name",
 			BoardID:   "XXX",
 			OwnerID:   "456",
@@ -221,7 +227,8 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("PATCH", "/api/lists/XXX", bytes.NewReader([]byte(`{
-    "name": "new name"
+    "name": "new name",
+		"position": 123.45
   }`)))
 	h.ServeHTTP(w, r)
 	require.Equal(t, http.StatusOK, w.Code)
@@ -230,6 +237,7 @@ func testListHandler_UpdateList_OK(t *testing.T) {
 	require.JSONEq(t, `{
 		"id": "XXX",
     "name": "new name",
+		"position": 123.45,
 		"slug": "new-name",
     "boardID": "XXX",
 		"ownerID": "456",

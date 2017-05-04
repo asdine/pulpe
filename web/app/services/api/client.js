@@ -18,17 +18,13 @@ class Client {
 
   getBoard = (owner, slug) => get(`${this.url}/boards/${owner}/${slug}`)
 
-  createBoard = ({ name }) => post(`${this.url}/user/boards`, {
-    name
-  })
+  createBoard = (payload) => post(`${this.url}/user/boards`, payload)
 
   deleteBoard = (id) => del(`${this.url}/boards/${id}`)
 
   updateBoard = ({ id, patch }) => update(`${this.url}/boards/${id}`, patch)
 
-  createList = ({ boardID, name }) => post(`${this.url}/boards/${boardID}/lists`, {
-    name
-  })
+  createList = ({ boardID, type, ...rest }) => post(`${this.url}/boards/${boardID}/lists`, rest)
 
   updateList = ({ id, patch }) => update(`${this.url}/lists/${id}`, patch)
 

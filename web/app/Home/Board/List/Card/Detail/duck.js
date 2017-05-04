@@ -5,8 +5,12 @@ import { getBoardSelector } from '@/Home/Board/duck';
 import { getListSelector } from '@/Home/Board/List/duck';
 import { UPDATE, DELETE } from '@/Home/Board/List/Card/duck';
 
-const redirectCardModalOnUpdateSuccessEpic = (action$, store) => action$.ofType(successOf(UPDATE))
+const redirectCardModalOnNameUpdateSuccessEpic = (action$, store) => action$.ofType(successOf(UPDATE))
   .do((action) => {
+    if (!action.originalAction.patch.name) {
+      return;
+    }
+
     const card = action.response.entities.cards[action.response.result];
     const board = getBoardSelector(store.getState());
     const list = getListSelector(store.getState(), card.listID);
@@ -22,6 +26,6 @@ const closeCardModalOnDeleteSuccessEpic = (action$, store) => action$.ofType(suc
   .ignoreElements();
 
 export const epics = combineEpics(/* eslint import/prefer-default-export: 0 */
-  redirectCardModalOnUpdateSuccessEpic,
+  redirectCardModalOnNameUpdateSuccessEpic,
   closeCardModalOnDeleteSuccessEpic,
 );

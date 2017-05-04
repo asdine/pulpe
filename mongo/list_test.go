@@ -34,7 +34,8 @@ func TestListService_CreateList(t *testing.T) {
 	t.Run("Unauthenticated", func(t *testing.T) {
 		s := sessions.NoAuth.ListService()
 		l := pulpe.ListCreation{
-			Name: "Name",
+			Name:     "Name",
+			Position: 1000,
 		}
 
 		// Create new list.
@@ -46,7 +47,8 @@ func TestListService_CreateList(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		s := sessions.Red.ListService()
 		l := pulpe.ListCreation{
-			Name: "Name",
+			Name:     "Name",
+			Position: 1000,
 		}
 
 		// Create new list.
@@ -54,6 +56,7 @@ func TestListService_CreateList(t *testing.T) {
 		require.NoError(t, err)
 		require.NotZero(t, list.ID)
 		require.Equal(t, list.Name, l.Name)
+		require.Equal(t, list.Position, l.Position)
 		require.Equal(t, "name", list.Slug)
 
 		// Retrieve list and compare.
@@ -61,6 +64,7 @@ func TestListService_CreateList(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, list.ID, other.ID)
 		require.Equal(t, list.Name, other.Name)
+		require.Equal(t, list.Position, other.Position)
 		require.Equal(t, list.BoardID, other.BoardID)
 		require.Equal(t, list.CreatedAt.UTC(), other.CreatedAt.UTC())
 		require.Equal(t, list.UpdatedAt, other.UpdatedAt)
@@ -269,7 +273,8 @@ func TestListService_UpdateList(t *testing.T) {
 		s := sessions.Red.ListService()
 
 		l := pulpe.ListCreation{
-			Name: "name",
+			Name:     "name",
+			Position: 1000,
 		}
 
 		// Create new list.
@@ -284,10 +289,21 @@ func TestListService_UpdateList(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, updatedList)
 
+		// Update multiple fields.
+		newName = "other name"
+		newPos := 500.0
+		updatedList, err = s.UpdateList(list.ID, &pulpe.ListUpdate{
+			Name:     &newName,
+			Position: &newPos,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, updatedList)
+
 		// Retrieve list and check.
 		other, err := s.List(list.ID)
 		require.NoError(t, err)
 		require.Equal(t, newName, other.Name)
+		require.Equal(t, newPos, other.Position)
 		require.NotNil(t, other.UpdatedAt)
 		require.Equal(t, updatedList, other)
 

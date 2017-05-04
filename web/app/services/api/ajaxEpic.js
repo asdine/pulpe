@@ -12,13 +12,15 @@ const ajaxEpic = (type, req, schema) =>
         if (schema) {
           return {
             type: successOf(type),
-            response: normalize(response, schema)
+            response: normalize(response, schema),
+            originalAction: action
           };
         }
 
         return {
           type: successOf(type),
-          response
+          response,
+          originalAction: action
         };
       })
       .catch(error => Observable.of({
