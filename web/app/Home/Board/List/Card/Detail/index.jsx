@@ -186,7 +186,7 @@ export default connect(
     return ({
       card,
       board: getBoardSelector(state),
-      isOpen: getModalType(state) === MODAL_CARD_DETAIL,
+      isOpen: (getModalType(state) === MODAL_CARD_DETAIL) && !!card,
       stillOpened: subsStillOpened(state),
       lastOpened: getLastOpened(state),
     });
