@@ -8,10 +8,7 @@ all: $(NAME)
 $(NAME):
 	go install ./cmd/$@
 
-buildstatic:
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo ./cmd/pulpe
-
-build: clean buildstatic dist docker
+build: clean $(NAME) dist
 
 deps:
 	glide up
@@ -31,7 +28,12 @@ testrace:
 dist:
 	cd web/ && yarn run build:prod
 
-docker:
+docker: clean
+	mkdir -p dist/
+	docker build -t blankrobot/pulpe-web-builder -f ./web/Dockerfile ./web
+	docker run -v $(PWD)/dist:/dist blankrobot/pulpe-web-builder
+	docker build -t blankrobot/pulpe-builder -f Dockerfile.build .
+	docker run -v $(PWD)/dist:/dist blankrobot/pulpe-builder
 	docker build -t blankrobot/pulpe .
 
 clean:

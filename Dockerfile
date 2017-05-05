@@ -3,7 +3,7 @@ MAINTAINER asdine.elhrychy@gmail.com
 
 EXPOSE 4000
 
-COPY pulpe /pulpe
-COPY dist /dist
+COPY dist/ /dist
+COPY dist/pulpe /pulpe
 
 CMD ["/pulpe", "server", "--mongo", "mongodb://mongodb:27017/pulpe"]

@@ -12,7 +12,7 @@ Pulpe is an open source web application for managing content.
 ### Requirements
 
 - [Go](https://golang.org/)
-- [Node.js 6.x](https://nodejs.org)
+- [Node.js 7.x](https://nodejs.org)
 - [Glide](https://github.com/Masterminds/glide)
 - [Yarn](https://yarnpkg.com/)
 - [Docker](https://www.docker.com/)
