@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
 import { DragSource, DropTarget, DragLayer } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import List from './index';
+import { ListPreview } from './index';
 import Card from './Card';
 
 const itemSource = {
-  beginDrag(props) {
-    const { id, index, list, card } = props;
+  beginDrag({ id, index, list, card }) {
     return { id, index, list, card };
   },
 
@@ -117,6 +116,12 @@ function getItemStyles(props) {
   return {
     transform,
     WebkitTransform: transform,
+    display: 'block',
+    pointerEvents: 'none',
+    position: 'fixed',
+    left: 0,
+    top: 0,
+    zIndex: 100
   };
 }
 
@@ -157,7 +162,7 @@ export class DraggablePreview extends Component { // eslint-disable-line react/n
       }
       case 'List': {
         this.setState({
-          preview: <List id={item.id} />
+          preview: <ListPreview id={item.id} />
         });
         break;
       }
@@ -171,13 +176,14 @@ export class DraggablePreview extends Component { // eslint-disable-line react/n
     const { isDragging, itemType } = this.props;
     const { preview } = this.state;
 
-    if (!isDragging || !preview || itemType !== 'Card') {
+    if (!isDragging || !preview || (itemType !== 'Card' && itemType !== 'List')) {
       return null;
     }
 
-    return (React.cloneElement(preview, {
-      isDragged: isDragging,
-      style: getItemStyles(this.props)
-    }));
+    return (
+      <div style={getItemStyles(this.props)} className="dragged">
+        {preview}
+      </div>
+    );
   }
 }

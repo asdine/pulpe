@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import update from 'react/lib/update';
-import Draggable from './Draggable';
 
 class DragDropContainer extends Component {
   constructor(props) {
@@ -41,24 +40,24 @@ class DragDropContainer extends Component {
   }
 
   render() {
-    const { className, itemClassName, onDrop } = this.props;
+    const { className, onDrop, itemClassName } = this.props;
     const { items } = this.state;
+
+    const childrenWithProps = React.Children.map(items,
+     (child, i) => React.cloneElement(child, {
+       className: itemClassName,
+       key: items[i].props.id,
+       id: items[i].props.id,
+       index: i,
+       findItem: this.findItem,
+       moveItem: this.moveItem,
+       onDrop
+     })
+    );
 
     return (
       <div className={className}>
-        {items.map((child, i) => (
-          <Draggable
-            className={itemClassName}
-            key={items[i].props.id}
-            id={items[i].props.id}
-            index={i}
-            findItem={this.findItem}
-            moveItem={this.moveItem}
-            onDrop={onDrop}
-          >
-            {child}
-          </Draggable>
-        ))}
+        {childrenWithProps}
       </div>
     );
   }

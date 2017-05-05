@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { DragSource, DropTarget } from 'react-dnd';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 import { showModal } from '@/components/Modal/duck';
 import Editable from '@/components/Editable';
 import { getBoardSelector } from '@/Home/Board/duck';
@@ -9,37 +11,131 @@ import { getCardsByListIDSelector, patchCard, dropCard, MODAL_CREATE_CARD } from
 import DragDropContainer from './DragDropContainer';
 import Card from './Card';
 
-const List = (props) =>
-  <div className="plp-cards-list-wrapper">
+const itemSource = {
+  beginDrag({ id, index }) {
+    return { id, index };
+  },
+
+  isDragging(props, monitor) {
+    return monitor.getItem().id === props.id;
+  },
+
+  endDrag(props, monitor) {
+    const { id, index: idx } = monitor.getItem();
+
+    if (!monitor.didDrop()) {
+      props.moveItem(id, idx);
+      return;
+    }
+
+    const { id: droppedOnId, index } = monitor.getDropResult();
+
+    props.onDrop(id, droppedOnId, index);
+  },
+};
+
+const itemTarget = {
+  hover(props, monitor) {
+    const { id: draggedId } = monitor.getItem();
+    const { id: overId } = props;
+
+    if (draggedId !== overId) {
+      const { index: overIndex } = props.findItem(overId);
+      props.moveItem(draggedId, overIndex);
+    }
+  },
+
+  drop(props) {
+    const { id, index } = props;
+    return { id, index };
+  }
+};
+
+
+@DropTarget('List', itemTarget, conn => ({
+  connectDropTarget: conn.dropTarget(),
+}))
+@DragSource('List', itemSource, (conn, monitor) => ({
+  connectDragSource: conn.dragSource(),
+  connectDragPreview: conn.dragPreview(),
+  isDragging: monitor.isDragging()
+}))
+class List extends Component {
+  componentDidMount() {
+    // Use empty image as a drag preview so browsers don't draw it
+    // and we can draw whatever we want on the custom drag layer instead.
+    this.props.connectDragPreview(getEmptyImage(), {
+      // IE fallback: specify that we'd rather screenshot the node
+      // when it already knows it's being dragged so we can hide it with CSS.
+      captureDraggingState: true,
+    });
+  }
+
+  render() {
+    const { connectDragSource, connectDropTarget,
+            isDragging, isDragged, ...rest } = this.props;
+
+    const { preview } = rest;
+
+    return connectDropTarget(
+      <div className="plp-cards-list-wrapper">
+        <div className={`plp-cards-list ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`}>
+          {!preview ?
+            connectDragSource(<div><Header {...rest} /></div>) :
+            <Header {...rest} />
+          }
+          <Body {...rest} />
+          <Footer {...rest} />
+        </div>
+      </div>
+    );
+  }
+}
+
+const listPreview = (props) =>
+  <div className="plp-cards-list-wrapper dragged" style={props.style}>
     <div className="plp-cards-list">
-      <Header {...props} />
-      <Body {...props} />
-      <Footer {...props} />
+      <Header {...props} preview="true" />
+      <Body {...props} preview="true" />
+      <Footer {...props} preview="true" />
     </div>
   </div>;
 
-const Header = ({ connectDragSource, list = {}, onChangeName, index }) =>
-  connectDragSource(
-    <div className="plp-list-top">
-      <Editable
-        className="plp-list-top-edit"
-        value={list.name}
-        onSave={(value) => onChangeName({ id: list.id, name: value })}
-      >
-        <h3>{ list.name || `#${index + 1}` }</h3>
-      </Editable>
-    </div>
-  );
+const Header = ({ list = {}, onChangeName, index }) =>
+  <div className="plp-list-top">
+    <Editable
+      className="plp-list-top-edit"
+      value={list.name}
+      onSave={(value) => onChangeName({ id: list.id, name: value })}
+    >
+      <h3>{ list.name || `#${index + 1}` }</h3>
+    </Editable>
+  </div>;
 
-const Body = ({ board = {}, list = {}, cards = [], moveToList, onDrop }) =>
-  <DragDropContainer moveToList={moveToList} onDrop={onDrop}>
-    {cards.map((card) => (
-      <Card key={card.id} id={card.id} card={card} board={board} list={list} />
-    ))}
-  </DragDropContainer>;
+const Body = ({ board = {}, list = {}, cards = [], preview, moveToList, onDropCard }) => {
+  const children = cards.map((card) => (
+    <Card key={card.id} id={card.id} card={card} board={board} list={list} />
+  ));
+
+  if (preview) {
+    return <div>{children}</div>;
+  }
+
+  return (
+    <DragDropContainer moveToList={moveToList} onDrop={onDropCard}>
+      {children}
+    </DragDropContainer>
+  );
+};
 
 const Footer = (props) => {
-  const { list = {}, cards = [], moveToList } = props;
+  const { list = {}, cards = [], moveToList, preview } = props;
+
+  if (preview) {
+    return (
+      <FooterActions {...props} />
+    );
+  }
 
   return (
     <Draggable
@@ -69,7 +165,7 @@ const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
     </button>
   </div>;
 
-export default connect(
+const connector = connect(
   (state, { id }) => ({
     list: getListSelector(state, id),
     board: getBoardSelector(state),
@@ -90,8 +186,11 @@ export default connect(
     moveToList: (patch) => {
       dispatch(patchCard(patch));
     },
-    onDrop: (card, index, canceled) => {
+    onDropCard: (card, index, canceled) => {
       dispatch(dropCard(card, index, canceled));
     }
   })
-)(List);
+);
+export default connector(List);
+
+export const ListPreview = connector(listPreview);
