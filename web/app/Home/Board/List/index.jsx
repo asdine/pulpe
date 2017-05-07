@@ -7,7 +7,7 @@ import Editable from '@/components/Editable';
 import { getBoardSelector } from '@/Home/Board/duck';
 import Draggable from './Draggable';
 import { patchList, updateList, deleteList, getListSelector, MODAL_DELETE_LIST } from './duck';
-import { getCardsByListIDSelector, patchCard, dropCard, MODAL_CREATE_CARD } from './Card/duck';
+import { getCardsByListIDSelector, patchCard, dropCard, createCard } from './Card/duck';
 import DragDropContainer from './DragDropContainer';
 import Card from './Card';
 
@@ -153,10 +153,17 @@ const Footer = (props) => {
 
 const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
   <div className="plp-list-bottom">
-    <button
-      className="btn btn-secondary btn-sm btn-new-card"
-      onClick={() => onCreateCard(list)}
-    >+ Add a new card</button>
+    <Editable
+      onSave={(name) => onCreateCard({
+        listID: list.id,
+        name,
+      })}
+    >
+      <button
+        className="btn btn-secondary btn-sm btn-new-card"
+      >+ Add a new card</button>
+    </Editable>
+
     <button
       className="btn btn-secondary btn-sm btn-delete-list"
       onClick={() => onDelete(list.id, cards)}
@@ -176,8 +183,8 @@ const connector = connect(
       dispatch(patchList(patch));
       dispatch(updateList(patch));
     },
-    onCreateCard: (list) => {
-      dispatch(showModal(MODAL_CREATE_CARD, list));
+    onCreateCard: (data) => {
+      dispatch(createCard(data));
     },
     onDelete: (id, cards) =>
       cards.length > 0 ?

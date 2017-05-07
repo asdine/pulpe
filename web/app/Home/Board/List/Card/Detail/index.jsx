@@ -130,7 +130,7 @@ const NameEditor = ({ card = {}, onSave, close }) => {
   );
 };
 
-const DescEditor = ({ card = {}, close, onSave }) => {
+const DescEditor = ({ card = {}, close, onSave }) => { // eslint-disable-line no-unused-vars
   let input;
 
   const save = () => {
@@ -143,13 +143,6 @@ const DescEditor = ({ card = {}, close, onSave }) => {
     }
 
     close();
-  };
-
-  const onKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      save();
-      close();
-    }
   };
 
   return (
@@ -166,7 +159,6 @@ const DescEditor = ({ card = {}, close, onSave }) => {
           <textarea
             autoFocus
             defaultValue={card.description}
-            onKeyPress={onKeyPress}
             ref={(node) => { input = node; }}
           />
           <div className="large-card-description-edit__footer">
