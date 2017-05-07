@@ -196,7 +196,7 @@ const byID = (state = {}, action) => {
       };
     }
     case successOf(DELETE): {
-      const { [action.id]: _, ...newState } = state; /* eslint no-unused-vars: 0 */
+      const { [action.response.id]: _, ...newState } = state; /* eslint no-unused-vars: 0 */
       return newState;
     }
     default:
@@ -216,7 +216,7 @@ const ids = (state = [], action) => {
       ];
     }
     case successOf(DELETE): {
-      return state.filter(id => id !== action.id);
+      return state.filter(id => id !== action.response.id);
     }
     default:
       return state;
