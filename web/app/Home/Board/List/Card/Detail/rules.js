@@ -3,8 +3,10 @@ import React from 'react';
 const BLOCK_TAGS = {
   blockquote: 'quote',
   p: 'paragraph',
-  pre: 'code'
+  pre: 'code',
+  line: 'paragraph'
 };
+
 
 // Add a dictionary of mark tags.
 const MARK_TAGS = {

@@ -2,8 +2,10 @@ import React from 'react';
 import { Editor, Html } from 'slate';
 import Portal from 'react-portal';
 import rules from './rules';
+import PlaceholderPlugin from './Placeholder';
 
 const schema = {
+  rules: PlaceholderPlugin().schema.rules,
   nodes: {
     code: props => <pre {...props.attributes}>{props.children}</pre>,
     paragraph: props => <p {...props.attributes}>{props.children}</p>,
@@ -19,6 +21,11 @@ const schema = {
 
 const html = new Html({ rules });
 
+// Create an array of plugins.
+const plugins = [
+  PlaceholderPlugin()
+];
+
 class RichEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -28,6 +35,7 @@ class RichEditor extends React.Component {
     if (props.content.length > 0) {
       content = props.content[0] !== '<' ? `<p>${props.content}</p>` : props.content;
     }
+
     this.state = {
       state: html.deserialize(content)
     };
@@ -125,9 +133,11 @@ class RichEditor extends React.Component {
     return (
       <div className="editor">
         <Editor
+          plugins={plugins}
           schema={schema}
           state={this.state.state}
           onChange={this.onChange}
+          placeholder="Write something awesome."
         />
       </div>
     );
