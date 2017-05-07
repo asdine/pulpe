@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import Modal from 'react-modal';
+import Modal from '@/components/Modal';
 import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck';
 import { MODAL_CREATE_CARD, createCard, getCardsByListIDSelector } from './duck';
 
@@ -37,7 +37,7 @@ const CreateCardForm = (props) => {
   };
 
   return (
-    <div>
+    <div className="modal-content">
       <div className="modal-header">
         <div className="container">
           <div className="row">

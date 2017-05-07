@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import Modal from 'react-modal';
 import { browserHistory } from 'react-router';
+import Modal from '@/components/Modal';
 import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck';
 import Sub, { SubOpener, SubClosed, SubOpened } from '@/components/Sub';
 import { subsStillOpened, popSub, closeSub, closeAllSubs, getLastOpened } from '@/components/Sub/duck';
@@ -49,7 +49,7 @@ class Detail extends Component {
     }
 
     return (
-      <div className="plp-modal-large-card" onClick={init}>
+      <div className="modal-content plp-modal-large-card" onClick={init}>
         <Header {...this.props} />
         <Body {...this.props} />
       </div>
