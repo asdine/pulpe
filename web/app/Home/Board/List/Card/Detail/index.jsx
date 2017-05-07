@@ -6,7 +6,8 @@ import { getModalProps, getModalType, hideModal } from '@/components/Modal/duck'
 import Sub, { SubOpener, SubClosed, SubOpened } from '@/components/Sub';
 import { subsStillOpened, popSub, closeSub, closeAllSubs, getLastOpened } from '@/components/Sub/duck';
 import { getBoardSelector } from '@/Home/Board/duck';
-import { MODAL_CARD_DETAIL, fetchCard, updateCard, patchCard, deleteCard, getCardBySlugSelector } from '@/Home/Board/List/Card/duck';
+import { MODAL_CARD_DETAIL, fetchCard, patchCard, deleteCard, getCardBySlugSelector } from '@/Home/Board/List/Card/duck';
+import { saveCard } from './duck';
 import RichEditor from './RichEditor';
 
 const DetailModal = (props) => {
@@ -87,7 +88,7 @@ const Header = ({ card, close, onSave, onDelete }) =>
 
 const Body = (props) =>
   <div className="modal-body">
-    <RichEditor {...props} />
+    <DescEditor {...props} />
   </div>;
 
 const NameEditor = ({ card = {}, onSave, close }) => {
@@ -132,43 +133,16 @@ const NameEditor = ({ card = {}, onSave, close }) => {
 };
 
 const DescEditor = ({ card = {}, close, onSave }) => { // eslint-disable-line no-unused-vars
-  let input;
-
-  const save = () => {
-    const value = input.value.trim();
+  const save = (value) => {
+    const description = value.trim();
 
     if (value && value !== card.description) {
-      onSave(card.id, { description: value });
-    } else {
-      onSave(card.id, null);
+      onSave(card.id, { description });
     }
-
-    close();
   };
 
   return (
-    <Sub name="descEditor">
-      <SubClosed>
-        <SubOpener>
-          <div className="large-card-description">
-            {card.description || <div className="large-card-description__no-description">Click here to add content</div>}
-          </div>
-        </SubOpener>
-      </SubClosed>
-      <SubOpened>
-        <div className="large-card-description-edit">
-          <textarea
-            autoFocus
-            defaultValue={card.description}
-            ref={(node) => { input = node; }}
-          />
-          <div className="large-card-description-edit__footer">
-            <button type="button" className="btn btn-secondary cancel-btn" onClick={close}>Cancel</button>
-            <button type="button" className="btn btn-primary save-btn" onClick={save}>Save</button>
-          </div>
-        </div>
-      </SubOpened>
-    </Sub>
+    <RichEditor content={card.description} onSave={save} />
   );
 };
 
@@ -198,7 +172,7 @@ export default connect(
     fetch: (id) => dispatch(fetchCard(id)),
     onSave: (id, patch) => {
       if (patch) {
-        dispatch(updateCard({ id, ...patch }));
+        dispatch(saveCard({ id, ...patch }));
         dispatch(patchCard({ id, ...patch }));
       }
     },

@@ -3,7 +3,18 @@ import { browserHistory } from 'react-router';
 import { successOf } from '@/services/api/ajaxEpic';
 import { getBoardSelector } from '@/Home/Board/duck';
 import { getListSelector } from '@/Home/Board/List/duck';
-import { UPDATE, DELETE } from '@/Home/Board/List/Card/duck';
+import { UPDATE, DELETE, updateCard } from '@/Home/Board/List/Card/duck';
+
+export const DOMAIN = 'pulpe/home/board/list/card/detail';
+
+// types
+export const SAVE = `${DOMAIN}/SAVE`;
+
+// action creators
+export const saveCard = (patch) => ({
+  type: SAVE,
+  patch
+});
 
 const redirectCardModalOnNameUpdateSuccessEpic = (action$, store) => action$.ofType(successOf(UPDATE))
   .do((action) => {
@@ -25,7 +36,12 @@ const closeCardModalOnDeleteSuccessEpic = (action$, store) => action$.ofType(suc
   })
   .ignoreElements();
 
+const saveCardEpic = action$ => action$.ofType(SAVE)
+  .debounceTime(5000)
+  .map(({ patch }) => updateCard(patch));
+
 export const epics = combineEpics(/* eslint import/prefer-default-export: 0 */
   redirectCardModalOnNameUpdateSuccessEpic,
   closeCardModalOnDeleteSuccessEpic,
+  saveCardEpic
 );

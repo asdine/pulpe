@@ -1,9 +1,14 @@
-
 import React from 'react';
-import { Editor, Plain } from 'slate';
+import { Editor, Html } from 'slate';
 import Portal from 'react-portal';
+import rules from './rules';
 
 const schema = {
+  nodes: {
+    code: props => <pre {...props.attributes}>{props.children}</pre>,
+    paragraph: props => <p {...props.attributes}>{props.children}</p>,
+    quote: props => <blockquote {...props.attributes}>{props.children}</blockquote>,
+  },
   marks: {
     bold: props => <strong>{props.children}</strong>,
     code: props => <code>{props.children}</code>,
@@ -12,24 +17,41 @@ const schema = {
   }
 };
 
+const html = new Html({ rules });
+
 class RichEditor extends React.Component {
-  state = {
-    state: Plain.deserialize('', { terse: true })
-  };
+  constructor(props) {
+    super(props);
 
-  componentDidMount = () => {
+    let content = '<p></p>';
+
+    if (props.content.length > 0) {
+      content = props.content[0] !== '<' ? `<p>${props.content}</p>` : props.content;
+    }
+    this.state = {
+      state: html.deserialize(content)
+    };
+
+    this.renderMarkButton = this.renderMarkButton.bind(this);
+    this.onClickMark = this.onClickMark.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.onOpen = this.onOpen.bind(this);
+  }
+
+  componentDidMount() {
     this.updateMenu();
   }
 
-  componentDidUpdate = () => {
+  componentDidUpdate() {
     this.updateMenu();
   }
 
-  onChange = (state) => {
+  onChange(state) {
+    this.props.onSave(html.serialize(state));
     this.setState({ state });
   }
 
-  onClickMark = (e, type) => {
+  onClickMark(e, type) {
     e.preventDefault();
     let { state } = this.state;
 
@@ -41,16 +63,16 @@ class RichEditor extends React.Component {
     this.setState({ state });
   }
 
-  onOpen = (portal) => {
+  onOpen(portal) {
     this.setState({ menu: portal.firstChild });
   }
 
-  hasMark = (type) => {
+  hasMark(type) {
     const { state } = this.state;
     return state.marks.some(mark => mark.type === type);
   }
 
-  updateMenu = () => {
+  updateMenu() {
     const { menu, state } = this.state;
     if (!menu) return;
 
@@ -75,18 +97,20 @@ class RichEditor extends React.Component {
     menu.style.zIndex = 1060;
   }
 
-  renderMenu = () => (
-    <Portal isOpened onOpen={this.onOpen}>
-      <div className="hover-menu bg-inverse">
-        {this.renderMarkButton('bold', 'format_bold')}
-        {this.renderMarkButton('italic', 'format_italic')}
-        {this.renderMarkButton('underlined', 'format_underlined')}
-        {this.renderMarkButton('code', 'code')}
-      </div>
-    </Portal>
-  )
+  renderMenu() {
+    return (
+      <Portal isOpened onOpen={this.onOpen}>
+        <div className="hover-menu bg-inverse">
+          {this.renderMarkButton('bold', 'format_bold')}
+          {this.renderMarkButton('italic', 'format_italic')}
+          {this.renderMarkButton('underlined', 'format_underlined')}
+          {this.renderMarkButton('code', 'code')}
+        </div>
+      </Portal>
+    );
+  }
 
-  renderMarkButton = (type, icon) => {
+  renderMarkButton(type, icon) {
     const isActive = this.hasMark(type);
     const onMouseDown = e => this.onClickMark(e, type);
 
@@ -97,22 +121,26 @@ class RichEditor extends React.Component {
     );
   }
 
-  renderEditor = () => (
-    <div className="editor">
-      <Editor
-        schema={schema}
-        state={this.state.state}
-        onChange={this.onChange}
-      />
-    </div>
-    )
+  renderEditor() {
+    return (
+      <div className="editor">
+        <Editor
+          schema={schema}
+          state={this.state.state}
+          onChange={this.onChange}
+        />
+      </div>
+    );
+  }
 
-  render = () => (
-    <div>
-      {this.renderMenu()}
-      {this.renderEditor()}
-    </div>
-  )
+  render() {
+    return (
+      <div>
+        {this.renderMenu()}
+        {this.renderEditor()}
+      </div>
+    );
+  }
 }
 
 export default RichEditor;
