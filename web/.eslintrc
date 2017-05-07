@@ -14,6 +14,7 @@
     "max-len": "off",
     "no-confusing-arrow": 0,
     "no-bitwise": "off",
+    "no-mixed-operators": "off",
     "import/no-unresolved": ["error", { "ignore": ["electron"] }],
     "import/no-extraneous-dependencies": "off",
     "import/no-mutable-exports": "off",

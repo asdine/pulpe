@@ -7,6 +7,7 @@ import Sub, { SubOpener, SubClosed, SubOpened } from '@/components/Sub';
 import { subsStillOpened, popSub, closeSub, closeAllSubs, getLastOpened } from '@/components/Sub/duck';
 import { getBoardSelector } from '@/Home/Board/duck';
 import { MODAL_CARD_DETAIL, fetchCard, updateCard, patchCard, deleteCard, getCardBySlugSelector } from '@/Home/Board/List/Card/duck';
+import RichEditor from './RichEditor';
 
 const DetailModal = (props) => {
   const { isOpen, toggle, card = {} } = props;
@@ -86,7 +87,7 @@ const Header = ({ card, close, onSave, onDelete }) =>
 
 const Body = (props) =>
   <div className="modal-body">
-    <DescEditor {...props} />
+    <RichEditor {...props} />
   </div>;
 
 const NameEditor = ({ card = {}, onSave, close }) => {
