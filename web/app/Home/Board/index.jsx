@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
+import { Scrollbars } from 'react-custom-scrollbars';
 import { getActiveBoard } from '@/Home/duck';
 import Editable from '@/components/Editable';
 import BoardHeader from './Header';
@@ -47,28 +48,35 @@ class Board extends Component {
 
 const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
   <div className="plp-board-content gridBoard-horizontal">
-    <DragDropContainer
-      className="plp-cards-list-wrapper"
-      itemClassName="plp-cards-list-wrapper"
-      onDrop={onDrop}
+    <Scrollbars
+      renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
+      renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
     >
-      {lists.map((id) => (
-        <List key={id} id={id} />
+      <div className="scrollable">
+        <DragDropContainer
+          className="plp-cards-list-wrapper"
+          itemClassName="plp-cards-list-wrapper"
+          onDrop={onDrop}
+        >
+          {lists.map((id) => (
+            <List key={id} id={id} />
       ))}
-    </DragDropContainer>
-    <DraggablePreview board={board} lists={lists} />
-    <div className="plp-cards-list-wrapper">
-      <div className="plp-cards-list">
-        <div className="plp-list-top">
-          <Editable
-            onSave={(name) => onCreate(board.id, name)}
-            className="plp-list-top-edit"
-          >
-            <button className="btn btn-success btn-sm btn-block">+ Create a new list</button>
-          </Editable>
+        </DragDropContainer>
+        <DraggablePreview board={board} lists={lists} />
+        <div className="plp-cards-list-wrapper">
+          <div className="plp-cards-list">
+            <div className="plp-list-top">
+              <Editable
+                onSave={(name) => onCreate(board.id, name)}
+                className="plp-list-top-edit"
+              >
+                <button className="btn btn-success btn-sm btn-block">+ Create a new list</button>
+              </Editable>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </Scrollbars>
   </div>
 );
 

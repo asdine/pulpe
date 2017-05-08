@@ -1,5 +1,10 @@
 body {
-  background: rgba(lightgrey, .2);
+  background-image: url('./assets/backgrounds/stefan-kunze-18046.jpg');
+  background-repeat:no-repeat;
+  background-position: left top;
+  background-attachment: fixed;
+  background-size: cover;
+
   font-family: 'Lato', sans-serif;
 
   .wrapper {

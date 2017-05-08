@@ -35,7 +35,10 @@ export default merge(baseConfig, {
       },
       {
         test: /\.(jpg|png|gif)$/,
-        use: 'file-loader'
+        loader: 'file-loader',
+        query: {
+          publicPath: '/assets/'
+        }
       },
       {
         test: /\.(woff|woff2|eot|ttf|svg)$/,
