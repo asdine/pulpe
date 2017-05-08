@@ -34,13 +34,14 @@ class Placeholder extends React.Component {
     props.children !== this.props.children ||
     props.className !== this.props.className ||
     props.node !== this.props.node ||
-    props.style !== this.props.style
-  )
+    props.style !== this.props.style ||
+    props.state.document.length !== this.props.state.document.length
+    )
 
 
   isVisible = () => {
     const { state } = this.props;
-    return state.document.isEmpty;
+    return state.document.isEmpty && state.document.nodes.size <= 1 && state.document.nodes.first() === this.props.node;
   }
 
   render = () => {

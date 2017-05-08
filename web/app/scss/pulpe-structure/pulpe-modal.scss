@@ -29,33 +29,8 @@
 			}
 		}
 
-		.large-card-description-edit {
-			textarea {
-				width     : 100%;
-				min-height: 150px;
-				border    : 1px solid lightgrey;
-				padding   : 5px 10px;
-
-				&:focus {
-					outline: none;
-				}
-			}
-
-			.large-card-description-edit__footer {
-				text-align: right;
-				margin-top: 10px;
-
-				.btn {
-					margin-left: 0;
-					display    : inline-block;
-				}
-
-				.save-btn {
-					margin-left: 5px;
-				}
-
-				.cancel-btn {}
-			}
+		.editor {
+			min-height: 350px;
 		}
 	}
 }
@@ -72,7 +47,13 @@
 	}
 }
 
+.modal-dialog {
+	max-width: 800px;
+}
+
 .plp-modal-large-card {
+	min-height: 400px;
+
 	.modal-header {
 		display: flex;
 

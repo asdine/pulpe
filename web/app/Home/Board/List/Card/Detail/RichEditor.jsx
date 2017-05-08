@@ -131,15 +131,14 @@ class RichEditor extends React.Component {
 
   renderEditor() {
     return (
-      <div className="editor">
-        <Editor
-          plugins={plugins}
-          schema={schema}
-          state={this.state.state}
-          onChange={this.onChange}
-          placeholder="Write something awesome."
-        />
-      </div>
+      <Editor
+        className="editor"
+        plugins={plugins}
+        schema={schema}
+        state={this.state.state}
+        onChange={this.onChange}
+        placeholder="Write something awesome."
+      />
     );
   }
 
