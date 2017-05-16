@@ -143,7 +143,7 @@ func (h *cardHandler) handlePatchCard(w http.ResponseWriter, r *http.Request, ps
 
 // CardCreateRequest is the payload sent to create a card.
 type CardCreateRequest struct {
-	Name        string  `json:"name" valid:"required,stringlength(1|64)"`
+	Name        string  `json:"name" valid:"required,stringlength(1|256)"`
 	Description string  `json:"description" valid:"stringlength(1|100000)"`
 	Position    float64 `json:"position"`
 }
@@ -173,7 +173,7 @@ func (c *CardCreateRequest) Validate() (*pulpe.CardCreation, error) {
 
 // CardUpdateRequest is the payload sent to update a card.
 type CardUpdateRequest struct {
-	Name        *string  `json:"name" valid:"stringlength(1|64)"`
+	Name        *string  `json:"name" valid:"stringlength(1|256)"`
 	Description *string  `json:"description" valid:"stringlength(1|100000)"`
 	Position    *float64 `json:"position"`
 	ListID      *string  `json:"listID"`
