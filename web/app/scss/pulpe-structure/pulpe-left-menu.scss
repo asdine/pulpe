@@ -1,41 +1,119 @@
-.plp-left-menu {
+.left-menu {
+	background-color: white;
+	box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.15);
 	height      : 100vh;
-	min-width   : 240px;
-	max-width   : 240px;
-	border-right: 1px solid rgba(0,0,0, .1);
-	padding-top : 30px;
-	padding-left: 30px;
-	color: white;
+	min-width   : 245px;
+	max-width   : 245px;
+	padding: 25px 17px;
+	overflow-y: scroll;
 
-	h1 {
-		text-transform: uppercase;
-		font-weight   : 800;
-		font-size     : 0.875rem;
-		padding       : 0;
-		margin        : 0 0 1rem;
+	.left-menu__logo {
+		margin: 0 0 0 4px;
+		width: 30px;
+		height: 24px;
 	}
 
-	.plp-boards-list {
-		.is-active {
-			font-weight: 600;
+	.left-menu__title {
+		margin: 0 8px 12px 8px;
+		font-weight: 400;
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 2px;
+		color: $cadet-blue;
+	}
+
+	.left-menu__item {
+		margin-bottom: 1px;
+		font-size: 14px;
+		line-height: 18px;
+		border-radius: 2px;
+		color: $mine-shaft;
+
+		&:hover {
+			background-color: $alabaster;
 			cursor     : pointer;
+		}	
+
+		&.is-active {
+			padding: 4px 8px 5px 8px;
+			background-color: $concrete;
+			color: $mine-shaft;
+			font-weight: 500;
 
 			&:hover {
-				text-decoration: underline;
+				background-color: $mercury;
+				cursor     : pointer;
 			}
 		}
 
 		a {
+			padding: 4px 8px 5px 8px;
 			text-decoration: none;
-			color          : white;
+			display: block;
+			color: $mine-shaft;
+		}
+	}
 
-			&:hover {
-				text-decoration: underline;
+	.left-menu__board-panel {
+		margin: 40px 0 0 0;
+		padding: 0;
+
+		.left-menu__board-list {
+			margin: 0 0 10px 0;
+		}
+	}
+
+	.left-menu__create-button {
+		position: relative;
+		background: none;
+		width: 100%;
+		padding: 7px 8px 8px 33px;
+		margin: 0 0 2px 0;
+		border: none;
+		font-size: 14px;
+		text-align: left;
+		color: $picton-blue;
+		transition: padding-left .3s;
+		outline: none;
+
+		&:before {
+			position: absolute;
+			top: 8px;
+			left: 8px;
+			content: url("./assets/icons/icn-plus.svg");
+		}
+
+		&:hover {
+			cursor: pointer;
+			padding-left: 36px;
+
+			&:before {
+				content: url("./assets/icons/icn-plus-full.svg");
+				margin-right: 10px;
 			}
 		}
 	}
 
-	.card {
-		background: none;
+	.left-menu__create-input {
+		width: 100%;
+		padding: 7px 8px 8px 10px;
+		border-radius: 2px;
+		border: 1px solid $picton-blue;
+		font-size: 14px;
+		outline: none;
+	}
+
+	.left-menu__account-panel {
+		margin: 45px 0 0 0;
+
+		.left-menu__account-list {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+
+			.account-list__sign-out {
+				display: block;
+			}
+		}
 	}
 }

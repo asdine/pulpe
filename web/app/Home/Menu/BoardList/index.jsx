@@ -16,21 +16,19 @@ class BoardList extends Component {
 
     return (
       <div>
-        <ul className="list-unstyled plp-boards-list">
+        <ul className="list-unstyled left-menu__board-list">
           {boards.map((board) => (
             activeBoard.slug === board.slug ?
-              <li key={board.id} className="is-active">
+              <li key={board.id} className="left-menu__item is-active">
                 {board.name}
               </li> :
-              <li key={board.id}>
+              <li key={board.id} className="left-menu__item">
                 <Link to={`/${board.owner.login}/${board.slug}`}>{board.name}</Link>
               </li>
           ))}
         </ul>
-        <Editable
-          onSave={onCreate}
-        >
-          <button className="btn btn-sm btn-secondary" color="secondary" size="sm">+ Create a board</button>
+        <Editable className="left-menu__create-input" onSave={onCreate} >
+          <button className="left-menu__create-button">Create a new board</button>
         </Editable>
       </div>
     );
