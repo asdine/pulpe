@@ -22,20 +22,21 @@
 	}
 
 	.left-menu__item {
-		padding: 3px 8px 5px 8px;
 		margin-bottom: 1px;
 		font-size: 14px;
+		line-height: 18px;
 		border-radius: 2px;
-		color: $scorpion;
+		color: $mine-shaft;
 
 		&:hover {
 			background-color: $alabaster;
 			cursor     : pointer;
-		}
+		}	
 
 		&.is-active {
+			padding: 4px 8px 5px 8px;
 			background-color: $concrete;
-			color: $scorpion;
+			color: $mine-shaft;
 			font-weight: 500;
 
 			&:hover {
@@ -45,9 +46,10 @@
 		}
 
 		a {
+			padding: 4px 8px 5px 8px;
 			text-decoration: none;
 			display: block;
-			color: $scorpion;
+			color: $mine-shaft;
 		}
 	}
 
