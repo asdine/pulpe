@@ -7,7 +7,7 @@ export default merge(baseConfig, {
 
   output: {
     filename: '[name].js',
-    publicPath: '/'
+    publicPath: '/assets/'
   },
 
   entry: {
@@ -24,7 +24,7 @@ export default merge(baseConfig, {
         loaders: [
           'babel-loader',
           'eslint-loader'
-        ],
+        ]
       },
       {
         test: /\.s?css$/,
@@ -35,14 +35,11 @@ export default merge(baseConfig, {
       },
       {
         test: /\.(jpg|png|gif|svg)$/,
-        loader: 'file-loader',
-        query: {
-          publicPath: '/assets/'
-        }
+        loader: 'file-loader'
       },
       {
         test: /\.(woff|woff2|eot|ttf)$/,
-        use: 'url-loader?limit=100000'
+        loader: 'url-loader?limit=100000'
       }
     ]
   },

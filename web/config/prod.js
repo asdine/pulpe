@@ -39,11 +39,11 @@ export default merge(baseConfig, {
         })
       },
       {
-        test: /\.(jpg|png|gif)$/,
+        test: /\.(jpg|png|gif|svg)$/,
         use: 'file-loader'
       },
       {
-        test: /\.(woff|woff2|eot|ttf|svg)$/,
+        test: /\.(woff|woff2|eot|ttf)$/,
         use: 'url-loader?limit=100000'
       }
     ]
