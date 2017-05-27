@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 44.1 (41455) - http://www.bohemiancoding.com/sketch -->
+    <title>Icons/Plus</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="_Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icons/Plus">
+            <circle id="Oval-3" stroke="#ABD0E8" cx="9" cy="9" r="8.5"></circle>
+            <rect id="Rectangle-13" fill="#3CAAEE" transform="translate(9.000000, 9.000000) rotate(-90.000000) translate(-9.000000, -9.000000) " x="5" y="8" width="8" height="2" rx="1"></rect>
+            <rect id="Rectangle-13" fill="#3CAAEE" x="5" y="8" width="8" height="2" rx="1"></rect>
+        </g>
+    </g>
+</svg>

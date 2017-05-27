@@ -27,10 +27,8 @@ class BoardList extends Component {
               </li>
           ))}
         </ul>
-        <Editable
-          onSave={onCreate}
-        >
-          <button className="btn btn-sm btn-secondary" color="secondary" size="sm">+ Create a board</button>
+        <Editable className="left-menu__create-input" onSave={onCreate} >
+          <button className="left-menu__create-button">Create a new board</button>
         </Editable>
       </div>
     );

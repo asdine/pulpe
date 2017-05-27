@@ -56,6 +56,50 @@
 	.left-menu__board-panel {
 		margin: 40px 0 0 0;
 		padding: 0;
+
+		.left-menu__board-list {
+			margin: 0 0 10px 0;
+		}
+	}
+
+	.left-menu__create-button {
+		position: relative;
+		background: none;
+		width: 100%;
+		padding: 7px 8px 8px 33px;
+		margin: 0 0 2px 0;
+		border: none;
+		font-size: 14px;
+		text-align: left;
+		color: $picton-blue;
+		transition: padding-left .3s;
+		outline: none;
+
+		&:before {
+			position: absolute;
+			top: 8px;
+			left: 8px;
+			content: url("./assets/icons/icn-plus.svg");
+		}
+
+		&:hover {
+			cursor: pointer;
+			padding-left: 36px;
+
+			&:before {
+				content: url("./assets/icons/icn-plus-full.svg");
+				margin-right: 10px;
+			}
+		}
+	}
+
+	.left-menu__create-input {
+		width: 100%;
+		padding: 7px 8px 8px 10px;
+		border-radius: 2px;
+		border: 1px solid $picton-blue;
+		font-size: 14px;
+		outline: none;
 	}
 
 	.left-menu__account-panel {
