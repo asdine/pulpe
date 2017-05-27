@@ -16,7 +16,7 @@ class BoardList extends Component {
 
     return (
       <div>
-        <ul className="list-unstyled plp-boards-list">
+        <ul className="list-unstyled left-menu__board-list">
           {boards.map((board) => (
             activeBoard.slug === board.slug ?
               <li key={board.id} className="is-active">

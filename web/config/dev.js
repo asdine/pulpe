@@ -34,14 +34,14 @@ export default merge(baseConfig, {
         ]
       },
       {
-        test: /\.(jpg|png|gif)$/,
+        test: /\.(jpg|png|gif|svg)$/,
         loader: 'file-loader',
         query: {
           publicPath: '/assets/'
         }
       },
       {
-        test: /\.(woff|woff2|eot|ttf|svg)$/,
+        test: /\.(woff|woff2|eot|ttf)$/,
         use: 'url-loader?limit=100000'
       }
     ]

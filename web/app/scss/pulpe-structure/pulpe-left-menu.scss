@@ -1,32 +1,59 @@
-.plp-left-menu {
+.left-menu {
 	background-color: white;
+	box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.15);
 	height      : 100vh;
 	min-width   : 245px;
 	max-width   : 245px;
-	padding-top : 25px;
-	padding-left: 17px;
-	box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.15);
+	padding: 25px 17px;
 
-	.plp-left-menu__logo {
-		margin: 0 0 40px 4px;
+	.left-menu__logo {
+		margin: 0 0 0 4px;
+		width: 30px;
+		height: 24px;
 	}
 
-	.plp-boards-list {
-		.is-active {
-			font-weight: 600;
-			cursor     : pointer;
+	.left-menu__title {
+		margin: 0 8px 12px 8px;
+		font-weight: 400;
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 2px;
+		color: $cadet-blue;
+	}
 
-			&:hover {
-				text-decoration: underline;
-			}
-		}
+	.left-menu__board-panel {
+		margin: 40px 0 0 0;
+		padding: 0;
+	}
 
+	.left-menu__board-list {
 		a {
 			text-decoration: none;
-			color          :black;
+			display: block;
+			color: $scorpion;
+		}
+
+		li {
+			padding: 3px 8px 5px 8px;
+			margin-bottom: 1px;
+			font-size: 14px;
+			border-radius: 2px;
+			color: $scorpion;
 
 			&:hover {
-				text-decoration: underline;
+				background-color: $alabaster;
+				cursor     : pointer;
+			}
+
+			&.is-active {
+				background-color: $concrete;
+				color: $scorpion;
+				font-weight: 500;
+
+				&:hover {
+					background-color: $mercury;
+					cursor     : pointer;
+				}
 			}
 		}
 	}
