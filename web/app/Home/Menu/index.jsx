@@ -3,7 +3,7 @@ import BoardList from './BoardList';
 
 const Menu = () =>
   <div className="plp-left-menu" style={{ position: 'relative' }}>
-    <h1>pulpe</h1>
+    <img src="./assets/img/logo-regular.svg" className="plp-left-menu__logo" alt="Pulpe logo" height="24px" width="30px" />
     <BoardList />
     <div
       className="card"

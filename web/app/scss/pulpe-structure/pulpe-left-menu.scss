@@ -1,18 +1,14 @@
 .plp-left-menu {
+	background-color: white;
 	height      : 100vh;
-	min-width   : 240px;
-	max-width   : 240px;
-	border-right: 1px solid rgba(0,0,0, .1);
-	padding-top : 30px;
-	padding-left: 30px;
-	color: white;
+	min-width   : 245px;
+	max-width   : 245px;
+	padding-top : 25px;
+	padding-left: 17px;
+	box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.15);
 
-	h1 {
-		text-transform: uppercase;
-		font-weight   : 800;
-		font-size     : 0.875rem;
-		padding       : 0;
-		margin        : 0 0 1rem;
+	.plp-left-menu__logo {
+		margin: 0 0 40px 4px;
 	}
 
 	.plp-boards-list {
@@ -27,7 +23,7 @@
 
 		a {
 			text-decoration: none;
-			color          : white;
+			color          :black;
 
 			&:hover {
 				text-decoration: underline;
