@@ -21,44 +21,52 @@
 		color: $cadet-blue;
 	}
 
-	.left-menu__board-panel {
-		margin: 40px 0 0 0;
-		padding: 0;
-	}
+	.left-menu__item {
+		padding: 3px 8px 5px 8px;
+		margin-bottom: 1px;
+		font-size: 14px;
+		border-radius: 2px;
+		color: $scorpion;
 
-	.left-menu__board-list {
+		&:hover {
+			background-color: $alabaster;
+			cursor     : pointer;
+		}
+
+		&.is-active {
+			background-color: $concrete;
+			color: $scorpion;
+			font-weight: 500;
+
+			&:hover {
+				background-color: $mercury;
+				cursor     : pointer;
+			}
+		}
+
 		a {
 			text-decoration: none;
 			display: block;
 			color: $scorpion;
 		}
-
-		li {
-			padding: 3px 8px 5px 8px;
-			margin-bottom: 1px;
-			font-size: 14px;
-			border-radius: 2px;
-			color: $scorpion;
-
-			&:hover {
-				background-color: $alabaster;
-				cursor     : pointer;
-			}
-
-			&.is-active {
-				background-color: $concrete;
-				color: $scorpion;
-				font-weight: 500;
-
-				&:hover {
-					background-color: $mercury;
-					cursor     : pointer;
-				}
-			}
-		}
 	}
 
-	.card {
-		background: none;
+	.left-menu__board-panel {
+		margin: 40px 0 0 0;
+		padding: 0;
+	}
+
+	.left-menu__account-panel {
+		margin: 45px 0 0 0;
+
+		.left-menu__account-list {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+
+			.account-list__sign-out {
+				display: block;
+			}
+		}
 	}
 }

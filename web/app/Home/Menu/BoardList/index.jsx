@@ -19,10 +19,10 @@ class BoardList extends Component {
         <ul className="list-unstyled left-menu__board-list">
           {boards.map((board) => (
             activeBoard.slug === board.slug ?
-              <li key={board.id} className="is-active">
+              <li key={board.id} className="left-menu__item is-active">
                 {board.name}
               </li> :
-              <li key={board.id}>
+              <li key={board.id} className="left-menu__item">
                 <Link to={`/${board.owner.login}/${board.slug}`}>{board.name}</Link>
               </li>
           ))}

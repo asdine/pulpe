@@ -10,18 +10,15 @@ const Menu = () =>
         <header className="left-menu__title">My boards</header>
         <BoardList />
       </div>
-    </nav>
-    <div
-      className="card"
-      style={{
-        position: 'absolute',
-        bottom: 0
-      }}
-    >
-      <div className="card-block">
-        <a className="btn btn-secondary" href="/logout" role="button">Sign out</a>
+      <div className="left-menu__account-panel">
+        <header className="left-menu__title">My account</header>
+        <ul className="left-menu__account-list">
+          <li className="left-menu__item">
+            <a className="account-list__sign-out" href="/logout" role="button">Sign out</a>
+          </li>
+        </ul>
       </div>
-    </div>
+    </nav>
   </div>;
 
 export default Menu;
