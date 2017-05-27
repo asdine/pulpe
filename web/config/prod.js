@@ -50,7 +50,7 @@ export default merge(baseConfig, {
   },
 
   plugins: [
-    new ExtractTextPlugin('style.css'),
+    new ExtractTextPlugin('[chunkhash].[name].css'),
     new webpack.optimize.CommonsChunkPlugin({
       name: ['vendor', 'manifest'], // vendor libs + extracted manifest
       minChunks: Infinity,
