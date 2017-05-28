@@ -3,6 +3,9 @@
 	width  : calc(100% - 240px);
 	margin : 0;
 	padding: 0;
+  background-image: url('./assets/img/gradient-black-transparency.svg');
+	background-repeat: repeat-x;
+  background-position: top;
 
 	header {
 		display      : flex;
@@ -10,7 +13,6 @@
 		height       : 55px;
 		padding      : 15px 30px 15px 40px;
 		margin       : 0;
-		border-bottom: 1px solid rgba(0,0,0, .1);
 
 		h2 {
 			flex     : 0;
