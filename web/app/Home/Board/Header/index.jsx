@@ -16,7 +16,7 @@ const BoardHeader = ({ board = {}, onSave, onDelete }) => (
     </Editable>
     <div className="board-options">
       <button
-        className="btn btn-danger btn-sm"
+        className=""
         onClick={() => onDelete(board)}
       >Delete</button>
     </div>

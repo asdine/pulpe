@@ -38,7 +38,7 @@ class Board extends Component {
     }
 
     return (
-      <div className="plp-board">
+      <div className="main-board">
         <BoardHeader {...this.props} />
         <BoardBody {...this.props} />
       </div>
