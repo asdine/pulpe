@@ -47,12 +47,12 @@ class Board extends Component {
 }
 
 const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
-  <div className="plp-board-content gridBoard-horizontal">
+  <div className="board-area">
     <Scrollbars
       renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
       renderTrackHorizontal={props => <div {...props} className="track-horizontal" />}
     >
-      <div className="scrollable">
+      <div className="scrollable board-content">
         <DragDropContainer
           className="plp-cards-list-wrapper"
           itemClassName="plp-cards-list-wrapper"
