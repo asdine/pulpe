@@ -54,8 +54,8 @@ const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
     >
       <div className="scrollable board-content">
         <DragDropContainer
-          className="plp-cards-list-wrapper"
-          itemClassName="plp-cards-list-wrapper"
+          className="board-list-group"
+          itemClassName="board-list-item"
           onDrop={onDrop}
         >
           {lists.map((id) => (
@@ -63,12 +63,12 @@ const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
       ))}
         </DragDropContainer>
         <DraggablePreview board={board} lists={lists} />
-        <div className="plp-cards-list-wrapper">
-          <div className="plp-cards-list">
-            <div className="plp-list-top">
+        <div className="board-new-list">
+          <div className="list-wrapper">
+            <div className="list-top">
               <Editable
                 onSave={(name) => onCreate(board.id, name)}
-                className="plp-list-top-edit"
+                className="list-top-edit"
               >
                 <button className="btn btn-success btn-sm btn-block">+ Create a new list</button>
               </Editable>
