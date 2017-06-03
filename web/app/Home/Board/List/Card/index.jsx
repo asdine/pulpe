@@ -5,8 +5,8 @@ const Card = (props) => {
   const { card = {}, list = {}, board = {}, isDragging, isDragged, style } = props;
 
   return (
-    <div style={style} className={`card ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`} onClick={() => browserHistory.push(`/${board.owner.login}/${board.slug}/${list.slug}/${card.slug}`)}>
-      <div className="card-block">
+    <div style={style} className={`card-item ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`} onClick={() => browserHistory.push(`/${board.owner.login}/${board.slug}/${list.slug}/${card.slug}`)}>
+      <div className="card-wrapper">
         <h3 className="card-title">{ card.name }</h3>
       </div>
     </div>
