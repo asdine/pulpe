@@ -5,6 +5,10 @@
 
 	.board-new-list {
 		display: flex;
+
+		.list-wrapper {
+			margin-right: 30px;
+		}
 	}
 
 	.board-list-item {
