@@ -111,6 +111,24 @@
 
 		.list-wrapper {
 			margin-right: 30px;
+
+			.btn-add-new-list {
+				width: 280px;
+				background: rgba(0,0,0,.15);
+				border: none;
+				border-radius: 4px;
+				padding: 12px;
+				color: white;
+				font-size: 14px;
+				font-weight: 400;
+				text-align: left;
+				transition: background .3s;
+
+				&:hover {
+					background: rgba(0,0,0,.35);
+					cursor: pointer;
+				}
+			}
 		}
 	}
 }
