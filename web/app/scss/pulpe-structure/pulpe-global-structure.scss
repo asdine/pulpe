@@ -12,4 +12,8 @@ body {
     display: flex;
     padding: 0;
   }
+
+  button, input, optgroup, select, textarea {
+    font-family: 'Roboto', sans-serif;
+  }
 }

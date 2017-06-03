@@ -69,13 +69,10 @@
 	}
 
 	.board-area {
-		// display: none;
-
 		width      : 100%;
 		height     : calc(100% - 55px);
 		margin     : 0;
 		white-space: nowrap;
-		// overflow-x : scroll;
 
 		.scrollable {
 			padding    : 30px 20px 30px 40px;
