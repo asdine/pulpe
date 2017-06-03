@@ -22,7 +22,7 @@
 			.list-top {
 				width     : 100%;
 				min-height: 20px;
-				padding   : 11px 12px 1px 12px;
+				padding   : 11px 12px 5px 12px;
 				margin: 0 0 3px 0;
 				border-top-left-radius: 4px;
 				border-top-right-radius: 4px;
@@ -66,7 +66,7 @@
 				background: rgba(0,0,0, .1);
 				box-shadow: 0;
 
-				.card,
+				.card-item,
 				.list-bottom,
 				.list-top {
 					visibility: hidden;
