@@ -160,12 +160,12 @@ const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
       })}
     >
       <button
-        className="btn btn-secondary btn-sm btn-new-card"
-      >+ Add a new card</button>
+        className="btn-add-new-card"
+      >Add a new card</button>
     </Editable>
 
     <button
-      className="btn btn-secondary btn-sm btn-delete-list"
+      className="btn-delete-list"
       onClick={() => onDelete(list.id, cards)}
     >
       Delete
