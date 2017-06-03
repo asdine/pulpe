@@ -1,11 +1,14 @@
 .board-area {
-	.plp-cards-list-wrapper {
-		display       : inline-block;
-		vertical-align: top;
+	.board-list-group {
+		display: flex;
+	}
 
-		.plp-cards-list {
-			display       : inline-block;
-			vertical-align: top;
+	.board-new-list {
+		display: flex;
+	}
+
+	.board-list-item {
+		.list-wrapper {
 			background    : rgba(lightgrey, .6);
 			width         : 280px;
 			margin        : 0 0.625rem 0 0;
@@ -13,11 +16,7 @@
 			box-shadow    : 1px 1px 0 0 rgba(0,0,0, .1);
 			border-radius : 4px;
 
-			.plp-card:last-of-type {
-				margin-bottom: 0.625rem;
-			}
-
-			.plp-list-top {
+			.list-top {
 				width     : 100%;
 				min-height: 24px;
 				margin    : 0;
@@ -37,7 +36,7 @@
 					}
 				}
 
-				.plp-list-top-edit {
+				.list-top-edit {
 					width     : 100%;
 					margin    : 0 0 11px;
 					padding   : 0 0 0 9px;
@@ -50,7 +49,7 @@
 				}
 			}
 
-			.plp-list-bottom {
+			.list-bottom {
 				width  : 100%;
 				display: flex;
 
@@ -66,8 +65,8 @@
 				box-shadow: 0;
 
 				.card,
-				.plp-list-bottom,
-				.plp-list-top {
+				.list-bottom,
+				.list-top {
 					visibility: hidden;
 				}
 			}

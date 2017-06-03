@@ -78,8 +78,8 @@ class List extends Component {
     const { preview } = rest;
 
     return connectDropTarget(
-      <div className="plp-cards-list-wrapper">
-        <div className={`plp-cards-list ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`}>
+      <div className="board-list-item">
+        <div className={`list-wrapper ${isDragged ? 'dragged' : ''} ${isDragging ? 'shadow' : ''}`}>
           {!preview ?
             connectDragSource(<div><Header {...rest} /></div>) :
             <Header {...rest} />
@@ -93,8 +93,8 @@ class List extends Component {
 }
 
 const listPreview = (props) =>
-  <div className="plp-cards-list-wrapper dragged" style={props.style}>
-    <div className="plp-cards-list">
+  <div className="board-list-item dragged" style={props.style}>
+    <div className="list-wrapper">
       <Header {...props} preview="true" />
       <Body {...props} preview="true" />
       <Footer {...props} preview="true" />
@@ -102,9 +102,9 @@ const listPreview = (props) =>
   </div>;
 
 const Header = ({ list = {}, onChangeName, index }) =>
-  <div className="plp-list-top">
+  <div className="list-top">
     <Editable
-      className="plp-list-top-edit"
+      className="list-top-edit"
       value={list.name}
       onSave={(value) => onChangeName({ id: list.id, name: value })}
     >
@@ -152,7 +152,7 @@ const Footer = (props) => {
 
 
 const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
-  <div className="plp-list-bottom">
+  <div className="list-bottom">
     <Editable
       onSave={(name) => onCreateCard({
         listID: list.id,
