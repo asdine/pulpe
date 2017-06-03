@@ -70,7 +70,7 @@ const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
                 onSave={(name) => onCreate(board.id, name)}
                 className="list-top-edit"
               >
-                <button className="btn btn-success btn-sm btn-block">+ Create a new list</button>
+                <button className="btn-add-new-list">Add a new list...</button>
               </Editable>
             </div>
           </div>
