@@ -14,39 +14,46 @@
 		padding      : 20px 30px 15px 40px;
 		margin       : 0;
 
-		h2 {
-			display: inline-block;
-			flex     : 0;
-			margin   : 7px 0 0 0;
-			padding  : 0 0 0.25rem;
-			font-size: 15px;
-			font-weight: 400;
-			color: white;
-			text-shadow: 1px 1px 0 rgba(0,0,0,0.40);
-
-			&:hover {
-				border-bottom: 1px solid lightgrey;
-				cursor       : pointer;
-			}
-		}
-
 		.board-name {
-			width: 100%;
-			background: none;
-			border    : none;
-			padding   : 0;
-			margin    : 0.25rem 0 0 0;
-			font-style: italic;
-			font-size: 15px;
-			font-weight: 400;
-			color: white;
-			text-shadow: 1px 1px 0 rgba(0,0,0,0.40);
+			width: 90%;
 
-			&:focus {
-				outline: none;
+			.board-name-title {
+				display: inline;
+				
+				h2 {
+					display: inline-block;
+					flex     : 0;
+					margin   : 7px 0 0 0;
+					padding  : 0 0 0.25rem;
+					font-size: 15px;
+					font-weight: 400;
+					color: white;
+					text-shadow: 1px 1px 0 rgba(0,0,0,0.40);
+
+					&:hover {
+						border-bottom: 1px solid lightgrey;
+						cursor       : pointer;
+					}
+				}
+			}
+
+			.board-name-edit {
+				width: 100%;
+				background: none;
+				border    : none;
+				padding   : 0;
+				margin    : 0.25rem 0 0 0;
+				font-size: 15px;
+				font-weight: 400;
+				color: white;
+				text-shadow: 1px 1px 0 rgba(0,0,0,0.40);
+
+				&:focus {
+					outline: none;
+				}
 			}
 		}
-
+		
 		.board-options {
 			margin-left: auto;
 
