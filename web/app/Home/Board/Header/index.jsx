@@ -9,8 +9,11 @@ const BoardHeader = ({ board = {}, onSave, onDelete }) => (
   <header>
     <Editable
       className="board-name"
+      childrenClassName="board-name-title"
+      editorClassName="board-name-edit"
       value={board.name}
       onSave={(value) => onSave({ id: board.id, name: value })}
+      editor={Editor}
     >
       <h2>{board.name}</h2>
     </Editable>
@@ -21,6 +24,14 @@ const BoardHeader = ({ board = {}, onSave, onDelete }) => (
       >Delete</button>
     </div>
   </header>
+);
+
+const Editor = ({ onRef, ...rest }) => (
+  <input
+    type="text"
+    ref={onRef}
+    {...rest}
+  />
 );
 
 export default connect(
@@ -34,3 +45,4 @@ export default connect(
     onDelete: (board) => dispatch(showModal(MODAL_DELETE_BOARD, board))
   })
 )(BoardHeader);
+

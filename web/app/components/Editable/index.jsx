@@ -68,19 +68,19 @@ class Editable extends Component {
   }
 
   render() {
-    const { value, children, className, style } = this.props;
+    const { value, children, className, editorClassName, childrenClassName, style } = this.props;
     const { isEditing } = this.state;
 
     const Editor = this.editor;
 
     return (
-      <div>
+      <div className={className}>
         { !isEditing ?
-          <div onClick={this.toggle}>{ children }</div> :
+          <div className={childrenClassName} onClick={this.toggle}>{ children }</div> :
           <Editor
             autoFocus
             style={style}
-            className={className}
+            className={editorClassName}
             defaultValue={value}
             onBlur={this.onSave}
             onKeyPress={this.onKeyPress}
