@@ -112,7 +112,7 @@ function getItemStyles(props) {
 
   const { x, y } = currentOffset;
 
-  const transform = `translate(${x}px, ${y}px) rotate(6deg)`;
+  const transform = `translate(${x}px, ${y}px) rotate(4deg)`;
   return {
     transform,
     WebkitTransform: transform,
