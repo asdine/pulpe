@@ -154,6 +154,8 @@ const Footer = (props) => {
 const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
   <div className="list-bottom">
     <Editable
+      childrenClassName="list-bottom-buttons"
+      editorClassName="add-new-card-input"
       onSave={(name) => onCreateCard({
         listID: list.id,
         name,
@@ -162,14 +164,11 @@ const FooterActions = ({ list, onCreateCard, onDelete, cards }) =>
       <button
         className="btn-add-new-card"
       >Add a new card</button>
+      <button
+        className="btn-delete-list"
+        onClick={() => onDelete(list.id, cards)}
+      >Delete</button>
     </Editable>
-
-    <button
-      className="btn-delete-list"
-      onClick={() => onDelete(list.id, cards)}
-    >
-      Delete
-    </button>
   </div>;
 
 const connector = connect(
