@@ -104,7 +104,7 @@ const listPreview = (props) =>
 const Header = ({ list = {}, onChangeName, index }) =>
   <div className="list-top">
     <Editable
-      className="list-top-edit"
+      editorClassName="list-top-edit"
       value={list.name}
       onSave={(value) => onChangeName({ id: list.id, name: value })}
     >
