@@ -69,6 +69,7 @@ const BoardBody = ({ board, lists = [], onCreate, onDrop }) => (
               <Editable
                 onSave={(name) => onCreate(board.id, name)}
                 className="list-top-edit"
+                editorClassName="list-top-edit-input"
               >
                 <button className="btn-add-new-list">Add a new list...</button>
               </Editable>
