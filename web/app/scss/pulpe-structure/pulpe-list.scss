@@ -148,6 +148,26 @@
 					background: rgba(0,0,0,.35);
 					cursor: pointer;
 				}
+
+				&:focus {
+					outline: none;
+				}
+			}
+
+			.list-top-edit-input {
+				background    : rgba($gallery, .925);
+				width         : 280px;
+				overflow      : auto;
+				padding       : 5px 11px 5px 11px;
+				border        : none;
+				border-radius : 4px;
+				box-shadow    : 1px 1px 2px 0 rgba(0,0,0,0.20);
+				font-size     : 14px;
+				font-weight   : 500;
+
+				&:focus {
+					outline: none;
+				}
 			}
 		}
 	}
